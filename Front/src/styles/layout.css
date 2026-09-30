@@ -1,0 +1,37 @@
+.dashboard-container{
+    display: flex;
+    height: 100vh;
+    font-family: 'Google Sans Flex',Arial, sans-serif;
+}
+.sidebar{
+    display: flex;
+    flex-direction: column;
+    width: 17.5%;
+    background-color: #ffffff;
+    color: #091540af;
+    padding: 20px 20px 20px 40px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    box-shadow: 5px 0px 10px 0px rgba(9,21,64,0.25);
+    -webkit-box-shadow: 5px 0px 10px 0px rgba(9,21,64,0.25);
+    -moz-box-shadow: 5px 0px 10px 0px rgba(9,21,64,0.25);
+}
+nav{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+}
+nav a{
+    text-decoration: none;
+    color: #091540af;
+}
+
+p{
+    margin-top: auto;
+    color: #091540af;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+}
