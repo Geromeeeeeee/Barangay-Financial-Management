@@ -4,7 +4,7 @@ import '../styles/revenue.css'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
-export default function Revenue_Modal ({setIsModalOpen}) {
+export default function Revenue_Modal({ setIsModalOpen }) {
     const [fundAllocation, setFundAllocation] = useState('General')
     const [loading, setLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
@@ -14,17 +14,15 @@ export default function Revenue_Modal ({setIsModalOpen}) {
         setLoading(true)
         setErrorMessage('')
 
-        // Gather form data natively using FormData
         const formData = new FormData(event.target);
         const amount = formData.get('amount');
-        const source = formData.get('description'); // Maps to your database source column
-        
-        // Handle dropdown vs newly typed fund allocation logic
+        const source = formData.get('description');
+
         let finalFundAllocation = formData.get('fundAllocation');
         if (finalFundAllocation === 'new') {
             finalFundAllocation = formData.get('newFundAllocation');
         } else if (finalFundAllocation === 'General') {
-            finalFundAllocation = ''; // Or keep as 'General' depending on your preference
+            finalFundAllocation = '';
         }
 
         try {
@@ -37,47 +35,61 @@ export default function Revenue_Modal ({setIsModalOpen}) {
             });
 
             if (response?.data?.status === 'revenue_recorded') {
-                setIsModalOpen(false); // Close modal on success
+                setIsModalOpen(false);
             } else {
                 setErrorMessage("Failed to record revenue.");
             }
-        } catch  {
+        } catch {
             setErrorMessage("Server error. Please check your backend connection.");
         } finally {
             setLoading(false);
         }
     }
 
-    return(
+    return (
         <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="revenue-modal-title"
-            className='revenue-modal-background'
+            className="revenue-modal-background"
             onClick={() => setIsModalOpen(false)}
         >
-            <div className='revenue-modal' onClick={(event) => event.stopPropagation()}>
+            <div className="revenue-modal" onClick={(event) => event.stopPropagation()}>
                 <h2 id="revenue-modal-title">Record Revenue</h2>
-                
-                {errorMessage && <p style={{ color: 'red', fontSize: '0.9rem' }}>{errorMessage}</p>}
 
-                <form onSubmit={handleSubmit}>
+                {errorMessage && (
+                    <div className="revenue-modal-error">{errorMessage}</div>
+                )}
+
+                <form onSubmit={handleSubmit} className="revenue-form">
                     <label>
-                        Amount
-                        <input name="amount" type="number" min="0" step="0.01" required />
-                    </label>
-                    <label>
-                        Source
-                        <input name="description" type="text" required placeholder="e.g., Clearance Fee" />
+                        <span>Amount</span>
+                        <input
+                            name="amount"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            required
+                        />
                     </label>
 
                     <label>
-                        Fund allocation
+                        <span>Source</span>
+                        <input
+                            name="description"
+                            type="text"
+                            placeholder="e.g., Clearance Fee"
+                            required
+                        />
+                    </label>
+
+                    <label>
+                        <span>Fund allocation</span>
                         <select
                             name="fundAllocation"
                             value={fundAllocation}
                             onChange={(event) => setFundAllocation(event.target.value)}
-                            className='drop-down'
                         >
                             <option value="General">General</option>
                             <option value="new">Create new fund allocation</option>
@@ -86,7 +98,7 @@ export default function Revenue_Modal ({setIsModalOpen}) {
 
                     {fundAllocation === 'new' && (
                         <label>
-                            New fund allocation
+                            <span>New fund allocation</span>
                             <input
                                 name="newFundAllocation"
                                 type="text"
@@ -96,13 +108,23 @@ export default function Revenue_Modal ({setIsModalOpen}) {
                             />
                         </label>
                     )}
-                    
-                    <button type="submit" disabled={loading}>
-                        {loading ? "Saving..." : "Save Revenue"}
-                    </button>
-                    <button type="button" onClick={() => setIsModalOpen(false)}>
-                        Cancel
-                    </button>
+
+                    <div className="revenue-modal-actions">
+                        <button
+                            type="button"
+                            className="btn-cancel"
+                            onClick={() => setIsModalOpen(false)}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="btn-save"
+                            disabled={loading}
+                        >
+                            {loading ? "Saving..." : "Save Revenue"}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

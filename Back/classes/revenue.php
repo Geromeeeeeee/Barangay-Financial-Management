@@ -7,7 +7,7 @@ class Revenue {
         $this->database = $pdo;
     }
 
-    public function record_revenue($amount, $source, $fund_allocation)
+    public function record_revenue($amount, $source, $fund_allocation, $created_by = null)
     {
         try {
             $this->database->beginTransaction();
@@ -30,11 +30,15 @@ class Revenue {
                 $allocation_val = $fund_allocation;
             }
 
-            $stmtInsertRevenue = $this->database->prepare('INSERT INTO revenues (amount, source, fund_allocation) VALUES (:amount, :source, :fund_allocation)');
+            $stmtInsertRevenue = $this->database->prepare('
+                INSERT INTO revenues (amount, source, fund_allocation, created_by)
+                VALUES (:amount, :source, :fund_allocation, :created_by)
+            ');
             $stmtInsertRevenue->execute([
-                'amount' => $amount,
-                'source' => $source,
+                'amount'          => $amount,
+                'source'          => $source,
                 'fund_allocation' => $allocation_val,
+                'created_by'      => $created_by,   // ← NEW
             ]);
 
             $this->database->commit();

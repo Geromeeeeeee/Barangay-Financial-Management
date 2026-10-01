@@ -1,40 +1,275 @@
-.revenue-modal-background{
+/* ================= PAGE ================= */
+.revenue-page {
+    padding: 4px;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.revenue-page h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px;
+    letter-spacing: -0.5px;
+}
+
+/* ================= HEADER ================= */
+.revenue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.revenue-sub {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 4px 0 0;
+}
+
+.revenue-open-btn {
+    padding: 10px 18px;
+    background: #1e3a8a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.revenue-open-btn:hover {
+    background: #172554;
+}
+
+.revenue-error {
+    padding: 10px 14px;
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    font-size: 0.83rem;
+    margin-bottom: 16px;
+}
+
+/* ================= CARD / TABLE ================= */
+.revenue-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 22px 24px;
+    box-shadow: 0 6px 16px -10px rgba(15, 23, 42, 0.12);
+}
+
+.revenue-empty {
+    padding: 30px 0;
+    text-align: center;
+}
+
+.revenue-empty p {
+    font-size: 0.9rem;
+    color: #475569;
+    margin: 0;
+}
+
+.revenue-empty .muted {
+    font-size: 0.82rem;
+    margin-top: 6px;
+}
+
+.revenue-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.revenue-table th {
+    text-align: left;
+    padding: 10px 8px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #64748b;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 700;
+}
+
+.revenue-table td {
+    padding: 14px 8px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+}
+
+.revenue-table tr:last-child td {
+    border-bottom: none;
+}
+
+.revenue-table .right { text-align: right; }
+
+.revenue-table .muted {
+    color: #94a3b8;
+    font-size: 0.82rem;
+    padding: 0;
+}
+
+.revenue-table .amount {
+    font-weight: 700;
+    color: #16a34a;
+}
+
+.fund-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #eff6ff;
+    color: #1e40af;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 600;
+}
+
+.muted {
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+/* ================= MODAL ================= */
+.revenue-modal-background {
     position: fixed;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(0, 0, 0, 0.5);
+    background: rgba(15, 23, 42, 0.55);
     z-index: 1000;
-}
-.revenue-modal{
-    width: min(90%, 420px);
-    padding: 24px;
-    background-color: #fff;
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-}
-button {
-    padding: 0.7rem;
-    border: 0;
-    border-radius: 10px;
-    background-color: #091540af;
-    color: #ffffff;
-    font-size: 1rem;
-    cursor: pointer;
+    padding: 20px;
+    backdrop-filter: blur(2px);
 }
 
-button:hover {
-    background-color: #091540fd;
+.revenue-modal {
+    width: min(100%, 440px);
+    padding: 28px 26px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -20px rgba(0, 0, 0, 0.5);
+    max-height: 90vh;
+    overflow-y: auto;
 }
-input{
-    border-radius: 15px;
+
+.revenue-modal h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 20px;
+    letter-spacing: -0.3px;
 }
-.drop-down{
-    padding: 0.7rem;
-    box-shadow: 0 0px 5px rgba(31, 41, 55, 0.15);
-    border: transparent;
+
+.revenue-modal-error {
+    padding: 10px 14px;
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
     border-radius: 10px;
-    font-size: 1rem;
-    outline: 1px solid rgba(0, 0, 0, 0.25);
+    font-size: 0.83rem;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+/* ================= MODAL FORM ================= */
+.revenue-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.revenue-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.revenue-form label > span {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #334155;
+    letter-spacing: 0.2px;
+}
+
+.revenue-form input,
+.revenue-form select {
+    width: 100%;
+    padding: 11px 14px;
+    font-family: inherit;
+    font-size: 0.92rem;
+    color: #0f172a;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.revenue-form select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 38px;
+}
+
+.revenue-form input::placeholder { color: #94a3b8; }
+
+.revenue-form input:focus,
+.revenue-form select:focus {
+    border-color: #2563eb;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+/* ================= MODAL ACTIONS ================= */
+.revenue-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.btn-cancel,
+.btn-save {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s, filter 0.15s;
+}
+
+.btn-cancel {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.btn-cancel:hover { background: #e2e8f0; }
+
+.btn-save {
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+    color: #fff;
+    box-shadow: 0 8px 20px -8px rgba(37, 99, 235, 0.6);
+}
+
+.btn-save:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+
+.btn-save:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    filter: none;
 }

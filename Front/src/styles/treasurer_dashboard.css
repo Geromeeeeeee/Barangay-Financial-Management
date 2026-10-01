@@ -1,0 +1,59 @@
+/* ============================================
+   TREASURER DASHBOARD — specific styles
+   ============================================ */
+
+.fund-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.fund-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.fund-row:last-child { border-bottom: none; }
+
+.fund-info { flex: 1; min-width: 0; }
+
+.fund-name {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fund-meta {
+    font-size: 0.73rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.fund-amount {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #16a34a;
+    flex-shrink: 0;
+}
+
+/* Green-tinted hero for the treasurer */
+.treasurer-view .dash-hero {
+    background:
+        radial-gradient(circle at 90% 20%, rgba(250, 204, 21, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 10% 100%, rgba(34, 197, 94, 0.2) 0%, transparent 45%),
+        linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+}
+
+.treasurer-view .dash-eyebrow { color: #facc15; }
+.treasurer-view .dash-role-badge {
+    background: rgba(34, 197, 94, 0.15);
+    color: #86efac;
+    border-color: rgba(34, 197, 94, 0.3);
+}

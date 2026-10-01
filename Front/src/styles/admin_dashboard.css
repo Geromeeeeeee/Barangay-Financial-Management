@@ -1,0 +1,9 @@
+/* ============================================
+   ADMIN DASHBOARD — specific overrides
+   (extends dashboard.css, imported after it)
+   ============================================ */
+
+/* Example: admin hero has a red tint */
+.dashboard-page.admin-view .dash-hero {
+    /* background: red variant — uncomment to test */
+}
