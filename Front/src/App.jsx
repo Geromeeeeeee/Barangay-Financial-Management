@@ -5,6 +5,7 @@ import Dashboard from './pages/dashboard';
 import { Protected_Route } from './components/protected_route';
 import DashboardLayout from './components/layout';
 import Revenue from './pages/revenue';
+import Expenditure from './pages/expenditure';
 import InviteCodesPage from './pages/admin/invite_codes';
 import PendingUsersPage from './pages/admin/pending_users';
 
@@ -15,15 +16,16 @@ function App() {
         <Route path='/' element={<Auth_Page/>}/>
         <Route path='/auth' element={<Auth_Page/>}/>
 
-        {/* Any logged-in user */}
+        {/* Everyone except staff */}
         <Route element={<Protected_Route />}>
           <Route element={<DashboardLayout />}>
             <Route path="/Dashboard" element={<Dashboard />} />
             <Route path="/Revenue" element={<Revenue />} />
+            <Route path="/Expenditure" element={<Expenditure />} />
           </Route>
         </Route>
 
-        {/* Admin-only */}
+        {/* Admin */}
         <Route element={<Protected_Route allowedRoles={["admin"]} />}>
           <Route element={<DashboardLayout />}>
             <Route path="/admin/invite-codes"  element={<InviteCodesPage />} />

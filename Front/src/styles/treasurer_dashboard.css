@@ -1,6 +1,3 @@
-/* ============================================
-   TREASURER DASHBOARD — specific styles
-   ============================================ */
 
 .fund-list {
     list-style: none;
@@ -36,14 +33,16 @@
     margin-top: 2px;
 }
 
+.fund-status-good { color: #16a34a; }
+.fund-status-warning { color: #d97706; }
+.fund-status-critical { color: #dc2626; }
+
 .fund-amount {
     font-size: 0.9rem;
     font-weight: 700;
     color: #16a34a;
     flex-shrink: 0;
 }
-
-/* Green-tinted hero for the treasurer */
 .treasurer-view .dash-hero {
     background:
         radial-gradient(circle at 90% 20%, rgba(250, 204, 21, 0.15) 0%, transparent 50%),

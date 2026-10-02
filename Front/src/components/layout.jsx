@@ -41,6 +41,7 @@ export default function DashboardLayout() {
                 <nav>
                     <Link to="/Dashboard">Dashboard</Link>
                     <Link to="/Revenue">Revenue</Link>
+                    <Link to="/Expenditure">Expenditures</Link>
 
                     {isAdmin && (
                         <>
@@ -51,7 +52,6 @@ export default function DashboardLayout() {
                     )}
                 </nav>
 
-                {/* Logout pinned to bottom */}
                 <div className="sidebar-footer">
                     <button
                         type="button"

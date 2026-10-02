@@ -12,6 +12,13 @@ export default function TreasurerDashboard({ user }) {
     const formatPeso = (n) =>
         "₱" + Number(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 });
 
+    const getFundStatus = (percentage) => {
+        if (percentage >= 75) return "Critical";
+        if (percentage >= 50) return "Warning";
+        if (percentage >= 20) return "Good";
+        return "Excellent";
+    };
+
     return (
         <div className="dashboard-page treasurer-view">
             <DashboardHero user={user} />
@@ -84,32 +91,46 @@ export default function TreasurerDashboard({ user }) {
                 {/* Top Fund Allocations */}
                 <div className="dash-card">
                     <div className="dash-card-head">
-                        <h2>Top Fund Allocations</h2>
+                        <h2>Fund Balances</h2>
                     </div>
 
                     {loading && <p className="muted">Loading…</p>}
 
-                    {!loading && stats.topFunds.length === 0 && (
+                    {!loading && stats.fundBalances.length === 0 && (
                         <p className="muted">No fund data yet.</p>
                     )}
 
-                    {!loading && stats.topFunds.length > 0 && (
-                        <ul className="fund-list">
-                            {stats.topFunds.map((f) => (
-                                <li key={f.fund_allocation} className="fund-row">
-                                    <div className="fund-info">
-                                        <div className="fund-name">{f.fund_allocation}</div>
-                                        <div className="fund-meta">{f.entries} entries</div>
+                    {!loading && stats.fundBalances.length > 0 && (
+                        <div className="fund-grid">
+                            {stats.fundBalances.map((f) => {
+                                const percentage = Number(f.usage_percentage || 0);
+                                const status = getFundStatus(percentage);
+
+                                return (
+                                    <div key={f.fund_name} className="fund-card">
+                                        <div className="fund-card-header">
+                                            <div className="fund-name">{f.fund_name}</div>
+                                            <span className={`fund-card-status fund-status-${status.toLowerCase()}`}>
+                                                {status}
+                                            </span>
+                                        </div>
+                                        <div className="fund-card-value">{formatPeso(f.balance)}</div>
+                                        <div className="fund-card-detail">
+                                            Remaining balance · {formatPeso(f.total_allocated)} total
+                                        </div>
+                                        <div className="fund-card-detail">
+                                            {percentage.toFixed(2)}% utilized
+                                        </div>
                                     </div>
-                                    <div className="fund-amount">{formatPeso(f.total)}</div>
-                                </li>
-                            ))}
-                        </ul>
+                                );
+                            })}
+                        </div>
                     )}
 
                     <div className="dash-tip" style={{ marginTop: 18 }}>
-                        <strong>Tip:</strong> Keep records updated daily so fund balances
-                        stay accurate for the Barangay Captain's review.
+                        <strong>Tip:</strong> Fund status is based on utilization:
+                        75% or more is Critical, 50% to less than 75% is Warning,
+                        20% to less than 50% is Good, and below 20% is Excellent.
                     </div>
                 </div>
 

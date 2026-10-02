@@ -1,9 +1,54 @@
-/* ============================================
-   ADMIN DASHBOARD — specific overrides
-   (extends dashboard.css, imported after it)
-   ============================================ */
-
-/* Example: admin hero has a red tint */
 .dashboard-page.admin-view .dash-hero {
-    /* background: red variant — uncomment to test */
+    background: red variant;
+}
+
+.admin-funds-card {
+    margin-bottom: 20px;
+}
+
+.admin-funds-card .fund-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-funds-card .fund-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-funds-card .fund-row:last-child {
+    border-bottom: none;
+}
+
+.admin-funds-card .fund-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-funds-card .fund-name {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.admin-funds-card .fund-meta {
+    font-size: 0.73rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.admin-funds-card .fund-status-good { color: #16a34a; }
+.admin-funds-card .fund-status-warning { color: #d97706; }
+.admin-funds-card .fund-status-critical { color: #dc2626; }
+
+.admin-funds-card .fund-amount {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #16a34a;
+    flex-shrink: 0;
 }

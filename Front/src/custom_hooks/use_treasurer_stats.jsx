@@ -10,6 +10,7 @@ export function useTreasurerStats() {
         totalRecords: 0,
         recordsThisMonth: 0,
         topFunds: [],
+        fundBalances: [],
         recentActivity: [],
     });
     const [loading, setLoading] = useState(true);

@@ -10,6 +10,13 @@ import { useDashboardStats } from "../../custom_hooks/use_dashboard_stats";
 export default function AdminDashboard({ user }) {
     const { stats, loading, error, refresh } = useDashboardStats();
 
+    const getFundStatus = (percentage) => {
+        if (percentage >= 75) return "Critical";
+        if (percentage >= 50) return "Warning";
+        if (percentage >= 20) return "Good";
+        return "Excellent";
+    };
+
     return (
         <div className="dashboard-page admin-view">
             <DashboardHero user={user} />
@@ -46,6 +53,46 @@ export default function AdminDashboard({ user }) {
                     trend="Revenue entries"
                     accent="purple"
                 />
+            </section>
+
+            {/* ===== FUND BALANCES ===== */}
+            <section className="dash-card admin-funds-card">
+                <div className="dash-card-head">
+                    <h2>Fund Balances</h2>
+                </div>
+
+                {loading && <p className="muted">Loading…</p>}
+
+                {!loading && stats.fundBalances.length === 0 && (
+                    <p className="muted">No fund data yet.</p>
+                )}
+
+                {!loading && stats.fundBalances.length > 0 && (
+                    <div className="fund-grid">
+                        {stats.fundBalances.map((fund) => {
+                            const percentage = Number(fund.usage_percentage || 0);
+                            const status = getFundStatus(percentage);
+
+                            return (
+                                <div key={fund.fund_name} className="fund-card">
+                                    <div className="fund-card-header">
+                                        <div className="fund-name">{fund.fund_name}</div>
+                                        <span className={`fund-card-status fund-status-${status.toLowerCase()}`}>
+                                            {status}
+                                        </span>
+                                    </div>
+                                    <div className="fund-card-value">{formatPeso(fund.balance)}</div>
+                                    <div className="fund-card-detail">
+                                        Remaining balance · {formatPeso(fund.total_allocated)} total
+                                    </div>
+                                    <div className="fund-card-detail">
+                                        {percentage.toFixed(2)}% utilized
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </section>
 
             {/* ===== TWO COLUMN ===== */}
@@ -113,6 +160,12 @@ export default function AdminDashboard({ user }) {
 }
 
 // ======================== HELPER ========================
+function formatPeso(value) {
+    return "₱" + Number(value || 0).toLocaleString("en-PH", {
+        minimumFractionDigits: 2,
+    });
+}
+
 function timeAgo(dateString) {
     if (!dateString) return "";
     const then = new Date(dateString.replace(" ", "T")).getTime();

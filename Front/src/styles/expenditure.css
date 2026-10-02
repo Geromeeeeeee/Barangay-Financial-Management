@@ -1,0 +1,173 @@
+.expenditure-page { 
+    padding: 4px; 
+    font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+}
+.expenditure-page h1 { 
+    font-size: 1.75rem; 
+    font-weight: 700; 
+    color: #0f172a; 
+    margin: 0 0 4px; 
+    letter-spacing: -0.5px; 
+}
+.expenditure-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-end; 
+    gap: 16px; 
+    flex-wrap: wrap; 
+    margin-bottom: 20px; 
+}
+.expenditure-sub { 
+    font-size: .85rem; 
+    color: #64748b; 
+    margin: 4px 0 0; 
+}
+.expenditure-open-btn { 
+    padding: 10px 18px; 
+    background: #1e3a8a; 
+    color: #fff; 
+    border: none; 
+    border-radius: 10px; 
+    font-family: inherit; 
+    font-size: .9rem; 
+    font-weight: 600; 
+    cursor: pointer; 
+    transition: background .15s; 
+}
+.expenditure-open-btn:hover { background: #172554; }
+.expenditure-error, .expenditure-modal-error { 
+    padding: 10px 14px; 
+    background: #fef2f2; 
+    color: #b91c1c; 
+    border: 1px solid #fecaca; 
+    border-radius: 10px; 
+    font-size: .83rem; 
+    margin-bottom: 16px; 
+}
+.expenditure-card { 
+    background: #fff; 
+    border: 1px solid #e2e8f0; 
+    border-radius: 14px; 
+    padding: 22px 24px; 
+    box-shadow: 0 6px 16px -10px rgba(15,23,42,.12); 
+}
+.expenditure-empty { 
+    padding: 30px 0; 
+    text-align: center; 
+}
+.expenditure-empty p { 
+    font-size: .9rem; 
+    color: #475569; 
+    margin: 0; 
+}
+.expenditure-empty .muted { 
+    font-size: .82rem; 
+    margin-top: 6px; 
+}
+.expenditure-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    font-size: .88rem; 
+}
+.expenditure-table th { 
+    text-align: left; 
+    padding: 10px 8px; 
+    font-size: .72rem; 
+    text-transform: uppercase; 
+    letter-spacing: .6px; 
+    color: #64748b; 
+    border-bottom: 1px solid #e2e8f0; 
+    font-weight: 700; 
+}
+.expenditure-table td { 
+    padding: 14px 8px; 
+    border-bottom: 1px solid #f1f5f9; 
+    color: #1e293b; 
+}
+.expenditure-table tr:last-child td { border-bottom: none; }
+.expenditure-table .right { text-align: right; }
+.expenditure-table .muted { 
+    color: #94a3b8; 
+    font-size: .82rem; 
+    padding: 0; 
+}
+.expenditure-table .amount { 
+    font-weight: 700; 
+    color: #dc2626; 
+}
+.fund-pill { 
+    display: inline-block; 
+    padding: 3px 10px; 
+    background: #eff6ff; 
+    color: #1e40af; 
+    border-radius: 999px; 
+    font-size: .74rem; 
+    font-weight: 600; 
+}
+.muted { 
+    color: #94a3b8; 
+    font-size: .85rem; 
+}
+.expenditure-modal-background { 
+    position: fixed; 
+    inset: 0; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    background: rgba(15,23,42,.55); 
+    z-index: 1000; padding: 20px; 
+    backdrop-filter: blur(2px); 
+}
+.expenditure-modal { 
+    width: min(100%, 440px); 
+    padding: 28px 26px; 
+    background: #fff; 
+    border-radius: 16px; 
+    box-shadow: 0 25px 50px -20px rgba(0,0,0,.5); 
+    max-height: 90vh; 
+    overflow-y: auto; 
+}
+.expenditure-modal h2 { 
+    font-size: 1.25rem; 
+    font-weight: 700; 
+    color: #0f172a; 
+    margin: 0 0 20px; 
+}
+.expenditure-form { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 14px; 
+}
+.expenditure-form label { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 6px; 
+}
+.expenditure-form label > span { 
+    font-size: .8rem; 
+    font-weight: 600; 
+    color: #334155; 
+}
+.expenditure-form input, .expenditure-form select { 
+    width: 100%;
+    padding: 11px 14px; 
+    font-family: inherit; 
+    font-size: .92rem; 
+    color: #0f172a; 
+    background: #f8fafc; 
+    border: 1.5px solid #e2e8f0; 
+    border-radius: 10px; 
+    outline: none; 
+    box-sizing: border-box; 
+}
+.expenditure-form input:focus, .expenditure-form select:focus { 
+    border-color: #2563eb; 
+    background: #fff; 
+    box-shadow: 0 0 0 4px rgba(37,99,235,.12); 
+}
+.expenditure-modal-actions { 
+    display: flex; 
+    justify-content: flex-end; 
+    gap: 10px; 
+    margin-top: 22px; 
+}

@@ -1,10 +1,9 @@
-/* ================= PAGE ================= */
+
 .dashboard-page {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     max-width: 1200px;
 }
 
-/* ================= HERO ================= */
 .dash-hero {
     display: flex;
     justify-content: space-between;
@@ -67,7 +66,7 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* ================= STAT CARDS ================= */
+
 .stat-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -156,7 +155,7 @@
     margin-top: 6px;
 }
 
-/* ================= TWO COLUMNS ================= */
+
 .dash-columns {
     display: grid;
     grid-template-columns: 1.4fr 1fr;
@@ -201,7 +200,7 @@
 
 .dash-link:hover { text-decoration: underline; }
 
-/* ================= ACTIVITY ================= */
+
 .activity-list {
     list-style: none;
     padding: 0;
@@ -256,7 +255,6 @@
     flex-shrink: 0;
 }
 
-/* ================= QUICK ACTIONS ================= */
 .quick-actions {
     display: flex;
     flex-direction: column;
@@ -328,7 +326,52 @@
     padding: 12px 0;
 }
 
-/* ================= TIP ================= */
+.fund-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+}
+
+.fund-card {
+    padding: 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.fund-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.fund-card-value {
+    margin-top: 14px;
+    color: #0f172a;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.fund-card-detail {
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 0.74rem;
+}
+
+.fund-card-status {
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.fund-status-good { color: #16a34a; }
+.fund-status-warning { color: #d97706; }
+.fund-status-critical { color: #dc2626; }
+.fund-status-excellent { color: #2563eb; }
+
 .dash-tip {
     margin-top: 16px;
     padding: 12px 14px;

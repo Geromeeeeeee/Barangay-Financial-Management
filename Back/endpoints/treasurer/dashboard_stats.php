@@ -38,6 +38,26 @@ $topFunds = $pdo->query("
     LIMIT 5
 ")->fetchAll(PDO::FETCH_ASSOC);
 
+// ============ FUND BALANCES ============
+$fundBalances = $pdo->query("
+    SELECT fb.fund_name,
+           fb.balance,
+           COALESCE(SUM(r.amount), 0) AS total_allocated
+    FROM fund_balances fb
+    LEFT JOIN revenues r ON r.fund_allocation = fb.fund_name
+    GROUP BY fb.fund_name, fb.balance
+    ORDER BY fb.fund_name ASC
+")->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($fundBalances as &$fund) {
+    $fund['balance'] = (float)$fund['balance'];
+    $fund['total_allocated'] = (float)$fund['total_allocated'];
+    $fund['usage_percentage'] = $fund['total_allocated'] > 0
+        ? round((($fund['total_allocated'] - $fund['balance']) / $fund['total_allocated']) * 100, 2)
+        : 0;
+}
+unset($fund);
+
 // ============ RECENT RECORDS (last 5) ============
 $recentActivity = $pdo->query("
     SELECT id, source, amount, fund_allocation, created_at
@@ -53,5 +73,6 @@ echo json_encode([
     'totalRecords'    => (int)$totalRecords,
     'recordsThisMonth'=> (int)$recordsThisMonth,
     'topFunds'        => $topFunds,
+    'fundBalances'    => $fundBalances,
     'recentActivity'  => $recentActivity,
 ]);
