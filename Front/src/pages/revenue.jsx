@@ -1,27 +1,14 @@
 import { useState } from 'react'
 import Revenue_Modal from '../components/revenue_modal'
 import useRevenue from '../custom_hooks/use_revenue'
+import useFormat from '../custom_hooks/use_format'
 import '../styles/revenue.css'
 
 export default function Revenue () {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const { revenues, loading, error, refetch } = useRevenue()
+    const {peso, date} = useFormat()
 
-    const formatPeso = (n) =>
-    new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP",
-        minimumFractionDigits: 2,
-    }).format(Number(n || 0))
-
-    const formatDate = (d) => {
-        if (!d) return "—"
-        return new Date(d.replace(" ", "T")).toLocaleDateString("en-PH", {
-            month: "short", day: "numeric", year: "numeric",
-        })
-    }
-
-    // Refetch after modal closes so new entries appear
     const handleCloseModal = (open) => {
         setIsModalOpen(open)
         if (!open) refetch()
@@ -72,14 +59,14 @@ export default function Revenue () {
                         <tbody>
                             {revenues.map((r) => (
                                 <tr key={r.id}>
-                                    <td className="muted">{formatDate(r.created_at)}</td>
+                                    <td className="muted">{date(r.created_at)}</td>
                                     <td>{r.source}</td>
                                     <td>
                                         {r.fund_allocation
                                             ? <span className="fund-pill">{r.fund_allocation}</span>
                                             : <span className="muted">—</span>}
                                     </td>
-                                    <td className="right amount">{formatPeso(r.amount)}</td>
+                                    <td className="right amount">{peso(r.amount)}</td>
                                 </tr>
                             ))}
                         </tbody>

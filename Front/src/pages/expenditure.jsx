@@ -1,22 +1,13 @@
 import { useState } from "react";
 import ExpenditureModal from "../components/expenditure_modal";
 import useExpenditure from "../custom_hooks/use_expenditure";
+import useFormat from "../custom_hooks/use_format";
 import "../styles/expenditure.css";
 
 export default function Expenditure() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { expenditures, loading, error, refetch } = useExpenditure();
-
-    const formatPeso = (value) => new Intl.NumberFormat("en-PH", {
-        style: "currency", currency: "PHP", minimumFractionDigits: 2
-    }).format(Number(value || 0));
-
-    const formatDate = (value) => {
-        if (!value) return "—";
-        return new Date(value.replace(" ", "T")).toLocaleDateString("en-PH", {
-            month: "short", day: "numeric", year: "numeric"
-        });
-    };
+    const {peso, date} = useFormat();
 
     const handleCloseModal = (open) => {
         setIsModalOpen(open);
@@ -54,12 +45,12 @@ export default function Expenditure() {
                         <tbody>
                             {expenditures.map((expenditure) => (
                                 <tr key={expenditure.id}>
-                                    <td className="muted">{formatDate(expenditure.created_at)}</td>
+                                    <td className="muted">{date(expenditure.created_at)}</td>
                                     <td>{expenditure.description}</td>
                                     <td>{expenditure.fund_allocation
                                         ? <span className="fund-pill">{expenditure.fund_allocation}</span>
                                         : <span className="muted">—</span>}</td>
-                                    <td className="right amount">{formatPeso(expenditure.amount)}</td>
+                                    <td className="right amount">{peso(expenditure.amount)}</td>
                                 </tr>
                             ))}
                         </tbody>
