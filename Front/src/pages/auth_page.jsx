@@ -5,6 +5,7 @@ import { useErr } from "../custom_hooks/use_err";
 import { useStat } from "../custom_hooks/use_stat";
 import { validateInviteCode } from "../custom_hooks/use_invite";
 import sealLogo from "../assets/barangay-salinas-logo.jpg";
+import Splash_Screen from "../components/splash_screen";
 
 function EyeIcon({ open }) {
     return open ? (
@@ -67,20 +68,7 @@ export default function Auth_Page() {
 
     // ===== SPLASH SCREEN =====
     if (showSplash) {
-        return (
-            <div className="splash-screen">
-                <div className="splash-content">
-                    <div className="splash-logo">
-                        <img src={sealLogo} alt="Barangay Salinas 1 Seal" className="splash-logo-img" />
-                    </div>
-                    <h1 className="splash-title">Barangay Financial</h1>
-                    <p className="splash-subtitle">Management System</p>
-                    <div className="splash-loader">
-                        <span></span><span></span><span></span>
-                    </div>
-                </div>
-            </div>
-        );
+        return <Splash_Screen/>
     }
 
     return (
