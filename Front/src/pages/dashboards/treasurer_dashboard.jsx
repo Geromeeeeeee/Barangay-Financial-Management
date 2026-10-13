@@ -12,7 +12,7 @@ export default function TreasurerDashboard({ user }) {
     const formatPeso = (n) =>
         "₱" + Number(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 });
 
-    const getFundStatus = (percentage) => {
+    const getCategoryStatus = (percentage) => {
         if (percentage >= 75) return "Critical";
         if (percentage >= 50) return "Warning";
         if (percentage >= 20) return "Good";
@@ -88,38 +88,40 @@ export default function TreasurerDashboard({ user }) {
                     )}
                 </div>
 
-                {/* Top Fund Allocations */}
+                {/* Budget Category Balances */}
                 <div className="dash-card">
                     <div className="dash-card-head">
-                        <h2>Fund Balances</h2>
+                        <h2>Budget Category Balances</h2>
                     </div>
 
                     {loading && <p className="muted">Loading…</p>}
 
-                    {!loading && stats.fundBalances.length === 0 && (
-                        <p className="muted">No fund data yet.</p>
+                    {!loading && stats.categoryBalances.length === 0 && (
+                        <p className="muted">No category data yet.</p>
                     )}
 
-                    {!loading && stats.fundBalances.length > 0 && (
+                    {!loading && stats.categoryBalances.length > 0 && (
                         <div className="fund-grid">
-                            {stats.fundBalances.map((f) => {
-                                const percentage = Number(f.usage_percentage || 0);
-                                const status = getFundStatus(percentage);
+                            {stats.categoryBalances.map((category) => {
+                                const allocated = Number(category.allocated_amount || 0);
+                                const spent = Number(category.spent_amount || 0);
+                                const percentage = allocated > 0 ? Math.min((spent / allocated) * 100, 100) : 0;
+                                const status = getCategoryStatus(percentage);
 
                                 return (
-                                    <div key={f.fund_name} className="fund-card">
+                                    <div key={category.id} className="fund-card">
                                         <div className="fund-card-header">
-                                            <div className="fund-name">{f.fund_name}</div>
+                                            <div className="fund-name">{category.name}</div>
                                             <span className={`fund-card-status fund-status-${status.toLowerCase()}`}>
                                                 {status}
                                             </span>
                                         </div>
-                                        <div className="fund-card-value">{formatPeso(f.balance)}</div>
+                                        <div className="fund-card-value">{formatPeso(category.balance)}</div>
                                         <div className="fund-card-detail">
-                                            Remaining balance · {formatPeso(f.total_allocated)} total
+                                            Remaining balance · {formatPeso(allocated)} allocated
                                         </div>
                                         <div className="fund-card-detail">
-                                            {percentage.toFixed(2)}% utilized
+                                            {formatPeso(spent)} spent · {percentage.toFixed(2)}% utilized
                                         </div>
                                     </div>
                                 );
@@ -128,7 +130,7 @@ export default function TreasurerDashboard({ user }) {
                     )}
 
                     <div className="dash-tip" style={{ marginTop: 18 }}>
-                        <strong>Tip:</strong> Fund status is based on utilization:
+                        <strong>Tip:</strong> Category status is based on utilization:
                         75% or more is Critical, 50% to less than 75% is Warning,
                         20% to less than 50% is Good, and below 20% is Excellent.
                     </div>

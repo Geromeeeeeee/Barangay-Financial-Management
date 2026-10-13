@@ -11,6 +11,7 @@ export function useTreasurerStats() {
         recordsThisMonth: 0,
         topFunds: [],
         fundBalances: [],
+        categoryBalances: [],
         recentActivity: [],
     });
     const [loading, setLoading] = useState(true);

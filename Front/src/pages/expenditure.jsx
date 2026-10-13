@@ -2,16 +2,23 @@ import { useState } from "react";
 import ExpenditureModal from "../components/expenditure_modal";
 import useExpenditure from "../custom_hooks/use_expenditure";
 import useFormat from "../custom_hooks/use_format";
+import useBudgetCategories from "../custom_hooks/use_budget_categories";
 import "../styles/expenditure.css";
 
 export default function Expenditure() {
+    const [selectedCategory, setSelectedCategory] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [subcategoryForm, setSubcategoryForm] = useState(null);
     const { expenditures, loading, error, refetch } = useExpenditure();
     const {peso, date} = useFormat();
+    const { categories, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory } = useBudgetCategories();
 
     const handleCloseModal = (open) => {
         setIsModalOpen(open);
-        if (!open) refetch();
+        if (!open) {
+            setSelectedCategory(null);
+            refetch();
+        }
     };
 
     return (
@@ -23,12 +30,36 @@ export default function Expenditure() {
                         {loading ? "Loading..." : `${expenditures.length} record${expenditures.length !== 1 ? "s" : ""}`}
                     </p>
                 </div>
-                <button type="button" className="expenditure-open-btn" onClick={() => setIsModalOpen(true)}>
-                    + Record Expenditure
-                </button>
             </header>
 
             {error && <div className="expenditure-error">{error}</div>}
+            {categoriesError && <div className="expenditure-error">{categoriesError}</div>}
+            {!categoriesLoading && categories.length > 0 && (
+                <div className="expenditure-categories">
+                    {categories.map((category) => (
+                        <section className="expenditure-category" key={category.id}>
+                            <div className="expenditure-category-head">
+                                <div>
+                                    <h2>{category.name}</h2>
+                                    <p>{peso(category.allocated_amount)} allocated · {peso(category.spent_amount)} spent · {peso(category.balance)} remaining</p>
+                                </div>
+                                <button type="button" className="expenditure-open-btn" onClick={() => { setSelectedCategory(category); setIsModalOpen(true); }}>Record Expenditure</button>
+                            </div>
+                            <div className="subcategory-list">
+                                {category.subcategories.map((subcategory) => (
+                                    <div className="subcategory-row" key={subcategory.id}>
+                                        <span>{subcategory.name}</span>
+                                        <span>{peso(subcategory.balance)} remaining</span>
+                                        <button type="button" onClick={() => setSubcategoryForm(subcategory)}>Edit</button>
+                                        <button type="button" onClick={() => deleteSubcategory(subcategory.id).catch((e) => window.alert(e.response?.data?.message || e.message))}>Delete</button>
+                                    </div>
+                                ))}
+                            </div>
+                            <button type="button" onClick={() => setSubcategoryForm({ category_id: category.id, name: "", allocated_amount: "" })}>+ Add subcategory</button>
+                        </section>
+                    ))}
+                </div>
+            )}
             <div className="expenditure-card">
                 {loading && <p className="muted">Loading records...</p>}
                 {!loading && expenditures.length === 0 && (
@@ -47,8 +78,8 @@ export default function Expenditure() {
                                 <tr key={expenditure.id}>
                                     <td className="muted">{date(expenditure.created_at)}</td>
                                     <td>{expenditure.description}</td>
-                                    <td>{expenditure.fund_allocation
-                                        ? <span className="fund-pill">{expenditure.fund_allocation}</span>
+                                    <td>{expenditure.subcategory_name || expenditure.category_name || expenditure.fund_allocation
+                                        ? <span className="fund-pill">{expenditure.subcategory_name || expenditure.category_name || expenditure.fund_allocation}</span>
                                         : <span className="muted">—</span>}</td>
                                     <td className="right amount">{peso(expenditure.amount)}</td>
                                 </tr>
@@ -57,7 +88,28 @@ export default function Expenditure() {
                     </table>
                 )}
             </div>
-            {isModalOpen && <ExpenditureModal setIsModalOpen={handleCloseModal} />}
+            {isModalOpen && <ExpenditureModal setIsModalOpen={handleCloseModal} categories={categories} selectedCategory={selectedCategory} />}
+            {subcategoryForm && <SubcategoryForm subcategory={subcategoryForm} onClose={() => setSubcategoryForm(null)} onSave={saveSubcategory} />}
         </div>
     );
+}
+
+function SubcategoryForm({ subcategory, onClose, onSave }) {
+    const [name, setName] = useState(subcategory.name || "");
+    const [amount, setAmount] = useState(subcategory.allocated_amount || "");
+    const [error, setError] = useState("");
+    const submit = async (event) => {
+        event.preventDefault();
+        try {
+            await onSave({ id: subcategory.id, category_id: subcategory.category_id, name, allocated_amount: Number(amount) });
+            onClose();
+        } catch (requestError) { setError(requestError.response?.data?.message || requestError.message); }
+    };
+    return <div className="expenditure-modal-background" onClick={onClose}><form className="expenditure-modal expenditure-form" onSubmit={submit} onClick={(event) => event.stopPropagation()}>
+        <h2>{subcategory.id ? "Edit subcategory" : "Add subcategory"}</h2>
+        {error && <div className="expenditure-modal-error">{error}</div>}
+        <label><span>Name</span><input value={name} onChange={(event) => setName(event.target.value)} required /></label>
+        <label><span>Allocated amount</span><input type="number" min="0.01" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} required /></label>
+        <div className="expenditure-modal-actions"><button type="button" className="btn-cancel" onClick={onClose}>Cancel</button><button type="submit" className="btn-save">Save</button></div>
+    </form></div>;
 }

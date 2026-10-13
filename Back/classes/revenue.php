@@ -7,10 +7,19 @@ class Revenue {
         $this->database = $pdo;
     }
 
-    public function record_revenue($amount, $source, $fund_allocation, $created_by = null)
+    public function record_revenue($amount, $source, $fund_allocation, $created_by = null, $request_key = null)
     {
         try {
             $this->database->beginTransaction();
+
+            if ($request_key) {
+                $existing = $this->database->prepare('SELECT id FROM revenues WHERE request_key = :request_key');
+                $existing->execute(['request_key' => $request_key]);
+                if ($existing->fetchColumn()) {
+                    $this->database->commit();
+                    return true;
+                }
+            }
 
             $allocation_val = null;
 
@@ -31,16 +40,38 @@ class Revenue {
             }
 
             $stmtInsertRevenue = $this->database->prepare('
-                INSERT INTO revenues (amount, source, fund_allocation, created_by)
-                VALUES (:amount, :source, :fund_allocation, :created_by)
+                INSERT INTO revenues (amount, source, fund_allocation, created_by, request_key)
+                VALUES (:amount, :source, :fund_allocation, :created_by, :request_key)
             ');
             $stmtInsertRevenue->execute([
                 'amount'          => $amount,
                 'source'          => $source,
                 'fund_allocation' => $allocation_val,
                 'created_by'      => $created_by,   // ← NEW
+                'request_key'     => $request_key,
             ]);
 
+            $revenueId = (int)$this->database->lastInsertId();
+            $categories = $this->database->query('SELECT id, percentage FROM budget_categories ORDER BY id')->fetchAll(PDO::FETCH_ASSOC);
+            $remaining = round((float)$amount, 2);
+            foreach ($categories as $index => $category) {
+                $categoryAmount = $index === count($categories) - 1
+                    ? $remaining
+                    : round((float)$amount * ((float)$category['percentage'] / 100), 2);
+                $remaining = round($remaining - $categoryAmount, 2);
+                $insertAllocation = $this->database->prepare('
+                    INSERT INTO revenue_allocations (revenue_id, category_id, amount)
+                    VALUES (:revenue_id, :category_id, :amount)
+                    ON DUPLICATE KEY UPDATE amount = VALUES(amount)
+                ');
+                $insertAllocation->execute([
+                    'revenue_id' => $revenueId,
+                    'category_id' => $category['id'],
+                    'amount' => $categoryAmount
+                ]);
+                $updateCategory = $this->database->prepare('UPDATE budget_categories SET allocated_amount = allocated_amount + :amount WHERE id = :id');
+                $updateCategory->execute(['amount' => $categoryAmount, 'id' => $category['id']]);
+            }
             $this->database->commit();
             return true;
         } catch (Exception $e) {

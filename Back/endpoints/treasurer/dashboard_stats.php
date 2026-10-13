@@ -49,6 +49,20 @@ $fundBalances = $pdo->query("
     ORDER BY fb.fund_name ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
+$categoryBalances = $pdo->query("
+    SELECT id, name, allocated_amount, spent_amount,
+           allocated_amount - spent_amount AS balance, percentage
+    FROM budget_categories ORDER BY id
+")->fetchAll(PDO::FETCH_ASSOC);
+foreach ($categoryBalances as &$category) {
+    $category['id'] = (int)$category['id'];
+    $category['allocated_amount'] = (float)$category['allocated_amount'];
+    $category['spent_amount'] = (float)$category['spent_amount'];
+    $category['balance'] = (float)$category['balance'];
+    $category['percentage'] = (float)$category['percentage'];
+}
+unset($category);
+
 foreach ($fundBalances as &$fund) {
     $fund['balance'] = (float)$fund['balance'];
     $fund['total_allocated'] = (float)$fund['total_allocated'];
@@ -74,5 +88,6 @@ echo json_encode([
     'recordsThisMonth'=> (int)$recordsThisMonth,
     'topFunds'        => $topFunds,
     'fundBalances'    => $fundBalances,
+    'categoryBalances' => $categoryBalances,
     'recentActivity'  => $recentActivity,
 ]);

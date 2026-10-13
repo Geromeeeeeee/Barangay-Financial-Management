@@ -9,11 +9,13 @@ $amount          = $data['amount']          ?? 0;
 $description     = $data['description']     ?? '';
 $fund_allocation = $data['fund_allocation'] ?? '';
 $created_by      = $_SESSION['uid']         ?? null;
+$category_id     = $data['category_id']     ?? null;
+$subcategory_id  = $data['subcategory_id']  ?? null;
 
 $expenditure = new Expenditure($pdo);
 
 try {
-    $expenditure->record_expenditure($amount, $description, $fund_allocation, $created_by);
+    $expenditure->record_expenditure($amount, $description, $fund_allocation, $created_by, $category_id, $subcategory_id);
     echo json_encode(['status' => 'expenditure_recorded']);
 } catch (Exception $e) {
     http_response_code(500);

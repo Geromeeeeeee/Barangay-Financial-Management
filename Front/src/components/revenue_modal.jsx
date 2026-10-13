@@ -5,6 +5,7 @@ import '../styles/revenue.css'
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
 export default function Revenue_Modal({ setIsModalOpen }) {
+    const [requestKey] = useState(() => crypto.randomUUID());
     const [fundAllocation, setFundAllocation] = useState('General')
     const [loading, setLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
@@ -29,7 +30,8 @@ export default function Revenue_Modal({ setIsModalOpen }) {
             const response = await axios.post(`${API_URL}/revenue/add_revenue.php`, {
                 amount: parseFloat(amount),
                 source: source,
-                fund_allocation: finalFundAllocation
+                fund_allocation: finalFundAllocation,
+                request_key: requestKey
             }, {
                 withCredentials: true
             });

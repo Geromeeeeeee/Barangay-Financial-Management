@@ -4,8 +4,7 @@ import "../styles/expenditure.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
-export default function ExpenditureModal({ setIsModalOpen }) {
-    const [fundAllocation, setFundAllocation] = useState("General");
+export default function ExpenditureModal({ setIsModalOpen, categories = [], selectedCategory = null }) {
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -15,18 +14,12 @@ export default function ExpenditureModal({ setIsModalOpen }) {
         setErrorMessage("");
 
         const formData = new FormData(event.target);
-        const selectedFundAllocation = formData.get("fundAllocation");
-        const finalFundAllocation = selectedFundAllocation === "General"
-            ? ""
-            : selectedFundAllocation === "new"
-                ? formData.get("newFundAllocation")
-                : selectedFundAllocation;
-
         try {
             const response = await axios.post(`${API_URL}expenditure/add_expenditure.php`, {
                 amount: parseFloat(formData.get("amount")),
                 description: formData.get("description"),
-                fund_allocation: finalFundAllocation
+                category_id: selectedCategory?.id || formData.get("categoryId") || null,
+                subcategory_id: formData.get("subcategoryId") || null
             }, { withCredentials: true });
 
             if (response?.data?.status === "expenditure_recorded") {
@@ -54,6 +47,24 @@ export default function ExpenditureModal({ setIsModalOpen }) {
                 {errorMessage && <div className="expenditure-modal-error">{errorMessage}</div>}
 
                 <form onSubmit={handleSubmit} className="expenditure-form">
+                    {categories.length > 0 && (
+                    <label>
+                        <span>Category</span>
+                        <select name="categoryId" defaultValue={selectedCategory?.id || ""} required>
+                            <option value="">Select category</option>
+                            {categories.map((category) => <option key={category.id} value={category.id}>{category.name} ({Number(category.balance).toFixed(2)} available)</option>)}
+                        </select>
+                    </label>
+                    )}
+                    {selectedCategory && <label>
+                        <span>Fund allocation</span>
+                        <select name="subcategoryId" defaultValue="">
+                            <option value="">Use main category balance</option>
+                            {(selectedCategory?.subcategories || categories.find((category) => String(category.id) === String(selectedCategory?.id))?.subcategories || []).map((subcategory) => (
+                                <option key={subcategory.id} value={subcategory.id}>{subcategory.name} ({Number(subcategory.balance).toFixed(2)} available)</option>
+                            ))}
+                        </select>
+                    </label>}
                     <label>
                         <span>Amount</span>
                         <input name="amount" type="number" min="0" step="0.01" placeholder="0.00" required />
@@ -62,23 +73,6 @@ export default function ExpenditureModal({ setIsModalOpen }) {
                         <span>Description</span>
                         <input name="description" type="text" placeholder="e.g., Community supplies" required />
                     </label>
-                    <label>
-                        <span>Fund allocation</span>
-                        <select
-                            name="fundAllocation"
-                            value={fundAllocation}
-                            onChange={(event) => setFundAllocation(event.target.value)}
-                        >
-                            <option value="General">General</option>
-                            <option value="new">Enter fund allocation</option>
-                        </select>
-                    </label>
-                    {fundAllocation === "new" && (
-                        <label>
-                            <span>Fund allocation</span>
-                            <input name="newFundAllocation" type="text" placeholder="Enter allocation name" autoFocus required />
-                        </label>
-                    )}
                     <div className="expenditure-modal-actions">
                         <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>Cancel</button>
                         <button type="submit" className="btn-save" disabled={loading}>

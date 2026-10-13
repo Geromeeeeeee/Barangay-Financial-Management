@@ -29,25 +29,21 @@ $totalRevenue = $pdo->query("
     SELECT COALESCE(SUM(amount), 0) FROM revenues
 ")->fetchColumn();
 
-// ============ FUND BALANCES ============
-$fundBalances = $pdo->query("
-    SELECT fb.fund_name,
-           fb.balance,
-           COALESCE(SUM(r.amount), 0) AS total_allocated
-    FROM fund_balances fb
-    LEFT JOIN revenues r ON r.fund_allocation = fb.fund_name
-    GROUP BY fb.fund_name, fb.balance
-    ORDER BY fb.fund_name ASC
+// ============ CATEGORY BALANCES ============
+$categoryBalances = $pdo->query("
+    SELECT id, name, allocated_amount, spent_amount,
+           allocated_amount - spent_amount AS balance
+    FROM budget_categories
+    ORDER BY id ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-foreach ($fundBalances as &$fund) {
-    $fund['balance'] = (float)$fund['balance'];
-    $fund['total_allocated'] = (float)$fund['total_allocated'];
-    $fund['usage_percentage'] = $fund['total_allocated'] > 0
-        ? round((($fund['total_allocated'] - $fund['balance']) / $fund['total_allocated']) * 100, 2)
-        : 0;
+foreach ($categoryBalances as &$category) {
+    $category['id'] = (int)$category['id'];
+    $category['allocated_amount'] = (float)$category['allocated_amount'];
+    $category['spent_amount'] = (float)$category['spent_amount'];
+    $category['balance'] = (float)$category['balance'];
 }
-unset($fund);
+unset($category);
 
 // ============ RECENT REVENUE RECORDS (last 5) ============
 $recentActivity = $pdo->query("
@@ -73,7 +69,7 @@ echo json_encode([
     'activeCodes'       => (int)$activeCodes,
     'recordsThisMonth'  => (int)$recordsThisMonth,
     'totalRevenue'      => (float)$totalRevenue,
-    'fundBalances'      => $fundBalances,
+    'categoryBalances'  => $categoryBalances,
     'recentActivity'    => $recentActivity,
     'recentRequests'    => $recentRequests,
 ]);

@@ -10,7 +10,7 @@ export function useDashboardStats() {
         activeCodes: 0,
         recordsThisMonth: 0,
         totalRevenue: 0,
-        fundBalances: [],
+        categoryBalances: [],
         recentActivity: [],
         recentRequests: [],
     });
