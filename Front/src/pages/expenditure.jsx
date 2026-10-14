@@ -3,6 +3,7 @@ import ExpenditureModal from "../components/expenditure_modal";
 import useExpenditure from "../custom_hooks/use_expenditure";
 import useFormat from "../custom_hooks/use_format";
 import useBudgetCategories from "../custom_hooks/use_budget_categories";
+import { useRole } from "../custom_hooks/use_role";
 import "../styles/expenditure.css";
 
 export default function Expenditure() {
@@ -12,6 +13,7 @@ export default function Expenditure() {
     const { expenditures, loading, error, refetch } = useExpenditure();
     const {peso, date} = useFormat();
     const { categories, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory } = useBudgetCategories();
+    const {isStaff} = useRole();
 
     const handleCloseModal = (open) => {
         setIsModalOpen(open);
@@ -43,7 +45,9 @@ export default function Expenditure() {
                                     <h2>{category.name}</h2>
                                     <p>{peso(category.allocated_amount)} allocated · {peso(category.spent_amount)} spent · {peso(category.balance)} remaining</p>
                                 </div>
-                                <button type="button" className="expenditure-open-btn" onClick={() => { setSelectedCategory(category); setIsModalOpen(true); }}>Record Expenditure</button>
+                                <button type="button" className="expenditure-open-btn" onClick={() => { setSelectedCategory(category); setIsModalOpen(true); }}>
+                                    {isStaff ? "Request Expenditure" : "Record Expenditure"}
+                                </button>
                             </div>
                             <div className="subcategory-list">
                                 {category.subcategories.map((subcategory) => (
