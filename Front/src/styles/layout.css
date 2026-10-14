@@ -1,22 +1,24 @@
 .dashboard-container {
     display: flex;
+    flex-direction: column;
     height: 100vh;
     font-family: 'Google Sans Flex', Arial, sans-serif;
 }
 
 .sidebar {
     display: flex;
-    flex-direction: column;
-    width: 17.5%;
+    width: 100%;
     background-color: #ffffff;
     color: #091540af;
     padding: 20px 20px 20px 40px;
     position: sticky;
     top: 0;
-    height: 100vh;
+    height: 10vh;
     box-shadow: 5px 0px 10px 0px rgba(9,21,64,0.25);
     -webkit-box-shadow: 5px 0px 10px 0px rgba(9,21,64,0.25);
     -moz-box-shadow: 5px 0px 10px 0px rgba(9,21,64,0.25);
+    align-items: center;
+    justify-content: space-between;
 }
 
 .sidebar h2 {
@@ -25,9 +27,8 @@
 
 nav {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-top: 30px;
+    align-items: center;
+    gap: 20px;
 }
 
 nav a {
@@ -75,13 +76,6 @@ nav a {
     color: #94a3b8;
     margin: 18px 0 8px;
     padding: 0 12px;
-}
-
-/* ===== Sidebar footer — pins logout to bottom ===== */
-.sidebar-footer {
-    margin-top: auto;
-    padding-top: 16px;
-    border-top: 1px solid rgba(9, 21, 64, 0.08);
 }
 
 .logout-btn {

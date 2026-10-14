@@ -6,7 +6,7 @@ import '../styles/layout.css'
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
 export default function DashboardLayout() {
-    const { user, isAdmin } = useRole();
+    const { isAdmin } = useRole();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -27,16 +27,7 @@ export default function DashboardLayout() {
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
-                <h2>Barangay Finance</h2>
-
-                {user && (
-                    <div className="user-badge">
-                        <div className="user-name">
-                            {user.firstName} {user.lastName}
-                        </div>
-                        <div className="user-role">{user.role}</div>
-                    </div>
-                )}
+                <h3>Barangay <br /> Finance</h3>
 
                 <nav>
                     <Link to="/Dashboard">Dashboard</Link>
@@ -45,7 +36,6 @@ export default function DashboardLayout() {
 
                     {isAdmin && (
                         <>
-                            <div className="nav-section">Admin</div>
                             <Link to="/admin/invite-codes">Invite Codes</Link>
                             <Link to="/admin/pending-users">Pending Users</Link>
                         </>
