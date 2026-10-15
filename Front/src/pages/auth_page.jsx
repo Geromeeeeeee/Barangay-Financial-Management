@@ -33,7 +33,7 @@ export default function Auth_Page() {
 
     // ===== Invite code state =====
     const [inviteCode, setInviteCode] = useState("");
-    const [codeStatus, setCodeStatus] = useState(null); // null | "checking" | "valid" | "invalid"
+    const [codeStatus, setCodeStatus] = useState(null);
     const [codeMessage, setCodeMessage] = useState("");
 
     const { handleSubmit, handleFormChange, accountDetails } = useAuth({
@@ -68,7 +68,7 @@ export default function Auth_Page() {
 
     // ===== SPLASH SCREEN =====
     if (showSplash) {
-        return <Splash_Screen/>
+        return <Splash_Screen />
     }
 
     return (
@@ -87,12 +87,10 @@ export default function Auth_Page() {
                     </div>
 
                     <div className="form-header">
-                        <h1>{isLogin ? "Welcome back" : "Request an account"}</h1>
-                        <p>
-                            {isLogin
-                                ? "Sign in to access your barangay dashboard."
-                                : "You'll need an invite code from your barangay administrator."}
-                        </p>
+                        <h1>{isLogin ? "Welcome" : "Request an account"}</h1>
+                        {!isLogin && (
+                            <p>You'll need an invite code from your barangay administrator.</p>
+                        )}
                     </div>
 
                     {err && <div className="alert alert-error">{err}</div>}

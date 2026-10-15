@@ -2,7 +2,7 @@ import "../../styles/dashboard.css";
 import "../../styles/admin_dashboard.css";
 import {
     IconUsers, IconClock, IconTicket, IconChart,
-    IconCheckCircle, IconMoney,
+    IconMoney,
     StatCard, ActivityRow, QuickAction, DashboardHero,
 } from "../../components/dashboard_widgets";
 import { useDashboardStats } from "../../custom_hooks/use_dashboard_stats";
@@ -115,7 +115,6 @@ export default function AdminDashboard({ user }) {
 
                     {!loading && (
                         <ul className="activity-list">
-                            {/* Latest revenue entries */}
                             {stats.recentActivity.map((row) => (
                                 <ActivityRow
                                     key={`rev-${row.id}`}
@@ -126,7 +125,6 @@ export default function AdminDashboard({ user }) {
                                 />
                             ))}
 
-                            {/* Pending account requests */}
                             {stats.recentRequests.map((u) => (
                                 <ActivityRow
                                     key={`usr-${u.id}`}
@@ -146,9 +144,8 @@ export default function AdminDashboard({ user }) {
                         <h2>Quick Actions</h2>
                     </div>
                     <div className="quick-actions">
-                        <QuickAction to="/admin/invite-codes"  Icon={IconTicket}      label="Generate Invite Code" />
-                        <QuickAction to="/admin/pending-users" Icon={IconCheckCircle} label="Review Pending Users" />
-                        <QuickAction to="/Revenue"             Icon={IconMoney}       label="View Revenue Records" />
+                        <QuickAction to="/admin/invite-codes"  Icon={IconTicket} label="Generate Invite Code" />
+                        <QuickAction to="/Revenue"             Icon={IconMoney}  label="Monitor Revenue Records" />
                     </div>
                     <div className="dash-tip">
                         <strong>Tip:</strong> Your dashboard auto-refreshes every 30 seconds,
@@ -161,7 +158,7 @@ export default function AdminDashboard({ user }) {
     );
 }
 
-// ======================== HELPER ========================
+// ======================== HELPERS ========================
 function formatPeso(value) {
     return "₱" + Number(value || 0).toLocaleString("en-PH", {
         minimumFractionDigits: 2,

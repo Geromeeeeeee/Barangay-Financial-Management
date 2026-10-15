@@ -7,7 +7,6 @@ import DashboardLayout from './components/layout';
 import Revenue from './pages/revenue';
 import Expenditure from './pages/expenditure';
 import InviteCodesPage from './pages/admin/invite_codes';
-import PendingUsersPage from './pages/admin/pending_users';
 
 function App() {
   return (
@@ -28,8 +27,7 @@ function App() {
         {/* Admin */}
         <Route element={<Protected_Route allowedRoles={["admin"]} />}>
           <Route element={<DashboardLayout />}>
-            <Route path="/admin/invite-codes"  element={<InviteCodesPage />} />
-            <Route path="/admin/pending-users" element={<PendingUsersPage />} />
+            <Route path="/admin/invite-codes" element={<InviteCodesPage />} />
           </Route>
         </Route>
       </Routes>

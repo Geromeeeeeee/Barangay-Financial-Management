@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Outlet, Link, useNavigate } from "react-router-dom"
 import { useRole } from "../custom_hooks/use_role"
 import axios from "axios"
@@ -9,20 +10,24 @@ export default function DashboardLayout() {
     const { isAdmin } = useRole();
     const navigate = useNavigate();
 
-    const handleLogout = async () => {
-    try {
-        await axios.post(
-            `${API_URL}auth.php`,
-            { action: 'logOut' },
-            { withCredentials: true }
-        );
-    } catch (e) {
-        console.error("Logout request failed:", e);
-    } finally {
-        localStorage.removeItem("user");
-        navigate("/");
-    }
-};
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [loggingOut, setLoggingOut] = useState(false);
+
+    const confirmLogout = async () => {
+        setLoggingOut(true);
+        try {
+            await axios.post(
+                `${API_URL}auth.php`,
+                { action: 'logOut' },
+                { withCredentials: true }
+            );
+        } catch (e) {
+            console.error("Logout request failed:", e);
+        } finally {
+            localStorage.removeItem("user");
+            navigate("/");
+        }
+    };
 
     return (
         <div className="dashboard-container">
@@ -35,10 +40,7 @@ export default function DashboardLayout() {
                     <Link to="/Expenditure">Expenditures</Link>
 
                     {isAdmin && (
-                        <>
-                            <Link to="/admin/invite-codes">Invite Codes</Link>
-                            <Link to="/admin/pending-users">Pending Users</Link>
-                        </>
+                        <Link to="/admin/invite-codes">Invite Codes</Link>
                     )}
                 </nav>
 
@@ -46,7 +48,7 @@ export default function DashboardLayout() {
                     <button
                         type="button"
                         className="logout-btn"
-                        onClick={handleLogout}
+                        onClick={() => setShowLogoutConfirm(true)}
                     >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -62,6 +64,50 @@ export default function DashboardLayout() {
             <main className="main-content" style={{ flex: 1, padding: '30px', overflowY: 'auto', background: '#f8fafc' }}>
                 <Outlet />
             </main>
+
+            {/* ===== Logout Confirmation Modal ===== */}
+            {showLogoutConfirm && (
+                <div
+                    className="logout-modal-backdrop"
+                    onClick={() => !loggingOut && setShowLogoutConfirm(false)}
+                >
+                    <div
+                        className="logout-modal"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="logout-modal-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                <polyline points="16 17 21 12 16 7" />
+                                <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                        </div>
+
+                        <h3>Log out?</h3>
+                        <p>Are you sure you want to end your session?</p>
+
+                        <div className="logout-modal-actions">
+                            <button
+                                type="button"
+                                className="logout-modal-cancel"
+                                onClick={() => setShowLogoutConfirm(false)}
+                                disabled={loggingOut}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="logout-modal-confirm"
+                                onClick={confirmLogout}
+                                disabled={loggingOut}
+                            >
+                                {loggingOut ? "Logging out…" : "Yes, log out"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

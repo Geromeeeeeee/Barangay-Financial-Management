@@ -1,13 +1,31 @@
 import { useState } from 'react'
 import Revenue_Modal from '../components/revenue_modal'
 import useRevenue from '../custom_hooks/use_revenue'
-import useFormat from '../custom_hooks/use_format'
+import { useRole } from '../custom_hooks/use_role'
 import '../styles/revenue.css'
 
 export default function Revenue () {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const { revenues, loading, error, refetch } = useRevenue()
-    const {peso, date} = useFormat()
+    const { isTreasurer, isStaff } = useRole()
+
+    // Only treasurer and staff can record revenue.
+    // Admin can only monitor.
+    const canRecord = isTreasurer || isStaff
+
+    const formatPeso = (n) =>
+        new Intl.NumberFormat("en-PH", {
+            style: "currency",
+            currency: "PHP",
+            minimumFractionDigits: 2,
+        }).format(Number(n || 0))
+
+    const formatDate = (d) => {
+        if (!d) return "—"
+        return new Date(d.replace(" ", "T")).toLocaleDateString("en-PH", {
+            month: "short", day: "numeric", year: "numeric",
+        })
+    }
 
     const handleCloseModal = (open) => {
         setIsModalOpen(open)
@@ -25,13 +43,16 @@ export default function Revenue () {
                             : `${revenues.length} record${revenues.length !== 1 ? "s" : ""}`}
                     </p>
                 </div>
-                <button
-                    type="button"
-                    className="revenue-open-btn"
-                    onClick={() => setIsModalOpen(true)}
-                >
-                    + Record Revenue
-                </button>
+
+                {canRecord && (
+                    <button
+                        type="button"
+                        className="revenue-open-btn"
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        + Record Revenue
+                    </button>
+                )}
             </header>
 
             {error && <div className="revenue-error">{error}</div>}
@@ -42,7 +63,9 @@ export default function Revenue () {
                 {!loading && revenues.length === 0 && (
                     <div className="revenue-empty">
                         <p>No revenue records yet.</p>
-                        <p className="muted">Click "Record Revenue" to add your first entry.</p>
+                        {canRecord && (
+                            <p className="muted">Click "Record Revenue" to add your first entry.</p>
+                        )}
                     </div>
                 )}
 
@@ -59,14 +82,14 @@ export default function Revenue () {
                         <tbody>
                             {revenues.map((r) => (
                                 <tr key={r.id}>
-                                    <td className="muted">{date(r.created_at)}</td>
+                                    <td className="muted">{formatDate(r.created_at)}</td>
                                     <td>{r.source}</td>
                                     <td>
                                         {r.fund_allocation
                                             ? <span className="fund-pill">{r.fund_allocation}</span>
                                             : <span className="muted">—</span>}
                                     </td>
-                                    <td className="right amount">{peso(r.amount)}</td>
+                                    <td className="right amount">{formatPeso(r.amount)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -74,7 +97,7 @@ export default function Revenue () {
                 )}
             </div>
 
-            {isModalOpen && (
+            {isModalOpen && canRecord && (
                 <Revenue_Modal setIsModalOpen={handleCloseModal} />
             )}
         </div>

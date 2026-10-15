@@ -105,7 +105,8 @@
     grid-template-columns: 1.1fr 1fr;
     width: 100%;
     max-width: 1080px;
-    min-height: 640px;
+    min-height: auto;
+    max-height: 90vh;
     background: #ffffff;
     border-radius: 20px;
     overflow: hidden;
@@ -116,7 +117,7 @@
 
 /* ================= FORM SIDE ================= */
 .auth-form-side {
-    padding: 48px 56px;
+    padding: 32px 48px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -127,7 +128,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 36px;
+    margin-bottom: 20px;
 }
 
 .brand-icon {
@@ -162,20 +163,20 @@
     letter-spacing: 0.4px;
 }
 
-.form-header { margin-bottom: 22px; }
+.form-header { margin-bottom: 16px; }
 
 .form-header h1 {
-    font-size: 1.7rem;
+    font-size: 1.55rem;
     font-weight: 700;
     color: #0f172a;
-    margin: 0 0 6px;
+    margin: 0;
     letter-spacing: -0.5px;
 }
 
 .form-header p {
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     color: #64748b;
-    margin: 0;
+    margin: 4px 0 0;
     line-height: 1.5;
 }
 
@@ -183,7 +184,7 @@
 .auth-form {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 11px;
 }
 
 .field-row {
@@ -192,14 +193,15 @@
     gap: 12px;
 }
 
+/* Label + input stacked vertically */
 .field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 
 .field span {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 600;
     color: #334155;
     letter-spacing: 0.2px;
@@ -208,8 +210,8 @@
 .field input,
 .field select {
     width: 100%;
-    padding: 11px 14px;
-    font-size: 0.9rem;
+    padding: 10px 13px;
+    font-size: 0.88rem;
     font-family: inherit;
     color: #0f172a;
     background: #f8fafc;
@@ -304,19 +306,19 @@
     display: flex;
     gap: 10px;
     align-items: flex-start;
-    padding: 11px 13px;
+    padding: 10px 12px;
     background: #eff6ff;
     border: 1px solid #bfdbfe;
     border-radius: 10px;
-    font-size: 0.79rem;
-    line-height: 1.5;
+    font-size: 0.76rem;
+    line-height: 1.45;
     color: #1e40af;
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 .info-note svg {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
     flex-shrink: 0;
     margin-top: 2px;
     color: #2563eb;
@@ -359,10 +361,10 @@
 
 /* ================= SUBMIT ================= */
 .submit-button {
-    margin-top: 10px;
-    padding: 13px 16px;
+    margin-top: 6px;
+    padding: 11px 16px;
     font-family: inherit;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 600;
     letter-spacing: 0.2px;
     color: #ffffff;
@@ -390,9 +392,9 @@
 
 /* ================= SWITCH LINK ================= */
 .auth-switch {
-    margin: 14px 0 0;
+    margin: 10px 0 0;
     text-align: center;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: #64748b;
 }
 
@@ -413,7 +415,7 @@
     padding: 10px 14px;
     border-radius: 10px;
     font-size: 0.83rem;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     font-weight: 500;
 }
 
@@ -469,15 +471,15 @@
 }
 
 .seal-wrap {
-    width: 160px;
-    height: 160px;
+    width: 140px;
+    height: 140px;
     border-radius: 50%;
     padding: 8px;
     background: rgba(255, 255, 255, 0.95);
     box-shadow:
         0 0 0 4px rgba(250, 204, 21, 0.55),
         0 18px 40px -12px rgba(0, 0, 0, 0.55);
-    margin-bottom: 26px;
+    margin-bottom: 24px;
     animation: sealFloat 4s ease-in-out infinite;
 }
 
@@ -495,7 +497,7 @@
 }
 
 .welcome-title {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: 700;
     letter-spacing: -0.3px;
     margin: 0 0 6px;
@@ -505,7 +507,7 @@
 }
 
 .welcome-sub {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 600;
     letter-spacing: 1.6px;
     text-transform: uppercase;
@@ -518,14 +520,14 @@
     height: 3px;
     border-radius: 2px;
     background: linear-gradient(90deg, #dc2626 0%, #facc15 50%, #2563eb 100%);
-    margin: 20px 0;
+    margin: 18px 0;
 }
 
 .welcome-text {
-    font-size: 0.9rem;
-    line-height: 1.65;
+    font-size: 0.85rem;
+    line-height: 1.6;
     color: #dbeafe;
-    max-width: 340px;
+    max-width: 320px;
     margin: 0;
 }
 
@@ -550,12 +552,12 @@
     }
 
     .auth-brand-side { display: none; }
-    .auth-form-side { padding: 40px 32px; }
+    .auth-form-side { padding: 32px 28px; }
 }
 
 @media (max-width: 480px) {
     .auth-page { padding: 12px; }
-    .auth-form-side { padding: 32px 22px; }
-    .form-header h1 { font-size: 1.45rem; }
+    .auth-form-side { padding: 28px 22px; }
+    .form-header h1 { font-size: 1.4rem; }
     .field-row { grid-template-columns: 1fr; }
 }
