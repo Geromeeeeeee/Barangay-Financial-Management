@@ -37,6 +37,12 @@ function category_payload(PDO $pdo): array {
     return $categories;
 }
 
+if (!isset($_SESSION['uid'])) {
+    http_response_code(401);
+    echo json_encode(['status' => 'error', 'message' => 'Authentication required.']);
+    exit();
+}
+
 try {
     $method = $_SERVER['REQUEST_METHOD'];
     $data = json_decode(file_get_contents('php://input'), true) ?: [];
@@ -49,6 +55,11 @@ try {
     if ($method !== 'POST' && $method !== 'PUT' && $method !== 'DELETE') {
         http_response_code(405);
         throw new Exception('Unsupported request method.');
+    }
+
+    if ($method !== 'GET' && ($_SESSION['role'] ?? '') === 'admin') {
+        http_response_code(403);
+        throw new Exception('Administrators cannot modify expenditure categories.');
     }
 
     $id = (int)($data['id'] ?? $_GET['id'] ?? 0);

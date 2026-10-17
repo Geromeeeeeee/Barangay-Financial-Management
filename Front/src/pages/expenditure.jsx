@@ -6,6 +6,8 @@ import useBudgetCategories from "../custom_hooks/use_budget_categories";
 import { useRole } from "../custom_hooks/use_role";
 import "../styles/expenditure.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
+
 export default function Expenditure() {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,7 +15,8 @@ export default function Expenditure() {
     const { expenditures, loading, error, refetch } = useExpenditure();
     const {peso, date} = useFormat();
     const { categories, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory } = useBudgetCategories();
-    const {isStaff} = useRole();
+    const {isAdmin, isStaff} = useRole();
+    const canModify = !isAdmin;
 
     const handleCloseModal = (open) => {
         setIsModalOpen(open);
@@ -45,21 +48,29 @@ export default function Expenditure() {
                                     <h2>{category.name}</h2>
                                     <p>{peso(category.allocated_amount)} allocated · {peso(category.spent_amount)} spent · {peso(category.balance)} remaining</p>
                                 </div>
-                                <button type="button" className="expenditure-open-btn" onClick={() => { setSelectedCategory(category); setIsModalOpen(true); }}>
-                                    {isStaff ? "Request Expenditure" : "Record Expenditure"}
-                                </button>
+                                {canModify && (
+                                    <button type="button" className="expenditure-open-btn" onClick={() => { setSelectedCategory(category); setIsModalOpen(true); }}>
+                                        {isStaff ? "Request Expenditure" : "Record Expenditure"}
+                                    </button>
+                                )}
                             </div>
                             <div className="subcategory-list">
                                 {category.subcategories.map((subcategory) => (
                                     <div className="subcategory-row" key={subcategory.id}>
                                         <span>{subcategory.name}</span>
                                         <span>{peso(subcategory.balance)} remaining</span>
-                                        <button type="button" onClick={() => setSubcategoryForm(subcategory)}>Edit</button>
-                                        <button type="button" onClick={() => deleteSubcategory(subcategory.id).catch((e) => window.alert(e.response?.data?.message || e.message))}>Delete</button>
+                                        {canModify && (
+                                            <>
+                                                <button type="button" onClick={() => setSubcategoryForm(subcategory)}>Edit</button>
+                                                <button type="button" onClick={() => deleteSubcategory(subcategory.id).catch((e) => window.alert(e.response?.data?.message || e.message))}>Delete</button>
+                                            </>
+                                        )}
                                     </div>
                                 ))}
                             </div>
-                            <button type="button" onClick={() => setSubcategoryForm({ category_id: category.id, name: "", allocated_amount: "" })}>+ Add subcategory</button>
+                            {canModify && (
+                                <button type="button" onClick={() => setSubcategoryForm({ category_id: category.id, name: "", allocated_amount: "" })}>+ Add subcategory</button>
+                            )}
                         </section>
                     ))}
                 </div>
@@ -75,7 +86,7 @@ export default function Expenditure() {
                 {!loading && expenditures.length > 0 && (
                     <table className="expenditure-table">
                         <thead>
-                            <tr><th>Date</th><th>Description</th><th>Fund Allocation</th><th className="right">Amount</th></tr>
+                            <tr><th>Date</th><th>Description</th><th>Fund Allocation</th><th>Supporting Document</th><th className="right">Amount</th></tr>
                         </thead>
                         <tbody>
                             {expenditures.map((expenditure) => (
@@ -85,6 +96,18 @@ export default function Expenditure() {
                                     <td>{expenditure.subcategory_name || expenditure.category_name || expenditure.fund_allocation
                                         ? <span className="fund-pill">{expenditure.subcategory_name || expenditure.category_name || expenditure.fund_allocation}</span>
                                         : <span className="muted">—</span>}</td>
+                                    <td>
+                                        {expenditure.attachment_path ? (
+                                            <a
+                                                className="attachment-link"
+                                                href={`${API_URL}expenditure/download_attachment.php?id=${encodeURIComponent(expenditure.id)}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                            >
+                                                {expenditure.attachment_name || "View document"}
+                                            </a>
+                                        ) : <span className="muted">—</span>}
+                                    </td>
                                     <td className="right amount">{peso(expenditure.amount)}</td>
                                 </tr>
                             ))}
@@ -92,8 +115,8 @@ export default function Expenditure() {
                     </table>
                 )}
             </div>
-            {isModalOpen && <ExpenditureModal setIsModalOpen={handleCloseModal} categories={categories} selectedCategory={selectedCategory} />}
-            {subcategoryForm && <SubcategoryForm subcategory={subcategoryForm} onClose={() => setSubcategoryForm(null)} onSave={saveSubcategory} />}
+            {isModalOpen && canModify && <ExpenditureModal setIsModalOpen={handleCloseModal} categories={categories} selectedCategory={selectedCategory} />}
+            {subcategoryForm && canModify && <SubcategoryForm subcategory={subcategoryForm} onClose={() => setSubcategoryForm(null)} onSave={saveSubcategory} />}
         </div>
     );
 }

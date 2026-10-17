@@ -7,7 +7,7 @@ class Expenditure {
         $this->database = $pdo;
     }
 
-    public function record_expenditure($amount, $description, $fund_allocation, $created_by = null, $category_id = null, $subcategory_id = null)
+    public function record_expenditure($amount, $description, $fund_allocation, $created_by = null, $category_id = null, $subcategory_id = null, $attachment_path = null, $attachment_name = null, $attachment_mime = null, $attachment_size = null)
     {
         try {
             $this->database->beginTransaction();
@@ -66,16 +66,24 @@ class Expenditure {
             }
 
             $stmtInsertExpenditure = $this->database->prepare('
-                INSERT INTO expenditures (amount, description, fund_allocation, created_by, category_id, subcategory_id)
-                VALUES (:amount, :description, :fund_allocation, :created_by, :category_id, :subcategory_id)
+                INSERT INTO expenditures
+                    (amount, description, fund_allocation, created_by, category_id, subcategory_id,
+                     attachment_path, attachment_name, attachment_mime, attachment_size)
+                VALUES
+                    (:amount, :description, :fund_allocation, :created_by, :category_id, :subcategory_id,
+                     :attachment_path, :attachment_name, :attachment_mime, :attachment_size)
             ');
             $stmtInsertExpenditure->execute([
                 'amount'          => $amount,
-                'description'      => $description,
+                'description'     => $description,
                 'fund_allocation' => $allocation_val,
                 'created_by'      => $created_by,
                 'category_id'     => $category_id ?: null,
                 'subcategory_id'  => $subcategory_id ?: null,
+                'attachment_path' => $attachment_path,
+                'attachment_name' => $attachment_name,
+                'attachment_mime' => $attachment_mime,
+                'attachment_size' => $attachment_size,
             ]);
 
             $this->database->commit();

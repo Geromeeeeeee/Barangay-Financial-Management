@@ -9,7 +9,24 @@ $action = $data['action'] ?? $_GET['action'] ?? '';
 
 $user = new User($pdo);
 
-// TODO: add admin check later
+if (!isset($_SESSION['uid'])) {
+    http_response_code(401);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Authentication is required.'
+    ]);
+    exit();
+}
+
+$currentUser = $user->get_user_by_id($_SESSION['uid']);
+if (!$currentUser || strtolower((string)$currentUser['role']) !== 'admin') {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Only administrators can manage pending accounts.'
+    ]);
+    exit();
+}
 
 // ===== LIST PENDING =====
 if($action === 'list'){

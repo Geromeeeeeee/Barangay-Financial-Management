@@ -6,7 +6,7 @@ import useSubmitExpenditure from "../custom_hooks/use_submitExpenditure";
 export default function ExpenditureModal({ setIsModalOpen, categories = [], selectedCategory = null }) {
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-    const {isStaff} = useRole();
+    const {isStaff, isTreasurer} = useRole();
     const {handleSubmit} = useSubmitExpenditure({setLoading, setErrorMessage, selectedCategory, setIsModalOpen});
     
     return (
@@ -24,14 +24,10 @@ export default function ExpenditureModal({ setIsModalOpen, categories = [], sele
                 {errorMessage && <div className="expenditure-modal-error">{errorMessage}</div>}
 
                 <form onSubmit={handleSubmit} className="expenditure-form">
-                    {categories.length > 0 && (
-                    <label>
-                        <span>Category</span>
-                        <select name="categoryId" defaultValue={selectedCategory?.id || ""} required>
-                            <option value="">Select category</option>
-                            {categories.map((category) => <option key={category.id} value={category.id}>{category.name} ({Number(category.balance).toFixed(2)} available)</option>)}
-                        </select>
-                    </label>
+                    {selectedCategory && (
+                        <div className="expenditure-selected-category">
+                            Category: <strong>{selectedCategory.name}</strong>
+                        </div>
                     )}
                     {selectedCategory && <label>
                         <span>Fund allocation</span>
@@ -50,6 +46,12 @@ export default function ExpenditureModal({ setIsModalOpen, categories = [], sele
                         <span>Description</span>
                         <input name="description" type="text" placeholder="e.g., Community supplies" required />
                     </label>
+                    {isTreasurer && (
+                        <label>
+                            <span>Supporting document <small>(optional, PDF/JPG/PNG up to 5 MB)</small></span>
+                            <input name="supporting_document" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" />
+                        </label>
+                    )}
                     <div className="expenditure-modal-actions">
                         <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>Cancel</button>
                         <button type="submit" className="btn-save" disabled={loading}>

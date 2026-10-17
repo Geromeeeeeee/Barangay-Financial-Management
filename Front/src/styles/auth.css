@@ -109,7 +109,7 @@
     max-height: 90vh;
     background: #ffffff;
     border-radius: 20px;
-    overflow: hidden;
+    overflow: auto;
     box-shadow:
         0 30px 60px -20px rgba(0, 0, 0, 0.45),
         0 0 0 1px rgba(255, 255, 255, 0.05);

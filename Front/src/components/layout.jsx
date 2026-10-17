@@ -40,7 +40,10 @@ export default function DashboardLayout() {
                     <Link to="/Expenditure">Expenditures</Link>
 
                     {isAdmin && (
-                        <Link to="/admin/invite-codes">Invite Codes</Link>
+                        <>
+                            <Link to="/admin/invite-codes">Invite Codes</Link>
+                            <Link to="/admin/pending-users">Pending Accounts</Link>
+                        </>
                     )}
                 </nav>
 

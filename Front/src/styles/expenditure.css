@@ -104,6 +104,13 @@
     font-size: .74rem; 
     font-weight: 600; 
 }
+.attachment-link {
+    color: #1d4ed8;
+    font-size: .8rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+.attachment-link:hover { text-decoration: underline; }
 .muted { 
     color: #94a3b8; 
     font-size: .85rem; 
@@ -155,6 +162,14 @@
     font-size: .8rem; 
     font-weight: 600; 
     color: #334155; 
+}
+.expenditure-selected-category {
+    padding: 10px 12px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    color: #1e40af;
+    font-size: .82rem;
 }
 .expenditure-form input, .expenditure-form select { 
     width: 100%;

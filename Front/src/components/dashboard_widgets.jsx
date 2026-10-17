@@ -150,7 +150,7 @@ export function DashboardHero({ user }) {
         <header className="dash-hero">
             <div>
                 <p className="dash-eyebrow">{greeting}</p>
-                <h1>Welcome back, {user.firstName}!</h1>
+                <h1>Welcome, {user.firstName}!</h1>
                 <p className="dash-sub">
                     You're signed in as <span className="dash-role-badge">{user.role}</span>
                 </p>

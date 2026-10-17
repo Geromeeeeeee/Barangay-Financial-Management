@@ -15,9 +15,12 @@ export function usePendingUsers() {
                 credentials: "include",
             });
             const data = await res.json();
+            if (!res.ok || !Array.isArray(data)) {
+                throw new Error(data.message || "Failed to load pending users");
+            }
             setUsers(data);
         } catch (e) {
-            setError("Failed to load pending users");
+            setError(e.message || "Failed to load pending users");
         } finally {
             setLoading(false);
         }
@@ -26,32 +29,40 @@ export function usePendingUsers() {
     const approve = async (id) => {
         setError(""); setSuccess("");
         try {
-            await fetch(`${API}/admin/pending_users.php`, {
+            const res = await fetch(`${API}/admin/pending_users.php`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
                 body: JSON.stringify({ action: "approve", id }),
             });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || "Failed to approve");
+            }
             setUsers((prev) => prev.filter((u) => u.id !== id));
             setSuccess("User approved");
         } catch (e) {
-            setError("Failed to approve");
+            setError(e.message || "Failed to approve");
         }
     };
 
     const reject = async (id) => {
         setError(""); setSuccess("");
         try {
-            await fetch(`${API}/admin/pending_users.php`, {
+            const res = await fetch(`${API}/admin/pending_users.php`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
                 body: JSON.stringify({ action: "reject", id }),
             });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || "Failed to reject");
+            }
             setUsers((prev) => prev.filter((u) => u.id !== id));
             setSuccess("User rejected");
         } catch (e) {
-            setError("Failed to reject");
+            setError(e.message || "Failed to reject");
         }
     };
 

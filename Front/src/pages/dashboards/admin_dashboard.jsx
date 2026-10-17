@@ -144,6 +144,7 @@ export default function AdminDashboard({ user }) {
                         <h2>Quick Actions</h2>
                     </div>
                     <div className="quick-actions">
+                        <QuickAction to="/admin/pending-users" Icon={IconUsers}  label="Review Pending Accounts" />
                         <QuickAction to="/admin/invite-codes"  Icon={IconTicket} label="Generate Invite Code" />
                         <QuickAction to="/Revenue"             Icon={IconMoney}  label="Monitor Revenue Records" />
                     </div>

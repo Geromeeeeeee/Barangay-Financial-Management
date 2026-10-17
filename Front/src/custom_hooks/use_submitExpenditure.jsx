@@ -9,12 +9,14 @@ export default function useSubmitExpenditure({setLoading, setErrorMessage, setIs
 
         const formData = new FormData(event.target);
         try {
-            const response = await axios.post(`${API_URL}expenditure/add_expenditure.php`, {
-                amount: parseFloat(formData.get("amount")),
-                description: formData.get("description"),
-                category_id: selectedCategory?.id || formData.get("categoryId") || null,
-                subcategory_id: formData.get("subcategoryId") || null
-            }, { withCredentials: true });
+            formData.set("category_id", selectedCategory?.id || formData.get("categoryId") || "");
+            formData.set("subcategory_id", formData.get("subcategoryId") || "");
+
+            const response = await axios.post(
+                `${API_URL}expenditure/add_expenditure.php`,
+                formData,
+                { withCredentials: true }
+            );
 
             if (response?.data?.status === "expenditure_recorded") {
                 setIsModalOpen(false);
