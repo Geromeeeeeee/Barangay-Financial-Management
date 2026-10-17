@@ -175,7 +175,11 @@ CREATE TABLE `revenues` (
   `fund_allocation` varchar(100) DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `request_key` char(36) DEFAULT NULL
+  `request_key` char(36) DEFAULT NULL,
+  `attachment_path` varchar(255) DEFAULT NULL,
+  `attachment_name` varchar(255) DEFAULT NULL,
+  `attachment_mime` varchar(100) DEFAULT NULL,
+  `attachment_size` int UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --

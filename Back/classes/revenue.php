@@ -7,7 +7,7 @@ class Revenue {
         $this->database = $pdo;
     }
 
-    public function record_revenue($amount, $source, $fund_allocation, $created_by = null, $request_key = null)
+    public function record_revenue($amount, $source, $fund_allocation, $created_by = null, $request_key = null, $attachment_path = null, $attachment_name = null, $attachment_mime = null, $attachment_size = null)
     {
         try {
             $this->database->beginTransaction();
@@ -40,15 +40,19 @@ class Revenue {
             }
 
             $stmtInsertRevenue = $this->database->prepare('
-                INSERT INTO revenues (amount, source, fund_allocation, created_by, request_key)
-                VALUES (:amount, :source, :fund_allocation, :created_by, :request_key)
+                INSERT INTO revenues (amount, source, fund_allocation, created_by, request_key, attachment_path, attachment_name, attachment_mime, attachment_size)
+                VALUES (:amount, :source, :fund_allocation, :created_by, :request_key, :attachment_path, :attachment_name, :attachment_mime, :attachment_size)
             ');
             $stmtInsertRevenue->execute([
                 'amount'          => $amount,
                 'source'          => $source,
                 'fund_allocation' => $allocation_val,
-                'created_by'      => $created_by,   // ← NEW
+                'created_by'      => $created_by,
                 'request_key'     => $request_key,
+                'attachment_path' => $attachment_path,
+                'attachment_name' => $attachment_name,
+                'attachment_mime' => $attachment_mime,
+                'attachment_size' => $attachment_size,
             ]);
 
             $revenueId = (int)$this->database->lastInsertId();

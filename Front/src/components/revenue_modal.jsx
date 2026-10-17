@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import axios from 'axios'
+import { useRole } from '../custom_hooks/use_role'
 import '../styles/revenue.css'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
@@ -9,6 +10,7 @@ export default function Revenue_Modal({ setIsModalOpen }) {
     const [fundAllocation, setFundAllocation] = useState('General')
     const [loading, setLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
+    const { isTreasurer } = useRole()
 
     const handleSubmit = async (event) => {
         event.preventDefault()
@@ -25,14 +27,12 @@ export default function Revenue_Modal({ setIsModalOpen }) {
         } else if (finalFundAllocation === 'General') {
             finalFundAllocation = '';
         }
+        formData.set('source', source);
+        formData.set('fund_allocation', finalFundAllocation || '');
+        formData.set('request_key', requestKey);
 
         try {
-            const response = await axios.post(`${API_URL}/revenue/add_revenue.php`, {
-                amount: parseFloat(amount),
-                source: source,
-                fund_allocation: finalFundAllocation,
-                request_key: requestKey
-            }, {
+            const response = await axios.post(`${API_URL}revenue/add_revenue.php`, formData, {
                 withCredentials: true
             });
 
@@ -108,6 +108,13 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                                 autoFocus
                                 required
                             />
+                        </label>
+                    )}
+
+                    {isTreasurer && (
+                        <label>
+                            <span>Supporting document <small>(required, PDF/JPG/PNG up to 5 MB)</small></span>
+                            <input name="supporting_document" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required />
                         </label>
                     )}
 

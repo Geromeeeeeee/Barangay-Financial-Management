@@ -4,6 +4,8 @@ import useRevenue from '../custom_hooks/use_revenue'
 import { useRole } from '../custom_hooks/use_role'
 import '../styles/revenue.css'
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
+
 export default function Revenue () {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const { revenues, loading, error, refetch } = useRevenue()
@@ -76,6 +78,7 @@ export default function Revenue () {
                                 <th>Date</th>
                                 <th>Source</th>
                                 <th>Fund Allocation</th>
+                                <th>Document</th>
                                 <th className="right">Amount</th>
                             </tr>
                         </thead>
@@ -88,6 +91,13 @@ export default function Revenue () {
                                         {r.fund_allocation
                                             ? <span className="fund-pill">{r.fund_allocation}</span>
                                             : <span className="muted">—</span>}
+                                    </td>
+                                    <td>
+                                        {r.attachment_path ? (
+                                            <a href={`${API_URL}revenue/download_attachment.php?id=${encodeURIComponent(r.id)}`} target="_blank" rel="noreferrer">
+                                                {r.attachment_name || "View document"}
+                                            </a>
+                                        ) : <span className="muted">—</span>}
                                     </td>
                                     <td className="right amount">{formatPeso(r.amount)}</td>
                                 </tr>
