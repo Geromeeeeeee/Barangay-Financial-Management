@@ -12,13 +12,7 @@ export default function useAuth({ isLogin, setErr, setStat, setIsLogin, inviteCo
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d!@#$%^&*]{6,12}$/;
 
     const [accountDetails, setAccountDetails] = useState({
-        firstName: '',
-        lastName: '',
-        userName: '',
-        email: '',
-        password: '',
-        confirmPass: '',
-        role: ''
+        firstName: '', lastName: '', userName: '', email: '', password: '', confirmPass: '', role: ''
     });
 
     const handleFormChange = (e) => {
@@ -31,19 +25,15 @@ export default function useAuth({ isLogin, setErr, setStat, setIsLogin, inviteCo
         e.preventDefault();
         setErr("");
 
-        // ===== Email format =====
+        // ===== Validation =====
         if (!isLogin && !emailRegex.test(accountDetails.email)) {
-            setErr("Please enter a valid email address (e.g., user@example.com)");
+            setErr("Please enter a valid email address.");
             return;
         }
-
-        // ===== Username rules =====
         if (!isLogin && !usernameRegex.test(accountDetails.userName)) {
             setErr("Username must be 6-30 characters, using only letters, numbers, and periods.");
             return;
         }
-
-        // ===== Signup password rules =====
         if (!isLogin) {
             if (!inviteCode || !inviteCode.trim()) {
                 setErr("Please enter your invite code");
@@ -59,7 +49,6 @@ export default function useAuth({ isLogin, setErr, setStat, setIsLogin, inviteCo
             }
         }
 
-        // ===== Payload =====
         const payload = {
             ...accountDetails,
             action: isLogin ? 'login' : 'signup',
@@ -67,56 +56,30 @@ export default function useAuth({ isLogin, setErr, setStat, setIsLogin, inviteCo
         };
 
         try {
-            const response = await axios.post(`${API_URL}auth.php`, payload, {
-                withCredentials: true
-            });
-
+            const response = await axios.post(`${API_URL}auth.php`, payload, { withCredentials: true });
             const status = response?.data?.status;
 
             // ========== LOGIN ==========
-           if (status === 'logged') {
-               localStorage.setItem("user", JSON.stringify(response.data.user));
-               navigate("/Dashboard");
-                return;
-}
-            if (status === 'pending_approval') {
-                setErr("Your account is pending admin approval.");
+            if (status === 'logged') {
+                localStorage.setItem("user", JSON.stringify(response.data.user));
+                navigate("/Dashboard");
                 return;
             }
-            if (status === 'account_rejected') {
-                setErr("Your account request was rejected.");
-                return;
-            }
-            if (status === 'account_not_found') {
-                setErr("Account not found.");
-                return;
-            }
-            if (status === 'Incorrect_password') {
-                setErr("Incorrect password.");
-                return;
-            }
+            if (status === 'pending_approval') return setErr("Your account is pending admin approval.");
+            if (status === 'account_rejected') return setErr("Your account request was rejected.");
+            if (status === 'account_not_found') return setErr("Account not found.");
+            if (status === 'Incorrect_password') return setErr("Incorrect password.");
 
             // ========== SIGNUP ==========
-            if (status === 'account_pending') {
+            if (status === 'account_created') {
                 setIsLogin(true);
-                setStat("Request submitted. Please wait for admin approval.");
+                setStat("Account created successfully! You can now sign in.");
                 return;
             }
-            if (status === 'invalid_invite') {
-                setErr(response.data.message || "Invalid or expired invite code.");
-                return;
-            }
-            if (status === 'username_taken') {
-                setErr("Username is already taken.");
-                return;
-            }
-            if (status === 'invalid_username') {
-                setErr(response.data.message || "Invalid username.");
-                return;
-            }
-            if (status === 'weak_password') {
-                setErr(response.data.message || "Password is too weak.");
-                return;
+            
+            // Show the specific error message (e.g., wrong email, username taken)
+            if (response.data.message) {
+                return setErr(response.data.message);
             }
 
             setErr("Something went wrong. Please try again.");

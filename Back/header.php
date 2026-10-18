@@ -1,4 +1,12 @@
 <?php
+// Load Composer autoloader
+require_once __DIR__ . '/vendor/autoload.php';
+
+// Load the .env file from the Back directory
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+// ===== CORS =====
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
 if ($origin && preg_match('#^http://localhost(:\d+)?$#', $origin)) {

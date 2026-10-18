@@ -6,8 +6,8 @@ import { Protected_Route } from './components/protected_route';
 import DashboardLayout from './components/layout';
 import Revenue from './pages/revenue';
 import Expenditure from './pages/expenditure';
+import Reports from './pages/reports'; // 👈 Added import
 import InviteCodesPage from './pages/admin/invite_codes';
-import PendingUsersPage from './pages/admin/pending_users';
 
 function App() {
   return (
@@ -22,6 +22,7 @@ function App() {
             <Route path="/Dashboard" element={<Dashboard />} />
             <Route path="/Revenue" element={<Revenue />} />
             <Route path="/Expenditure" element={<Expenditure />} />
+            <Route path="/Reports" element={<Reports />} /> {/* 👈 Added route */}
           </Route>
         </Route>
 
@@ -29,7 +30,6 @@ function App() {
         <Route element={<Protected_Route allowedRoles={["admin"]} />}>
           <Route element={<DashboardLayout />}>
             <Route path="/admin/invite-codes" element={<InviteCodesPage />} />
-            <Route path="/admin/pending-users" element={<PendingUsersPage />} />
           </Route>
         </Route>
       </Routes>

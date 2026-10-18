@@ -20,7 +20,7 @@ $user = new User($pdo);
 
 if(isset($action) && !empty($action)){
 
-    // ============ SIGN UP ============
+       // ============ SIGN UP ============
     if($action === 'signup'){
         $result = $user->sign_up(
             $email, $password, $first_name, $last_name,
@@ -28,7 +28,8 @@ if(isset($action) && !empty($action)){
         );
 
         if($result['success']){
-            echo json_encode(['status' => 'account_pending']);
+            // 👈 Changed from 'account_pending' to 'account_created'
+            echo json_encode(['status' => 'account_created']);
         } else {
             echo json_encode([
                 'status'  => $result['status'],

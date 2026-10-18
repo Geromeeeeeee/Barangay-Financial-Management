@@ -43,12 +43,11 @@ export default function DashboardLayout() {
                     <Link to="/Dashboard">Dashboard</Link>
                     <Link to="/Revenue">Revenue</Link>
                     <Link to="/Expenditure">Expenditures</Link>
+                    <Link to="/Reports">Reports</Link> {/* 👈 Added Reports Link */}
 
                     {isAdmin && (
-                        <>
-                            <Link to="/admin/invite-codes">Invite Codes</Link>
-                            <Link to="/admin/pending-users">Pending Accounts</Link>
-                        </>
+                        // 👇 Removed Pending Accounts, kept Invite Codes
+                        <Link to="/admin/invite-codes">Invite Codes</Link>
                     )}
                 </nav>
 

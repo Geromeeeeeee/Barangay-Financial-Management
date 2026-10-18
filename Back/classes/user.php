@@ -31,35 +31,22 @@ class User {
         $user = $this->get_user($username);
 
         if(!$user){
-            return([
-                'success' => false,
-                'status' => 'account_not_found'
-            ]);
+            return(['success' => false, 'status' => 'account_not_found']);
         }
 
         if(!password_verify($password, $user['password'])){
-            return([
-                'success' => false,
-                'status' => 'Incorrect_password'
-            ]);
+            return(['success' => false, 'status' => 'Incorrect_password']);
         }
 
         if(isset($user['status'])){
             if($user['status'] === 'pending'){
-                return([
-                    'success' => false,
-                    'status' => 'pending_approval'
-                ]);
+                return(['success' => false, 'status' => 'pending_approval']);
             }
             if($user['status'] === 'rejected'){
-                return([
-                    'success' => false,
-                    'status' => 'account_rejected'
-                ]);
+                return(['success' => false, 'status' => 'account_rejected']);
             }
         }
 
-        // Return full user info (needed for role-based UI)
         return([
             'success' => true,
             'user' => [
@@ -75,6 +62,7 @@ class User {
 
     // ===== SIGN UP =====
     public function sign_up ($email, $password, $first_name, $last_name, $role, $username, $invite_code) {
+        // 1. Validate invite code
         require_once __DIR__ . '/invite.php';
         $invite = new Invite($this->database);
         $check = $invite->validate_code($invite_code);
@@ -87,6 +75,16 @@ class User {
             ];
         }
 
+        // 2. Email must match the invite
+        if (isset($check['email']) && strtolower(trim($email)) !== strtolower(trim($check['email']))) {
+            return [
+                'success' => false,
+                'status'  => 'email_mismatch',
+                'message' => "This invite code was sent to {$check['email']}. Please use that email."
+            ];
+        }
+
+        // 3. Username format
         if (!preg_match('/^(?![.])(?!.*[.]{2})(?![.])[a-z0-9.]{6,30}$/i', $username)) {
             return [
                 'success' => false,
@@ -95,6 +93,7 @@ class User {
             ];
         }
 
+        // 4. Password strength
         if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d!@#$%^&*]{6,12}$/', $password)) {
             return [
                 'success' => false,
@@ -103,20 +102,34 @@ class User {
             ];
         }
 
+        // 5. Username already taken?
         $user = $this->get_user($username);
         if ($user) {
             return [
                 'success' => false,
-                'status'  => 'username_taken'
+                'status'  => 'username_taken',
+                'message' => "Username '{$username}' is already taken."
             ];
         }
 
+        // 6. Email already registered?
+        $stmt = $this->database->prepare('SELECT id FROM users WHERE email = :email LIMIT 1');
+        $stmt->execute(['email' => $email]);
+        if ($stmt->fetch()) {
+            return [
+                'success' => false,
+                'status'  => 'email_taken',
+                'message' => "Email '{$email}' is already registered."
+            ];
+        }
+
+        // 7. Insert user as ACTIVE (no admin approval needed)
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         $stmt = $this->database->prepare("
             INSERT INTO users
                 (username, email, password, first_name, last_name, role, status)
             VALUES
-                (:username, :email, :password, :first_name, :last_name, :role, 'pending')
+                (:username, :email, :password, :first_name, :last_name, :role, 'active')
         ");
         $stmt->execute([
             'username'   => $username,
@@ -129,11 +142,12 @@ class User {
 
         $new_user_id = $this->database->lastInsertId();
 
+        // 8. Mark code as used
         $invite->mark_used($check['id'], $new_user_id);
 
         return [
             'success' => true,
-            'status'  => 'account_pending'
+            'status'  => 'account_created'
         ];
     }
 
@@ -156,12 +170,8 @@ class User {
     // ===== PENDING USERS (admin) =====
     public function get_pending(){
         $stmt = $this->database->query("
-            SELECT id,
-                   first_name AS firstName,
-                   last_name  AS lastName,
-                   username   AS userName,
-                   email, role, status,
-                   created_at AS createdAt
+            SELECT id, first_name AS firstName, last_name AS lastName,
+                   username AS userName, email, role, status, created_at AS createdAt
             FROM users
             WHERE status = 'pending'
             ORDER BY created_at ASC
@@ -191,3 +201,4 @@ class User {
         return $stmt->rowCount() > 0;
     }
 }
+?>

@@ -11,7 +11,7 @@ class Invite {
     // Check if a code is valid (not used, not expired)
     public function validate_code($code) {
         $stmt = $this->database->prepare('
-            SELECT id, role, expires_at, used_by
+            SELECT id, role, email, expires_at, used_by
             FROM invite_codes
             WHERE code = :code
             LIMIT 1
@@ -33,31 +33,39 @@ class Invite {
             'valid' => true,
             'id'    => $row['id'],
             'role'  => $row['role'],
+            'email' => $row['email'], // Return the email
         ];
     }
 
     // Generate a new code
-    public function generate_code($role, $hours, $created_by = null) {
-        $code = 'SAL1-'
+    public function generate_code($role, $email, $hours, $created_by = null) {
+        $code = 'MAL2A-'
               . strtoupper(bin2hex(random_bytes(2)))
               . '-'
               . strtoupper(bin2hex(random_bytes(2)));
 
         $stmt = $this->database->prepare('
-            INSERT INTO invite_codes (code, role, expires_at, created_by)
-            VALUES (:code, :role, DATE_ADD(NOW(), INTERVAL :hours HOUR), :created_by)
+            INSERT INTO invite_codes (code, role, email, expires_at, created_by)
+            VALUES (:code, :role, :email, DATE_ADD(NOW(), INTERVAL :hours HOUR), :created_by)
         ');
         $stmt->execute([
             'code'       => $code,
             'role'       => $role,
+            'email'      => $email,
             'hours'      => $hours,
             'created_by' => $created_by,
         ]);
+
+        // 🔴 TRIGGER THE EMAIL HERE
+        require_once __DIR__ . '/mailer.php';
+        $mailer = new Mailer();
+        $mailer->sendInvite($email, $role, $code);
 
         return [
             'id'        => $this->database->lastInsertId(),
             'code'      => $code,
             'role'      => $role,
+            'email'     => $email,
             'expiresAt' => date('Y-m-d H:i:s', strtotime("+$hours hours")),
             'usedBy'    => null,
         ];
@@ -66,7 +74,7 @@ class Invite {
     // List all codes
     public function list_all() {
         $stmt = $this->database->query('
-            SELECT id, code, role,
+            SELECT id, code, role, email,
                    expires_at AS expiresAt,
                    used_by    AS usedBy,
                    used_at    AS usedAt,
@@ -94,3 +102,4 @@ class Invite {
         $stmt->execute(['user_id' => $user_id, 'id' => $code_id]);
     }
 }
+?>

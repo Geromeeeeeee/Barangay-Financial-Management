@@ -23,18 +23,26 @@ export function useInvite() {
         }
     };
 
-    const generateCode = async (role, expiresInHours = 24) => {
+    // 👇 Added 'email' as the second parameter
+    const generateCode = async (role, email, expiresInHours = 24) => {
         setError(""); setSuccess("");
         try {
             const res = await fetch(`${API}/admin/invite_codes.php`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ action: "create", role, expiresInHours }),
+                // 👇 Send the email to the backend
+                body: JSON.stringify({ action: "create", role, email, expiresInHours }),
             });
             const data = await res.json();
+            
+            if (data.success === false) {
+                setError(data.message || "Failed to generate code");
+                return;
+            }
+
             setCodes((prev) => [data, ...prev]);
-            setSuccess(`Code created: ${data.code}`);
+            setSuccess(`Code ${data.code} generated and sent to ${email}`);
             return data;
         } catch (e) {
             setError("Failed to generate code");

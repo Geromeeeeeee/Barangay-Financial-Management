@@ -1,7 +1,7 @@
 import "../../styles/dashboard.css";
 import "../../styles/admin_dashboard.css";
 import {
-    IconUsers, IconClock, IconTicket, IconChart,
+    IconUsers, IconTicket, IconChart,
     IconMoney,
     StatCard, ActivityRow, QuickAction, DashboardHero,
 } from "../../components/dashboard_widgets";
@@ -33,17 +33,17 @@ export default function AdminDashboard({ user }) {
                     accent="blue"
                 />
                 <StatCard
-                    Icon={IconClock}
-                    label="Pending Approvals"
-                    value={loading ? "…" : stats.pendingApprovals}
-                    trend={stats.pendingApprovals > 0 ? "Needs review" : "All clear"}
-                    accent="amber"
-                />
-                <StatCard
                     Icon={IconTicket}
                     label="Active Invite Codes"
                     value={loading ? "…" : stats.activeCodes}
                     trend="Valid & unused"
+                    accent="amber"
+                />
+                <StatCard
+                    Icon={IconMoney}
+                    label="Total Revenue"
+                    value={loading ? "…" : formatPeso(stats.totalRevenue)}
+                    trend="All time collection"
                     accent="green"
                 />
                 <StatCard
@@ -103,17 +103,17 @@ export default function AdminDashboard({ user }) {
                 {/* Recent Activity (live) */}
                 <div className="dash-card">
                     <div className="dash-card-head">
-                        <h2>Recent Activity</h2>
+                        <h2>Recent Revenue Activity</h2>
                         <button className="dash-link" onClick={refresh}>Refresh</button>
                     </div>
 
                     {loading && <p className="muted">Loading…</p>}
 
-                    {!loading && stats.recentActivity.length === 0 && stats.recentRequests.length === 0 && (
-                        <p className="muted">No recent activity.</p>
+                    {!loading && stats.recentActivity.length === 0 && (
+                        <p className="muted">No recent revenue activity.</p>
                     )}
 
-                    {!loading && (
+                    {!loading && stats.recentActivity.length > 0 && (
                         <ul className="activity-list">
                             {stats.recentActivity.map((row) => (
                                 <ActivityRow
@@ -122,16 +122,6 @@ export default function AdminDashboard({ user }) {
                                     title={`Revenue: ${row.source}`}
                                     meta={`₱${Number(row.amount).toLocaleString()} · ${row.fund_allocation}`}
                                     time={timeAgo(row.created_at)}
-                                />
-                            ))}
-
-                            {stats.recentRequests.map((u) => (
-                                <ActivityRow
-                                    key={`usr-${u.id}`}
-                                    dot="blue"
-                                    title="New account request"
-                                    meta={`${u.username} · ${u.role}`}
-                                    time={timeAgo(u.created_at)}
                                 />
                             ))}
                         </ul>
@@ -144,13 +134,12 @@ export default function AdminDashboard({ user }) {
                         <h2>Quick Actions</h2>
                     </div>
                     <div className="quick-actions">
-                        <QuickAction to="/admin/pending-users" Icon={IconUsers}  label="Review Pending Accounts" />
                         <QuickAction to="/admin/invite-codes"  Icon={IconTicket} label="Generate Invite Code" />
                         <QuickAction to="/Revenue"             Icon={IconMoney}  label="Monitor Revenue Records" />
                     </div>
                     <div className="dash-tip">
                         <strong>Tip:</strong> Your dashboard auto-refreshes every 30 seconds,
-                        so numbers stay current as staff add records.
+                        so numbers stay current as the treasurer adds records.
                     </div>
                 </div>
 

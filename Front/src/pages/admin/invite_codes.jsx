@@ -5,16 +5,23 @@ import "../../styles/admin.css";
 export default function InviteCodesPage() {
     const { codes, loading, error, success, generateCode, revokeCode } = useInvite();
     const [role, setRole] = useState("staff");
+    const [email, setEmail] = useState("");
     const [hours, setHours] = useState(24);
 
-    const handleGenerate = () => generateCode(role, Number(hours));
+    const handleGenerate = (e) => {
+        e.preventDefault();
+        if (!email.trim()) return;
+        generateCode(role, email.trim(), Number(hours));
+        setEmail(""); // clear input
+    };
+
     const copy = (code) => navigator.clipboard.writeText(code);
 
     return (
         <div className="admin-page">
             <header className="admin-header">
                 <h1>Invite Codes</h1>
-                <p>Generate one-time codes to onboard new staff, treasurers, or admins.</p>
+                <p>Generate one-time codes and send them to a specific email address.</p>
             </header>
 
             {error && <div className="alert alert-error">{error}</div>}
@@ -22,7 +29,17 @@ export default function InviteCodesPage() {
 
             <section className="admin-card">
                 <h2>Generate a new code</h2>
-                <div className="invite-form">
+                <form className="invite-form" onSubmit={handleGenerate}>
+                    <label>
+                        Email address
+                        <input 
+                            type="email" 
+                            placeholder="name@example.com" 
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required 
+                        />
+                    </label>
                     <label>
                         Role
                         <select value={role} onChange={(e) => setRole(e.target.value)}>
@@ -36,8 +53,8 @@ export default function InviteCodesPage() {
                         <input type="number" min="1" max="168"
                             value={hours} onChange={(e) => setHours(e.target.value)} />
                     </label>
-                    <button className="btn-primary" onClick={handleGenerate}>Generate</button>
-                </div>
+                    <button type="submit" className="btn-primary">Generate</button>
+                </form>
             </section>
 
             <section className="admin-card">
@@ -49,6 +66,7 @@ export default function InviteCodesPage() {
                         <thead>
                             <tr>
                                 <th>Code</th>
+                                <th>Sent to (Email)</th>
                                 <th>Role</th>
                                 <th>Expires</th>
                                 <th>Used</th>
@@ -60,13 +78,14 @@ export default function InviteCodesPage() {
                                 <tr key={c.id}>
                                     <td>
                                         <code className="code-pill">{c.code}</code>
-                                        <button className="link-btn" onClick={() => copy(c.code)}>copy</button>
+                                        <button type="button" className="link-btn" onClick={() => copy(c.code)}>copy</button>
                                     </td>
+                                    <td>{c.email || "—"}</td>
                                     <td>{c.role}</td>
                                     <td>{new Date(c.expiresAt).toLocaleString()}</td>
                                     <td>{c.usedBy ? "Yes" : "No"}</td>
                                     <td>
-                                        <button className="btn-danger" onClick={() => revokeCode(c.id)}>
+                                        <button type="button" className="btn-danger" onClick={() => revokeCode(c.id)}>
                                             Revoke
                                         </button>
                                     </td>
