@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Outlet, Link, useNavigate } from "react-router-dom"
 import { useRole } from "../custom_hooks/use_role"
 import axios from "axios"
+import sealLogo from "../assets/barangay-malagasang-logo.jpg"
 import '../styles/layout.css'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
@@ -32,7 +33,11 @@ export default function DashboardLayout() {
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
-                <h3>Barangay <br /> Finance</h3>
+                {/* Brand Header with Logo */}
+                <div className="sidebar-brand">
+                    <img src={sealLogo} alt="Malagasang II-A Seal" className="sidebar-logo" />
+                    <h3>Malagasang II-A <br /> Finance</h3>
+                </div>
 
                 <nav>
                     <Link to="/Dashboard">Dashboard</Link>

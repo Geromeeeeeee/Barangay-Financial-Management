@@ -11,9 +11,9 @@
     min-height: 100vh;
     padding: 24px;
     background:
-        radial-gradient(circle at 20% 10%, #1e3a8a 0%, transparent 45%),
+        radial-gradient(circle at 20% 10%, #166534 0%, transparent 45%),
         radial-gradient(circle at 85% 90%, #0f172a 0%, transparent 50%),
-        linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+        linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
     color: #0f172a;
 }
 
@@ -24,7 +24,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
     z-index: 9999;
     animation: fadeOut 0.5s ease 1.8s forwards;
     font-family: 'Inter', sans-serif;
@@ -87,7 +87,7 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #60a5fa;
+    background: #4ade80; /* Light green loader */
     animation: bounce 1.2s infinite ease-in-out;
 }
 
@@ -225,9 +225,9 @@
 
 .field input:focus,
 .field select:focus {
-    border-color: #2563eb;
+    border-color: #16a34a;
     background: #ffffff;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
 }
 
 /* ================= PASSWORD TOGGLE ================= */
@@ -258,8 +258,8 @@
 }
 
 .password-toggle:hover {
-    color: #2563eb;
-    background: rgba(37, 99, 235, 0.08);
+    color: #16a34a;
+    background: rgba(22, 163, 74, 0.08);
 }
 
 .password-toggle svg { width: 18px; height: 18px; display: block; }
@@ -307,12 +307,12 @@
     gap: 10px;
     align-items: flex-start;
     padding: 10px 12px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
     border-radius: 10px;
     font-size: 0.76rem;
     line-height: 1.45;
-    color: #1e40af;
+    color: #166534;
     margin-top: 2px;
 }
 
@@ -321,10 +321,10 @@
     height: 15px;
     flex-shrink: 0;
     margin-top: 2px;
-    color: #2563eb;
+    color: #16a34a;
 }
 
-.info-note strong { font-weight: 700; color: #1e3a8a; }
+.info-note strong { font-weight: 700; color: #14532d; }
 
 /* ================= EXTRAS ================= */
 .form-extras {
@@ -347,12 +347,12 @@
 .checkbox input {
     width: 14px;
     height: 14px;
-    accent-color: #2563eb;
+    accent-color: #16a34a;
     cursor: pointer;
 }
 
 .forgot {
-    color: #2563eb;
+    color: #16a34a;
     text-decoration: none;
     font-weight: 600;
 }
@@ -368,18 +368,18 @@
     font-weight: 600;
     letter-spacing: 0.2px;
     color: #ffffff;
-    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+    background: linear-gradient(135deg, #14532d 0%, #22c55e 100%); /* Green button */
     border: none;
     border-radius: 10px;
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.2s, filter 0.2s;
-    box-shadow: 0 8px 20px -8px rgba(37, 99, 235, 0.6);
+    box-shadow: 0 8px 20px -8px rgba(34, 197, 94, 0.6);
 }
 
 .submit-button:hover {
     transform: translateY(-1px);
     filter: brightness(1.05);
-    box-shadow: 0 12px 26px -8px rgba(37, 99, 235, 0.7);
+    box-shadow: 0 12px 26px -8px rgba(34, 197, 94, 0.7);
 }
 
 .submit-button:active { transform: translateY(0); }
@@ -402,7 +402,7 @@
     background: none;
     border: none;
     padding: 0;
-    color: #2563eb;
+    color: #16a34a;
     font: inherit;
     font-weight: 600;
     cursor: pointer;
@@ -444,9 +444,9 @@
     overflow: hidden;
     background:
         radial-gradient(circle at 50% 15%, rgba(250, 204, 21, 0.22) 0%, transparent 55%),
-        radial-gradient(circle at 15% 85%, rgba(220, 38, 38, 0.35) 0%, transparent 55%),
-        radial-gradient(circle at 90% 80%, rgba(37, 99, 235, 0.35) 0%, transparent 55%),
-        linear-gradient(160deg, #1e3a8a 0%, #172554 100%);
+        radial-gradient(circle at 15% 85%, rgba(220, 38, 38, 0.25) 0%, transparent 55%),
+        radial-gradient(circle at 90% 80%, rgba(22, 163, 74, 0.35) 0%, transparent 55%),
+        linear-gradient(160deg, #166534 0%, #052e16 100%); /* Dark green base */
 }
 
 .auth-brand-side::before {
@@ -519,14 +519,14 @@
     width: 52px;
     height: 3px;
     border-radius: 2px;
-    background: linear-gradient(90deg, #dc2626 0%, #facc15 50%, #2563eb 100%);
+    background: linear-gradient(90deg, #dc2626 0%, #facc15 50%, #16a34a 100%); /* Red → Gold → Green */
     margin: 18px 0;
 }
 
 .welcome-text {
     font-size: 0.85rem;
     line-height: 1.6;
-    color: #dbeafe;
+    color: #dcfce7;
     max-width: 320px;
     margin: 0;
 }

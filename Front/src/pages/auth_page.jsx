@@ -4,7 +4,7 @@ import useAuth from "../custom_hooks/use_auth";
 import { useErr } from "../custom_hooks/use_err";
 import { useStat } from "../custom_hooks/use_stat";
 import { validateInviteCode } from "../custom_hooks/use_invite";
-import sealLogo from "../assets/barangay-salinas-logo.jpg";
+import sealLogo from "../assets/barangay-malagasang-logo.jpg";
 import Splash_Screen from "../components/splash_screen";
 
 function EyeIcon({ open }) {
@@ -78,10 +78,10 @@ export default function Auth_Page() {
                 <div className="auth-form-side">
                     <div className="brand-mark">
                         <div className="brand-icon">
-                            <img src={sealLogo} alt="Barangay Salinas 1 Seal" className="brand-icon-img" />
+                            <img src={sealLogo} alt="Barangay Malagasang II-A Seal" className="brand-icon-img" />
                         </div>
                         <div>
-                            <div className="brand-name">Barangay Financial</div>
+                            <div className="brand-name">Barangay Malagasang II-A</div>
                             <div className="brand-sub">Management System</div>
                         </div>
                     </div>
@@ -106,7 +106,7 @@ export default function Auth_Page() {
                                     <div className={`invite-wrap invite-${codeStatus || "idle"}`}>
                                         <input
                                             type="text"
-                                            placeholder="SAL1-XXXX-XXXX"
+                                            placeholder="MAL2A-XXXX-XXXX"
                                             required
                                             value={inviteCode}
                                             onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
@@ -201,7 +201,7 @@ export default function Auth_Page() {
                                         <line x1="12" y1="16" x2="12" y2="12" />
                                         <line x1="12" y1="8" x2="12.01" y2="8" />
                                     </svg>
-                                    <span>Your request will be reviewed by an admin before you can sign in.</span>
+                                    <span>Use the exact email address that received the invite code.</span>
                                 </div>
                             </>
                         )}
@@ -237,10 +237,10 @@ export default function Auth_Page() {
                 <aside className="auth-brand-side">
                     <div className="brand-side-content">
                         <div className="seal-wrap">
-                            <img src={sealLogo} alt="Barangay Salinas 1 Seal" className="seal-img" />
+                            <img src={sealLogo} alt="Barangay Malagasang II-A Seal" className="seal-img" />
                         </div>
                         <h2 className="welcome-title">Maligayang pagdating, Kabarangay!</h2>
-                        <p className="welcome-sub">Welcome to Barangay Salinas 1</p>
+                        <p className="welcome-sub">Welcome to Barangay Malagasang II-A</p>
                         <div className="welcome-divider" />
                         <p className="welcome-text">
                             {isLogin
@@ -248,7 +248,7 @@ export default function Auth_Page() {
                                 : "Kailangan mo ng invite code mula sa barangay administrator upang makapagrehistro."}
                         </p>
                     </div>
-                    <div className="brand-footer">City of Bacoor · Cavite</div>
+                    <div className="brand-footer">City of Imus · Cavite</div>
                 </aside>
 
             </div>

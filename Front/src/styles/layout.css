@@ -25,6 +25,29 @@
     margin: 0;
 }
 
+/* Sidebar Brand Area */
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.sidebar-logo {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    border-radius: 50%;
+    border: 2px solid #e2e8f0;
+}
+
+.sidebar-brand h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.2;
+    color: #0f172a;
+}
+
 nav {
     display: flex;
     align-items: center;
