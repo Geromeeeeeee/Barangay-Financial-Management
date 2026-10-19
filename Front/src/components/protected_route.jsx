@@ -12,14 +12,13 @@ export function Protected_Route({ allowedRoles }) {
     useEffect(() => {
         const checkSession = async () => {
             try {
-                const response = await axios.get(
-                    `${API_URL}session.php`, {
-                        withCredentials: true
-                    }
-                )
+                const response = await axios.get(`${API_URL}session.php`, {
+                    withCredentials: true
+                })
                 if (response.data.status === "logged") {
                     setSession(true);
-                    setRole(response.data.user?.role || null);
+                    // 👈 Force lowercase to prevent case-sensitivity bugs
+                    setRole((response.data.user?.role || "").toLowerCase());
 
                     if (response.data.user) {
                         localStorage.setItem("user", JSON.stringify(response.data.user));
@@ -38,15 +37,8 @@ export function Protected_Route({ allowedRoles }) {
         checkSession()
     }, [])
 
-    if (loading) {
-        return <h1>Loading...</h1>
-    }
-
-    if (!session) {
-        return <Navigate to={"/"} replace />
-    }
-
-    // Role check (only runs if allowedRoles is passed)
+    if (loading) return <h1>Loading...</h1>
+    if (!session) return <Navigate to={"/"} replace />
     if (allowedRoles && !allowedRoles.includes(role)) {
         return <Navigate to={"/Dashboard"} replace />
     }

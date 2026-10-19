@@ -46,6 +46,8 @@ export default function InviteCodesPage() {
                             <option value="staff">Staff</option>
                             <option value="treasurer">Treasurer</option>
                             <option value="admin">Admin</option>
+                            <option value="sk_chairman">SK Chairman</option> {/* 👈 NEW */}
+                            <option value="sk_member">SK Member</option>     {/* 👈 NEW */}
                         </select>
                     </label>
                     <label>

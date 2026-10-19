@@ -6,6 +6,8 @@ use PHPMailer\PHPMailer\Exception;
 require_once __DIR__ . '/../vendor/autoload.php';
 
 class Mailer {
+    
+    // ===== 1. SEND INVITE CODE =====
     public function sendInvite($toEmail, $role, $code) {
         $mail = new PHPMailer(true);
 
@@ -40,7 +42,52 @@ class Mailer {
             $mail->send();
             return true;
         } catch (Exception $e) {
-            error_log("MAILER ERROR: " . $mail->ErrorInfo);
+            error_log("MAILER ERROR (Invite): " . $mail->ErrorInfo);
+            return false;
+        }
+    }
+
+    // ===== 2. SEND PASSWORD RESET LINK =====
+    public function sendPasswordReset($toEmail, $token) {
+        $mail = new PHPMailer(true);
+
+        try {
+            // Gmail SMTP Settings
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $_ENV['MAIL_USERNAME'];
+            $mail->Password   = $_ENV['MAIL_PASSWORD'];
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
+
+            // Recipients
+            $mail->setFrom($_ENV['MAIL_USERNAME'], 'Barangay Malagasang II-A');
+            $mail->addAddress($toEmail);
+
+            // Link goes to your React frontend
+            $resetLink = "http://localhost:5173/reset-password?token=" . $token;
+
+            // Content
+            $mail->isHTML(true);
+            $mail->Subject = 'Password Reset Request';
+            $mail->Body    = "
+                <h2>Password Reset</h2>
+                <p>We received a request to reset the password for your Barangay System account.</p>
+                <p>Click the button below to set a new password:</p>
+                <p style='margin: 30px 0;'>
+                    <a href='{$resetLink}' style='background: #166534; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;'>Reset My Password</a>
+                </p>
+                <p style='font-size: 12px; color: #666;'>Or copy and paste this link into your browser:<br>
+                <a href='{$resetLink}'>{$resetLink}</a></p>
+                <hr>
+                <p><em>If you didn't request this, you can safely ignore this email. This link expires in 1 hour.</em></p>
+            ";
+
+            $mail->send();
+            return true;
+        } catch (Exception $e) {
+            error_log("MAILER ERROR (Reset): " . $mail->ErrorInfo);
             return false;
         }
     }

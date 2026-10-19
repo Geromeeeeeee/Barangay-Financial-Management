@@ -8,7 +8,7 @@ import '../styles/layout.css'
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
 export default function DashboardLayout() {
-    const { isAdmin, isTreasurer, isStaff } = useRole();
+    const { isAdmin, isTreasurer, isStaff, isSK } = useRole(); 
     const navigate = useNavigate();
 
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -17,11 +17,7 @@ export default function DashboardLayout() {
     const confirmLogout = async () => {
         setLoggingOut(true);
         try {
-            await axios.post(
-                `${API_URL}auth.php`,
-                { action: 'logOut' },
-                { withCredentials: true }
-            );
+            await axios.post(`${API_URL}auth.php`, { action: 'logOut' }, { withCredentials: true });
         } catch (e) {
             console.error("Logout request failed:", e);
         } finally {
@@ -33,7 +29,6 @@ export default function DashboardLayout() {
     return (
         <div className="dashboard-container">
             <aside className="sidebar">
-                {/* Brand Header with Logo */}
                 <div className="sidebar-brand">
                     <img src={sealLogo} alt="Malagasang II-A Seal" className="sidebar-logo" />
                     <h3>Malagasang II-A <br /> Finance</h3>
@@ -42,29 +37,30 @@ export default function DashboardLayout() {
                 <nav>
                     <Link to="/Dashboard">Dashboard</Link>
 
-                    {(isAdmin || isTreasurer) &&(
+                    {(isAdmin || isTreasurer || isSK) && (
                         <>
-                        <Link to="/Revenue">Revenue</Link>
-                        <Link to="/Expenditure">Expenditures</Link>
+                            <Link to="/Revenue">Revenue</Link>
+                            <Link to="/Expenditure">Expenditures</Link>
                         </>
                     )}
 
-                    {isStaff && (
+                    {/* 👇 Removed isAdmin. Now only Staff and Treasurer see this */}
+                    {(isStaff || isTreasurer) && (
                         <Link to="/Reports">Reports</Link>
                     )}
+                    
+                    {isTreasurer && (
+                        <Link to="/admin/projects">Project Requests</Link>
+                    )}
+
                     {isAdmin && (
                         <Link to="/admin/invite-codes">Invite Codes</Link>
                     )}
                 </nav>
 
                 <div className="sidebar-footer">
-                    <button
-                        type="button"
-                        className="logout-btn"
-                        onClick={() => setShowLogoutConfirm(true)}
-                    >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <button type="button" className="logout-btn" onClick={() => setShowLogoutConfirm(true)}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                             <polyline points="16 17 21 12 16 7" />
                             <line x1="21" y1="12" x2="9" y2="12" />
@@ -79,41 +75,20 @@ export default function DashboardLayout() {
             </main>
 
             {showLogoutConfirm && (
-                <div
-                    className="logout-modal-backdrop"
-                    onClick={() => !loggingOut && setShowLogoutConfirm(false)}
-                >
-                    <div
-                        className="logout-modal"
-                        onClick={(e) => e.stopPropagation()}
-                    >
+                <div className="logout-modal-backdrop" onClick={() => !loggingOut && setShowLogoutConfirm(false)}>
+                    <div className="logout-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="logout-modal-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                                 <polyline points="16 17 21 12 16 7" />
                                 <line x1="21" y1="12" x2="9" y2="12" />
                             </svg>
                         </div>
-
                         <h3>Log out?</h3>
                         <p>Are you sure you want to end your session?</p>
-
                         <div className="logout-modal-actions">
-                            <button
-                                type="button"
-                                className="logout-modal-cancel"
-                                onClick={() => setShowLogoutConfirm(false)}
-                                disabled={loggingOut}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="logout-modal-confirm"
-                                onClick={confirmLogout}
-                                disabled={loggingOut}
-                            >
+                            <button type="button" className="logout-modal-cancel" onClick={() => setShowLogoutConfirm(false)} disabled={loggingOut}>Cancel</button>
+                            <button type="button" className="logout-modal-confirm" onClick={confirmLogout} disabled={loggingOut}>
                                 {loggingOut ? "Logging out…" : "Yes, log out"}
                             </button>
                         </div>

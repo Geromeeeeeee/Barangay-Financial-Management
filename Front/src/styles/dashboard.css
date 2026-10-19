@@ -384,3 +384,9 @@
 }
 
 .dash-tip strong { color: #92400e; }
+
+.unknown-role-msg {
+    padding: 30px;
+    font-size: 1.1rem;
+    color: #64748b;
+}

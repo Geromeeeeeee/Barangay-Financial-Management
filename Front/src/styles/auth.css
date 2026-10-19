@@ -544,6 +544,18 @@
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.auth-shell.reset-layout {
+    display: flex;
+    justify-content: center;
+    max-width: 480px;
+    min-height: auto;
+}
+
+.auth-shell.reset-layout .auth-form-side {
+    width: 100%;
+    padding: 40px;
+}
+
 /* ================= RESPONSIVE ================= */
 @media (max-width: 900px) {
     .auth-shell {

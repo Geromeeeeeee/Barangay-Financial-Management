@@ -1,0 +1,54 @@
+
+.sk-view .dash-hero {
+    background:
+        radial-gradient(circle at 90% 20%, rgba(56, 189, 248, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 10% 100%, rgba(15, 118, 110, 0.25) 0%, transparent 45%),
+        linear-gradient(135deg, #0f766e 0%, #042f2e 100%);
+}
+
+.sk-view .dash-eyebrow { color: #38bdf8; }
+.sk-view .dash-role-badge {
+    background: rgba(56, 189, 248, 0.15);
+    color: #7dd3fc;
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+.sk-project-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sk-project-form input,
+.sk-project-form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    outline: none;
+}
+
+.sk-project-form input:focus,
+.sk-project-form textarea:focus {
+    border-color: #16a34a;
+    background: #fff;
+}
+
+.sk-project-form button {
+    padding: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: white;
+    background: #16a34a;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.sk-project-form button:hover {
+    background: #15803d;
+}

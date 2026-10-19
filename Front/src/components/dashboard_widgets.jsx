@@ -41,9 +41,7 @@ export const IconMoney = () => (
 
 export const IconPeso = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        {/* The "P" shape */}
         <path d="M7 20V4h6a4 4 0 0 1 0 8H7" />
-        {/* Two horizontal strokes through the P (peso ₱) */}
         <line x1="5" y1="10" x2="15" y2="10" />
         <line x1="5" y1="14" x2="15" y2="14" />
     </svg>
@@ -146,13 +144,27 @@ export function QuickAction({ to, Icon, label }) {
 
 export function DashboardHero({ user }) {
     const greeting = getGreeting();
+
+    // 👇 Translates the raw database role into a pretty display name
+    const formatRole = (rawRole) => {
+        if (!rawRole) return "";
+        const roleMap = {
+            "admin": "Administrator",
+            "treasurer": "Treasurer",
+            "staff": "Staff",
+            "sk_chairman": "SK Chairman",
+            "sk_member": "SK Member"
+        };
+        return roleMap[rawRole.toLowerCase()] || rawRole;
+    };
+
     return (
         <header className="dash-hero">
             <div>
                 <p className="dash-eyebrow">{greeting}</p>
                 <h1>Welcome, {user.firstName}!</h1>
                 <p className="dash-sub">
-                    You're signed in as <span className="dash-role-badge">{user.role}</span>
+                    You're signed in as <span className="dash-role-badge">{formatRole(user.role)}</span>
                 </p>
             </div>
             <div className="dash-hero-date">
@@ -167,7 +179,6 @@ export function DashboardHero({ user }) {
     );
 }
 
-// ======================== HELPERS ========================
 function getGreeting() {
     const h = new Date().getHours();
     if (h < 12) return "Good morning";
