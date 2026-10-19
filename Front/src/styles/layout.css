@@ -30,7 +30,6 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 20px;
 }
 
 .sidebar-logo {
@@ -59,15 +58,6 @@ nav a {
     color: #091540af;
 }
 
-.sidebar nav .nav-section {
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: #94a3b8;
-    margin: 18px 0 8px;
-    padding: 0 12px;
-}
 .user-badge {
     background: rgba(9, 21, 64, 0.06);
     border: 1px solid rgba(9, 21, 64, 0.08);

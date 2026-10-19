@@ -21,7 +21,6 @@ export function Protected_Route({ allowedRoles }) {
                     setSession(true);
                     setRole(response.data.user?.role || null);
 
-                    // Keep localStorage in sync with server
                     if (response.data.user) {
                         localStorage.setItem("user", JSON.stringify(response.data.user));
                     }

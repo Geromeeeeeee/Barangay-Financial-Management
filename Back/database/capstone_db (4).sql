@@ -118,7 +118,7 @@ INSERT INTO `expenditures` (`id`, `amount`, `description`, `fund_allocation`, `c
 --
 
 CREATE TABLE `fund_balances` (
-  `id` int NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
   `fund_name` varchar(100) NOT NULL,
   `balance` decimal(12,2) NOT NULL DEFAULT '0.00'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -169,7 +169,7 @@ INSERT INTO `invite_codes` (`id`, `code`, `role`, `recipient_email`, `expires_at
 --
 
 CREATE TABLE `revenues` (
-  `id` int NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
   `amount` decimal(12,2) NOT NULL,
   `source` varchar(100) NOT NULL,
   `fund_allocation` varchar(100) DEFAULT NULL,
@@ -206,7 +206,7 @@ INSERT INTO `revenues` (`id`, `amount`, `source`, `fund_allocation`, `created_by
 --
 
 CREATE TABLE `revenue_allocations` (
-  `id` bigint UNSIGNED NOT NULL,
+  `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
   `revenue_id` int NOT NULL,
   `category_id` int UNSIGNED NOT NULL,
   `amount` decimal(15,2) NOT NULL,

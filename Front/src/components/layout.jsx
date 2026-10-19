@@ -8,7 +8,7 @@ import '../styles/layout.css'
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
 export default function DashboardLayout() {
-    const { isAdmin } = useRole();
+    const { isAdmin, isTreasurer, isStaff } = useRole();
     const navigate = useNavigate();
 
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -41,12 +41,18 @@ export default function DashboardLayout() {
 
                 <nav>
                     <Link to="/Dashboard">Dashboard</Link>
-                    <Link to="/Revenue">Revenue</Link>
-                    <Link to="/Expenditure">Expenditures</Link>
-                    <Link to="/Reports">Reports</Link> {/* 👈 Added Reports Link */}
 
+                    {(isAdmin || isTreasurer) &&(
+                        <>
+                        <Link to="/Revenue">Revenue</Link>
+                        <Link to="/Expenditure">Expenditures</Link>
+                        </>
+                    )}
+
+                    {isStaff && (
+                        <Link to="/Reports">Reports</Link>
+                    )}
                     {isAdmin && (
-                        // 👇 Removed Pending Accounts, kept Invite Codes
                         <Link to="/admin/invite-codes">Invite Codes</Link>
                     )}
                 </nav>
@@ -72,7 +78,6 @@ export default function DashboardLayout() {
                 <Outlet />
             </main>
 
-            {/* ===== Logout Confirmation Modal ===== */}
             {showLogoutConfirm && (
                 <div
                     className="logout-modal-backdrop"

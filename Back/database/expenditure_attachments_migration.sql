@@ -1,4 +1,10 @@
 ALTER TABLE expenditures
+    ADD PRIMARY KEY (id);
+
+ALTER TABLE expenditures
+    MODIFY COLUMN id INT UNSIGNED NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE expenditures
     ADD COLUMN attachment_path VARCHAR(255) NULL AFTER subcategory_id,
     ADD COLUMN attachment_name VARCHAR(255) NULL AFTER attachment_path,
     ADD COLUMN attachment_mime VARCHAR(100) NULL AFTER attachment_name,

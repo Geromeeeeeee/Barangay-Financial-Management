@@ -6,7 +6,7 @@ import { Protected_Route } from './components/protected_route';
 import DashboardLayout from './components/layout';
 import Revenue from './pages/revenue';
 import Expenditure from './pages/expenditure';
-import Reports from './pages/reports'; // 👈 Added import
+import Reports from './pages/reports';
 import InviteCodesPage from './pages/admin/invite_codes';
 
 function App() {
@@ -16,13 +16,25 @@ function App() {
         <Route path='/' element={<Auth_Page/>}/>
         <Route path='/auth' element={<Auth_Page/>}/>
 
-        {/* Everyone except staff */}
-        <Route element={<Protected_Route />}>
+        {/* General Access para sa dashboard */}
+        <Route element={<Protected_Route/>}>
           <Route element={<DashboardLayout />}>
             <Route path="/Dashboard" element={<Dashboard />} />
+          </Route>
+        </Route>
+        
+        {/* Everyone except staff has access */}
+        <Route element={<Protected_Route allowedRoles={['admin', 'treasurer']}/>}>
+          <Route element={<DashboardLayout />}>
             <Route path="/Revenue" element={<Revenue />} />
             <Route path="/Expenditure" element={<Expenditure />} />
-            <Route path="/Reports" element={<Reports />} /> {/* 👈 Added route */}
+          </Route>
+        </Route>
+
+        {/* Staff */}
+        <Route element={<Protected_Route allowedRoles={['staff']}/>}>
+          <Route element={<DashboardLayout />}>
+            <Route path="/Reports" element={<Reports />} />
           </Route>
         </Route>
 
