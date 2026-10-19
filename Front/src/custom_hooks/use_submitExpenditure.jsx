@@ -1,7 +1,7 @@
 import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
-export default function useSubmitExpenditure({setLoading, setErrorMessage, setIsModalOpen, selectedCategory}){
+export default function useSubmitExpenditure({setLoading, setErrorMessage, selectedCategory, setSuccessMessage}){
     const handleSubmit = async (event) =>{
         event.preventDefault();
         setLoading(true);
@@ -19,7 +19,7 @@ export default function useSubmitExpenditure({setLoading, setErrorMessage, setIs
             );
 
             if (response?.data?.status === "expenditure_recorded") {
-                setIsModalOpen(false);
+                setSuccessMessage("Expenditure Recorded!")
             } else {
                 setErrorMessage("Failed to record expenditure.");
             }

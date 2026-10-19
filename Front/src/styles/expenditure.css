@@ -44,6 +44,14 @@
     font-size: .83rem; 
     margin-bottom: 16px; 
 }
+.expenditure-modal-success{
+    padding: 10px 14px; 
+    background: #cae987; 
+    color: #061c08; 
+    border: 1px solid #e5feca; 
+    border-radius: 10px; 
+    font-size: .83rem; 
+}
 .expenditure-card { 
     background: #fff; 
     border: 1px solid #e2e8f0; 

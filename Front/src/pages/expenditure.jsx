@@ -15,8 +15,8 @@ export default function Expenditure() {
     const { expenditures, loading, error, refetch } = useExpenditure();
     const {peso, date} = useFormat();
     const { categories, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory } = useBudgetCategories();
-    const {isAdmin, isStaff} = useRole();
-    const canModify = !isAdmin;
+    const {isTreasurer} = useRole();
+    const canModify = isTreasurer;
 
     const handleCloseModal = (open) => {
         setIsModalOpen(open);
@@ -50,7 +50,7 @@ export default function Expenditure() {
                                 </div>
                                 {canModify && (
                                     <button type="button" className="expenditure-open-btn" onClick={() => { setSelectedCategory(category); setIsModalOpen(true); }}>
-                                        {isStaff ? "Request Expenditure" : "Record Expenditure"}
+                                        Record Expenditure
                                     </button>
                                 )}
                             </div>

@@ -26,6 +26,8 @@ export function useRole() {
         isTreasurer: hasRole(["treasurer"]),
         isStaff:     hasRole(["staff"]),
         isSK:        hasRole(["sk_chairman", "sk_member"]),
+        isSKChair: hasRole(['sk_chairman']),
+        isSKMember: hasRole(['sk_member']),
         isLoggedIn:  !!user,
     };
 }

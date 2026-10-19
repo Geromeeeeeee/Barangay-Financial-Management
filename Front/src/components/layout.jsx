@@ -43,8 +43,7 @@ export default function DashboardLayout() {
                             <Link to="/Expenditure">Expenditures</Link>
                         </>
                     )}
-
-                    {/* 👇 Removed isAdmin. Now only Staff and Treasurer see this */}
+                    
                     {(isStaff || isTreasurer) && (
                         <Link to="/Reports">Reports</Link>
                     )}

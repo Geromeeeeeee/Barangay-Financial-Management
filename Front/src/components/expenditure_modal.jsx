@@ -6,8 +6,19 @@ import useSubmitExpenditure from "../custom_hooks/use_submitExpenditure";
 export default function ExpenditureModal({ setIsModalOpen, categories = [], selectedCategory = null }) {
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-    const {isStaff, isTreasurer} = useRole();
-    const {handleSubmit} = useSubmitExpenditure({setLoading, setErrorMessage, selectedCategory, setIsModalOpen});
+    const [successMessage, setSuccessMessage] = useState("")
+    const {isTreasurer} = useRole();
+    const {handleSubmit} = useSubmitExpenditure({setLoading, setErrorMessage, selectedCategory, setSuccessMessage});
+
+    if(successMessage){
+        return(
+            <div className="expenditure-modal-background" onClick={()=> setIsModalOpen(false)}>
+                <div className="expenditure-modal" onClick={(event) => event.stopPropagation()}>
+                    {successMessage && (<div className="expenditure-modal-success">{successMessage}</div>)}
+                </div>
+            </div>
+        )
+    }
     
     return (
         <div
@@ -19,9 +30,10 @@ export default function ExpenditureModal({ setIsModalOpen, categories = [], sele
         >
             <div className="expenditure-modal" onClick={(event) => event.stopPropagation()}>
                 <h2 id="expenditure-modal-title">
-                    {isStaff ? "Request Expenditure" : "Record Expenditure"}
+                    Record Expenditure
                 </h2>
                 {errorMessage && <div className="expenditure-modal-error">{errorMessage}</div>}
+                {successMessage && <div className="expenditure-modal-error">{successMessage}</div>}
 
                 <form onSubmit={handleSubmit} className="expenditure-form">
                     {selectedCategory && (
