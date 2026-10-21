@@ -1,87 +1,29 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import Revenue_Modal from '../components/revenue_modal'
 import useRevenue from '../custom_hooks/use_revenue'
 import { useRole } from '../custom_hooks/use_role'
+import useFilter from '../custom_hooks/use_filter'
+import usePagination from '../custom_hooks/use_pagination'
+import useFormat from '../custom_hooks/use_format'
 import '../styles/revenue.css'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
 export default function Revenue () {
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [filters, setFilters] = useState({
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear(),
-        show: "10"
-    })
     const [currentPage, setCurrentPage] = useState(1)
-    const filterParams = useMemo(() => ({
-        month: filters.month,
-        year: filters.year
-    }), [filters.month, filters.year])
+    const {filters, months, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { revenues, loading, error, refetch } = useRevenue(filterParams)
+    const {totalPages, displayedRecords} = usePagination({currentPage, filters, records: revenues})
     const { isTreasurer, isStaff } = useRole()
+    const {peso, date} = useFormat()
 
     const canRecord = isTreasurer || isStaff
-    const months = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ]
-
-    const formatPeso = (n) =>
-        new Intl.NumberFormat("en-PH", {
-            style: "currency",
-            currency: "PHP",
-            minimumFractionDigits: 2,
-        }).format(Number(n || 0))
-
-    const formatDate = (d) => {
-        if (!d) return "—"
-        return new Date(d.replace(" ", "T")).toLocaleDateString("en-PH", {
-            month: "short", day: "numeric", year: "numeric",
-        })
-    }
 
     const handleCloseModal = (open) => {
         setIsModalOpen(open)
         if (!open) refetch()
     }
-
-    const updateFilter = (event) => {
-        const { name, value } = event.target
-
-        setFilters((current) => ({
-            ...current,
-            [name]: value
-        }))
-
-        setCurrentPage(1)
-    }
-
-    const clearFilters = () => {
-        setFilters({
-            month: new Date().getMonth() + 1,
-            year: new Date().getFullYear(),
-            show: "10"
-        })
-
-        setCurrentPage(1)
-    }
-
-    const pageSize = filters.show === "all"
-        ? revenues.length
-        : Number(filters.show)
-
-    const totalPages = Math.max(
-        1,
-        Math.ceil(revenues.length / pageSize)
-    )
-
-    const startIndex = (currentPage - 1) * pageSize
-
-    const displayedRevenues = revenues.slice(
-        startIndex,
-        startIndex + pageSize
-    )
 
     return (
         <div className="revenue-page">
@@ -145,9 +87,9 @@ export default function Revenue () {
                             </tr>
                         </thead>
                         <tbody>
-                            {displayedRevenues.map((r) => (
+                            {displayedRecords.map((r) => (
                                 <tr key={r.id}>
-                                    <td className="muted">{formatDate(r.created_at)}</td>
+                                    <td className="muted">{date(r.created_at)}</td>
                                     <td>{r.source}</td>
                                     <td>
                                         {r.fund_allocation
@@ -161,7 +103,7 @@ export default function Revenue () {
                                             </a>
                                         ) : <span className="muted">—</span>}
                                     </td>
-                                    <td className="right amount">{formatPeso(r.amount)}</td>
+                                    <td className="right amount">{peso(r.amount)}</td>
                                 </tr>
                             ))}
                         </tbody>

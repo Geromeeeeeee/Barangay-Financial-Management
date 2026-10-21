@@ -1,5 +1,6 @@
 export default function useFormat(){
-    const peso = (value) => new Intl.NumberFormat("en-PH",{
+    const peso = (value) => 
+        new Intl.NumberFormat("en-PH",{
          style: "currency", 
          currency: "PHP", 
          minimumFractionDigits: 2

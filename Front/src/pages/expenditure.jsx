@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import ExpenditureModal from "../components/expenditure_modal";
 import useExpenditure from "../custom_hooks/use_expenditure";
 import useFormat from "../custom_hooks/use_format";
 import useBudgetCategories from "../custom_hooks/use_budget_categories";
 import { useRole } from "../custom_hooks/use_role";
+import useFilter from "../custom_hooks/use_filter";
+import usePagination from "../custom_hooks/use_pagination";
 import "../styles/expenditure.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
@@ -13,23 +15,13 @@ export default function Expenditure() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [subcategoryForm, setSubcategoryForm] = useState(null);
     const [currentPage, setCurrentPage] = useState(1)
-    const [filters, setFilters] = useState({
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear(),
-        show: "10"
-    })
-    const filterParams = useMemo(() => Object.fromEntries(
-        Object.entries(filters).filter(([, value]) => value !== "")
-    ), [filters]);
+    const {filters, months, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { expenditures, loading, error, refetch } = useExpenditure(filterParams);
+    const {totalPages, displayedRecords} = usePagination({currentPage, filters, records: expenditures})
     const {peso, date} = useFormat();
     const { categories, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory } = useBudgetCategories();
     const {isTreasurer} = useRole();
     const canModify = isTreasurer;
-    const months = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ];
 
     const handleCloseModal = (open) => {
         setIsModalOpen(open);
@@ -38,37 +30,6 @@ export default function Expenditure() {
             refetch();
         }
     };
-
-    const updateFilter = (event) => {
-        const { name, value } = event.target;
-        setFilters((current) => ({ ...current, [name]: value }));
-    };
-
-    const clearFilters = () => {
-        setFilters({
-            month: new Date().getMonth() + 1,
-            year: new Date().getFullYear(),
-            show: "10"
-        })
-
-        setCurrentPage(1)
-    }
-
-    const pageSize = filters.show === "all"
-        ? expenditures.length
-        : Number(filters.show)
-
-    const totalPages = Math.max(
-        1,
-        Math.ceil(expenditures.length / pageSize)
-    )
-
-    const startIndex = (currentPage - 1) * pageSize
-
-    const displayedExpenditure = expenditures.slice(
-        startIndex,
-        startIndex + pageSize
-    )
 
     return (
         <div className="expenditure-page">
@@ -148,7 +109,7 @@ export default function Expenditure() {
                             <tr><th>Date</th><th>Description</th><th>Fund Allocation</th><th>Supporting Document</th><th className="right">Amount</th></tr>
                         </thead>
                         <tbody>
-                            {displayedExpenditure.map((expenditure) => (
+                            {displayedRecords.map((expenditure) => (
                                 <tr key={expenditure.id}>
                                     <td className="muted">{date(expenditure.created_at)}</td>
                                     <td>{expenditure.description}</td>
