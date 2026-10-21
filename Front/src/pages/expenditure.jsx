@@ -6,6 +6,7 @@ import useBudgetCategories from "../custom_hooks/use_budget_categories";
 import { useRole } from "../custom_hooks/use_role";
 import useFilter from "../custom_hooks/use_filter";
 import usePagination from "../custom_hooks/use_pagination";
+import Filter from "../components/filter";
 import "../styles/expenditure.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
@@ -81,21 +82,7 @@ export default function Expenditure() {
                 </div>
             )}
             <div className="expenditure-card">
-                <div className="records-filters">
-                    <label><span>Month</span><select name="month" value={filters.month} onChange={updateFilter}>{months.map((month, index) => <option key={index + 1} value={index + 1}>{month}</option>)}</select></label>
-                    <label><span>Year</span><input type="number" name="year" value={filters.year} onChange={updateFilter} /></label>
-                    <label>
-                        <span>Show</span>
-                        <select name="show" value={filters.show} onChange={updateFilter}>
-                            <option value="5">5</option>
-                            <option value="10">10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                            <option value="all">All</option>
-                        </select>
-                    </label>
-                    <button type="button" className="filter-clear" onClick={clearFilters}>Reset</button>
-                </div>
+                <Filter filters={filters} updateFilter={updateFilter} months={months} clearFilters={clearFilters}/>
                 {loading && <p className="muted">Loading records...</p>}
                 {!loading && expenditures.length === 0 && (
                     <div className="expenditure-empty">
