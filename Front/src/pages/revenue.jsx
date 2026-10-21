@@ -10,16 +10,17 @@ export default function Revenue () {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [filters, setFilters] = useState({
         month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
+        year: new Date().getFullYear(),
+        show: "10"
     })
-    const filterParams = useMemo(() => Object.fromEntries(
-        Object.entries(filters).filter(([, value]) => value !== '')
-    ), [filters])
+    const [currentPage, setCurrentPage] = useState(1)
+    const filterParams = useMemo(() => ({
+        month: filters.month,
+        year: filters.year
+    }), [filters.month, filters.year])
     const { revenues, loading, error, refetch } = useRevenue(filterParams)
     const { isTreasurer, isStaff } = useRole()
 
-    // Only treasurer and staff can record revenue.
-    // Admin can only monitor.
     const canRecord = isTreasurer || isStaff
     const months = [
         "January", "February", "March", "April", "May", "June",
@@ -47,13 +48,40 @@ export default function Revenue () {
 
     const updateFilter = (event) => {
         const { name, value } = event.target
-        setFilters((current) => ({ ...current, [name]: value }))
+
+        setFilters((current) => ({
+            ...current,
+            [name]: value
+        }))
+
+        setCurrentPage(1)
     }
 
-    const clearFilters = () => setFilters({
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
-    })
+    const clearFilters = () => {
+        setFilters({
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
+            show: "10"
+        })
+
+        setCurrentPage(1)
+    }
+
+    const pageSize = filters.show === "all"
+        ? revenues.length
+        : Number(filters.show)
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(revenues.length / pageSize)
+    )
+
+    const startIndex = (currentPage - 1) * pageSize
+
+    const displayedRevenues = revenues.slice(
+        startIndex,
+        startIndex + pageSize
+    )
 
     return (
         <div className="revenue-page">
@@ -84,6 +112,16 @@ export default function Revenue () {
                 <div className="records-filters">
                     <label><span>Month</span><select name="month" value={filters.month} onChange={updateFilter}>{months.map((month, index) => <option key={index + 1} value={index + 1}>{month}</option>)}</select></label>
                     <label><span>Year</span><input type="number" name="year" value={filters.year} onChange={updateFilter} /></label>
+                    <label>
+                        <span>Show</span>
+                        <select name="show" value={filters.show} onChange={updateFilter}>
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="all">All</option>
+                        </select>
+                    </label>
                     <button type="button" className="filter-clear" onClick={clearFilters}>Reset</button>
                 </div>
                 {loading && <p className="muted">Loading records…</p>}
@@ -95,6 +133,7 @@ export default function Revenue () {
                 )}
 
                 {!loading && revenues.length > 0 && (
+                    <>
                     <table className="revenue-table">
                         <thead>
                             <tr>
@@ -106,7 +145,7 @@ export default function Revenue () {
                             </tr>
                         </thead>
                         <tbody>
-                            {revenues.map((r) => (
+                            {displayedRevenues.map((r) => (
                                 <tr key={r.id}>
                                     <td className="muted">{formatDate(r.created_at)}</td>
                                     <td>{r.source}</td>
@@ -127,6 +166,28 @@ export default function Revenue () {
                             ))}
                         </tbody>
                     </table>
+                    <div className="pagination">
+                        <button
+                            type="button"
+                            onClick={() => setCurrentPage(page => page - 1)}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </button>
+
+                        <span>
+                            Page {currentPage} of {totalPages}
+                        </span>
+
+                        <button
+                            type="button"
+                            onClick={() => setCurrentPage(page => page + 1)}
+                            disabled={currentPage >= totalPages}
+                        >
+                            Next
+                        </button>
+                    </div>
+                    </>
                 )}
             </div>
 

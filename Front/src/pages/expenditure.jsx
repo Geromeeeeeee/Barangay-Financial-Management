@@ -12,10 +12,12 @@ export default function Expenditure() {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [subcategoryForm, setSubcategoryForm] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1)
     const [filters, setFilters] = useState({
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear(),
-    });
+        show: "10"
+    })
     const filterParams = useMemo(() => Object.fromEntries(
         Object.entries(filters).filter(([, value]) => value !== "")
     ), [filters]);
@@ -42,10 +44,31 @@ export default function Expenditure() {
         setFilters((current) => ({ ...current, [name]: value }));
     };
 
-    const clearFilters = () => setFilters({
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear(),
-    });
+    const clearFilters = () => {
+        setFilters({
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
+            show: "10"
+        })
+
+        setCurrentPage(1)
+    }
+
+    const pageSize = filters.show === "all"
+        ? expenditures.length
+        : Number(filters.show)
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(expenditures.length / pageSize)
+    )
+
+    const startIndex = (currentPage - 1) * pageSize
+
+    const displayedExpenditure = expenditures.slice(
+        startIndex,
+        startIndex + pageSize
+    )
 
     return (
         <div className="expenditure-page">
@@ -100,6 +123,16 @@ export default function Expenditure() {
                 <div className="records-filters">
                     <label><span>Month</span><select name="month" value={filters.month} onChange={updateFilter}>{months.map((month, index) => <option key={index + 1} value={index + 1}>{month}</option>)}</select></label>
                     <label><span>Year</span><input type="number" name="year" value={filters.year} onChange={updateFilter} /></label>
+                    <label>
+                        <span>Show</span>
+                        <select name="show" value={filters.show} onChange={updateFilter}>
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="all">All</option>
+                        </select>
+                    </label>
                     <button type="button" className="filter-clear" onClick={clearFilters}>Reset</button>
                 </div>
                 {loading && <p className="muted">Loading records...</p>}
@@ -109,12 +142,13 @@ export default function Expenditure() {
                     </div>
                 )}
                 {!loading && expenditures.length > 0 && (
+                    <>
                     <table className="expenditure-table">
                         <thead>
                             <tr><th>Date</th><th>Description</th><th>Fund Allocation</th><th>Supporting Document</th><th className="right">Amount</th></tr>
                         </thead>
                         <tbody>
-                            {expenditures.map((expenditure) => (
+                            {displayedExpenditure.map((expenditure) => (
                                 <tr key={expenditure.id}>
                                     <td className="muted">{date(expenditure.created_at)}</td>
                                     <td>{expenditure.description}</td>
@@ -138,6 +172,28 @@ export default function Expenditure() {
                             ))}
                         </tbody>
                     </table>
+                    <div className="pagination">
+                        <button
+                            type="button"
+                            onClick={() => setCurrentPage(page => page - 1)}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </button>
+
+                        <span>
+                            Page {currentPage} of {totalPages}
+                        </span>
+
+                        <button
+                            type="button"
+                            onClick={() => setCurrentPage(page => page + 1)}
+                            disabled={currentPage >= totalPages}
+                        >
+                            Next
+                        </button>
+                    </div>
+                    </>
                 )}
             </div>
             {isModalOpen && canModify && <ExpenditureModal setIsModalOpen={handleCloseModal} categories={categories} selectedCategory={selectedCategory} />}
