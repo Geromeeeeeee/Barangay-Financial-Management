@@ -94,14 +94,28 @@ class Expenditure {
         }
     }
 
-    public function get_expenditures(){
-        $stmt = $this->database->query('
+    public function get_expenditures(array $filters = []){
+        $conditions = [];
+        $parameters = [];
+
+        if ($filters['month'] !== null && $filters['month'] !== '') {
+            $conditions[] = 'MONTH(e.created_at) = :month';
+            $parameters['month'] = $filters['month'];
+        }
+        if ($filters['year'] !== null && $filters['year'] !== '') {
+            $conditions[] = 'YEAR(e.created_at) = :year';
+            $parameters['year'] = $filters['year'];
+        }
+        $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
+        $stmt = $this->database->prepare("
             SELECT e.*, c.name AS category_name, s.name AS subcategory_name
             FROM expenditures e
             LEFT JOIN budget_categories c ON c.id = e.category_id
             LEFT JOIN budget_subcategories s ON s.id = e.subcategory_id
+            {$where}
             ORDER BY e.created_at DESC
-        ');
+        ");
+        $stmt->execute($parameters);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

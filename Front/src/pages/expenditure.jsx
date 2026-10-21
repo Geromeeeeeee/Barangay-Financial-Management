@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import ExpenditureModal from "../components/expenditure_modal";
 import useExpenditure from "../custom_hooks/use_expenditure";
 import useFormat from "../custom_hooks/use_format";
@@ -12,11 +12,22 @@ export default function Expenditure() {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [subcategoryForm, setSubcategoryForm] = useState(null);
-    const { expenditures, loading, error, refetch } = useExpenditure();
+    const [filters, setFilters] = useState({
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear(),
+    });
+    const filterParams = useMemo(() => Object.fromEntries(
+        Object.entries(filters).filter(([, value]) => value !== "")
+    ), [filters]);
+    const { expenditures, loading, error, refetch } = useExpenditure(filterParams);
     const {peso, date} = useFormat();
     const { categories, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory } = useBudgetCategories();
     const {isTreasurer} = useRole();
     const canModify = isTreasurer;
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
 
     const handleCloseModal = (open) => {
         setIsModalOpen(open);
@@ -25,6 +36,16 @@ export default function Expenditure() {
             refetch();
         }
     };
+
+    const updateFilter = (event) => {
+        const { name, value } = event.target;
+        setFilters((current) => ({ ...current, [name]: value }));
+    };
+
+    const clearFilters = () => setFilters({
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear(),
+    });
 
     return (
         <div className="expenditure-page">
@@ -76,11 +97,15 @@ export default function Expenditure() {
                 </div>
             )}
             <div className="expenditure-card">
+                <div className="records-filters">
+                    <label><span>Month</span><select name="month" value={filters.month} onChange={updateFilter}>{months.map((month, index) => <option key={index + 1} value={index + 1}>{month}</option>)}</select></label>
+                    <label><span>Year</span><input type="number" name="year" value={filters.year} onChange={updateFilter} /></label>
+                    <button type="button" className="filter-clear" onClick={clearFilters}>Reset</button>
+                </div>
                 {loading && <p className="muted">Loading records...</p>}
                 {!loading && expenditures.length === 0 && (
                     <div className="expenditure-empty">
-                        <p>No expenditure records yet.</p>
-                        <p className="muted">Click "Record Expenditure" to add your first entry.</p>
+                        <p>No expenditure records match the selected month and year.</p>
                     </div>
                 )}
                 {!loading && expenditures.length > 0 && (

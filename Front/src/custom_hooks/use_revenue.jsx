@@ -3,17 +3,18 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
-export default function useRevenue () {
+export default function useRevenue (filters = {}) {
     const [revenues, setRevenues] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     const fetchRevenue = useCallback((signal) => (
         axios.get(`${API_URL}revenue/get_revenue.php`, {
+            params: filters,
             signal,
             withCredentials: true
         })
-    ), []);
+    ), [filters]);
 
     useEffect(() => {
         const controller = new AbortController();

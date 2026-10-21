@@ -135,6 +135,59 @@
     font-size: 0.85rem;
 }
 
+.records-filters {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.records-filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 135px;
+}
+
+.records-filters label span {
+    color: #64748b;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.records-filters input,
+.records-filters select {
+    min-height: 38px;
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: #1e293b;
+    background: #fff;
+    font: inherit;
+    font-size: .82rem;
+}
+
+.filter-clear {
+    min-height: 38px;
+    padding: 7px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: #475569;
+    background: #f8fafc;
+    cursor: pointer;
+    font: inherit;
+    font-size: .82rem;
+}
+
+.filter-clear:disabled {
+    cursor: not-allowed;
+    opacity: .5;
+}
+
 /* ================= MODAL ================= */
 .revenue-modal-background {
     position: fixed;

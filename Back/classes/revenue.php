@@ -86,8 +86,21 @@ class Revenue {
         }
     }
 
-    public function get_revenue(){
-        $stmt = $this->database->query('SELECT * FROM revenues ORDER BY created_at DESC');
+    public function get_revenue(array $filters = []){
+        $conditions = [];
+        $parameters = [];
+
+        if ($filters['month'] !== null && $filters['month'] !== '') {
+            $conditions[] = 'MONTH(created_at) = :month';
+            $parameters['month'] = $filters['month'];
+        }
+        if ($filters['year'] !== null && $filters['year'] !== '') {
+            $conditions[] = 'YEAR(created_at) = :year';
+            $parameters['year'] = $filters['year'];
+        }
+        $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
+        $stmt = $this->database->prepare("SELECT * FROM revenues{$where} ORDER BY created_at DESC");
+        $stmt->execute($parameters);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

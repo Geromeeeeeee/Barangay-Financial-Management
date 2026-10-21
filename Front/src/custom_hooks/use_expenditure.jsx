@@ -3,17 +3,18 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
-export default function useExpenditure() {
+export default function useExpenditure(filters = {}) {
     const [expenditures, setExpenditures] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     const fetchExpenditures = useCallback((signal) => (
         axios.get(`${API_URL}expenditure/get_expenditures.php`, {
+            params: filters,
             signal,
             withCredentials: true
         })
-    ), []);
+    ), [filters]);
 
     useEffect(() => {
         const controller = new AbortController();
