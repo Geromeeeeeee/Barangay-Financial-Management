@@ -8,6 +8,7 @@ import useFilter from "../custom_hooks/use_filter";
 import usePagination from "../custom_hooks/use_pagination";
 import Filter from "../components/filter";
 import "../styles/expenditure.css";
+import Pagination from "../components/pagination";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
@@ -120,27 +121,7 @@ export default function Expenditure() {
                             ))}
                         </tbody>
                     </table>
-                    <div className="pagination">
-                        <button
-                            type="button"
-                            onClick={() => setCurrentPage(page => page - 1)}
-                            disabled={currentPage === 1}
-                        >
-                            Previous
-                        </button>
-
-                        <span>
-                            Page {currentPage} of {totalPages}
-                        </span>
-
-                        <button
-                            type="button"
-                            onClick={() => setCurrentPage(page => page + 1)}
-                            disabled={currentPage >= totalPages}
-                        >
-                            Next
-                        </button>
-                    </div>
+                    <Pagination setCurrentPage={setCurrentPage} currentPage={currentPage} totalPages={totalPages}/>
                     </>
                 )}
             </div>

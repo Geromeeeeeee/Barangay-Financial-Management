@@ -326,3 +326,11 @@
     transform: none;
     filter: none;
 }
+
+.pagination{
+    margin-top: 2.5%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2.5%;
+}

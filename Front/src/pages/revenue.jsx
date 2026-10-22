@@ -6,6 +6,7 @@ import useFilter from '../custom_hooks/use_filter'
 import usePagination from '../custom_hooks/use_pagination'
 import useFormat from '../custom_hooks/use_format'
 import Filter from '../components/filter'
+import Pagination from '../components/pagination'
 import '../styles/revenue.css'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
@@ -95,27 +96,7 @@ export default function Revenue () {
                             ))}
                         </tbody>
                     </table>
-                    <div className="pagination">
-                        <button
-                            type="button"
-                            onClick={() => setCurrentPage(page => page - 1)}
-                            disabled={currentPage === 1}
-                        >
-                            Previous
-                        </button>
-
-                        <span>
-                            Page {currentPage} of {totalPages}
-                        </span>
-
-                        <button
-                            type="button"
-                            onClick={() => setCurrentPage(page => page + 1)}
-                            disabled={currentPage >= totalPages}
-                        >
-                            Next
-                        </button>
-                    </div>
+                    <Pagination setCurrentPage={setCurrentPage} currentPage={currentPage} totalPages={totalPages}/>
                     </>
                 )}
             </div>
