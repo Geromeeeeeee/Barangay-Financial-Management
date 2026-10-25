@@ -44,7 +44,7 @@ SET name = CASE id
     WHEN 2 THEN 'SK'
     WHEN 3 THEN 'BDRRMF'
     WHEN 4 THEN 'GAD'
-    WHEN 5 THEN 'SCPWD & BCPC'
+    WHEN 5 THEN 'SCPWD'
     WHEN 6 THEN 'PSA'
     ELSE name
 END,
@@ -53,7 +53,7 @@ percentage = CASE id
     WHEN 2 THEN 10.00
     WHEN 3 THEN 5.00
     WHEN 4 THEN 5.00
-    WHEN 5 THEN 1.00
+    WHEN 5 THEN 2.00
     WHEN 6 THEN 55.00
     ELSE percentage
 END
@@ -62,5 +62,5 @@ WHERE id BETWEEN 1 AND 6;
 INSERT INTO budget_categories (name, percentage)
 VALUES
     ('Development Fund', 20.00), ('SK', 10.00), ('BDRRMF', 5.00),
-    ('GAD', 5.00), ('SCPWD & BCPC', 1.00), ('PSA', 55.00)
+    ('GAD', 5.00), ('SCPWD', 2.00), ('PSA', 55.00), ('BCPC', 1.00)
 ON DUPLICATE KEY UPDATE percentage = VALUES(percentage);

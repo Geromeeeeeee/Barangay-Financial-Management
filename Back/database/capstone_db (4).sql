@@ -46,8 +46,9 @@ INSERT INTO `budget_categories` (`id`, `name`, `percentage`, `is_custom`, `alloc
 (2, 'SK', 10.00, 0, 0.00, 10000.00, '2026-10-13 09:33:21'),
 (3, 'BDRRMF', 5.00, 0, 0.00, 0.00, '2026-10-13 09:33:21'),
 (4, 'GAD', 5.00, 0, 0.00, 0.00, '2026-10-13 09:33:21'),
-(5, 'SCPWD & BCPC', 1.00, 0, 0.00, 432123.00, '2026-10-13 09:33:21'),
-(6, 'PSA', 55.00, 0, 0.00, 0.00, '2026-10-13 09:33:21');
+(5, 'SCPWD', 2.00, 0, 0.00, 432123.00, '2026-10-13 09:33:21'),
+(6, 'PSA', 55.00, 0, 0.00, 0.00, '2026-10-13 09:33:21'),
+(7, 'BCPC', 1.00, 0, 0.00, 0.00, '2026-10-25 14:15:38');
 
 -- --------------------------------------------------------
 
@@ -356,7 +357,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `budget_categories`
 --
 ALTER TABLE `budget_categories`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `budget_subcategories`

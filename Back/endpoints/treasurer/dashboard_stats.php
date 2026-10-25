@@ -41,20 +41,9 @@ $topFunds = $pdo->query("
     LIMIT 5
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-// ============ FUND BALANCES ============
-$fundBalances = $pdo->query("
-    SELECT fb.fund_name,
-           fb.balance,
-           COALESCE(SUM(r.amount), 0) AS total_allocated
-    FROM fund_balances fb
-    LEFT JOIN revenues r ON r.fund_allocation = fb.fund_name
-    GROUP BY fb.fund_name, fb.balance
-    ORDER BY fb.fund_name ASC
-")->fetchAll(PDO::FETCH_ASSOC);
-
 $categoryBalances = $pdo->query("
     SELECT id, name, allocated_amount, spent_amount,
-           allocated_amount - spent_amount AS balance, percentage
+           allocated_amount - spent_amount AS balance, percentage, is_custom
     FROM budget_categories ORDER BY id
 ")->fetchAll(PDO::FETCH_ASSOC);
 foreach ($categoryBalances as &$category) {
@@ -63,6 +52,7 @@ foreach ($categoryBalances as &$category) {
     $category['spent_amount'] = (float)$category['spent_amount'];
     $category['balance'] = (float)$category['balance'];
     $category['percentage'] = (float)$category['percentage'];
+    $category['is_custom'] = (bool)$category['is_custom'];
 }
 unset($category);
 
@@ -72,15 +62,6 @@ $totalExpenditures = $pdo->query("SELECT COALESCE(SUM(amount), 0) FROM expenditu
 $totalRemaining = array_reduce($categoryBalances, static function ($total, $category) {
     return $total + (float)$category['balance'];
 }, 0.0);
-
-foreach ($fundBalances as &$fund) {
-    $fund['balance'] = (float)$fund['balance'];
-    $fund['total_allocated'] = (float)$fund['total_allocated'];
-    $fund['usage_percentage'] = $fund['total_allocated'] > 0
-        ? round((($fund['total_allocated'] - $fund['balance']) / $fund['total_allocated']) * 100, 2)
-        : 0;
-}
-unset($fund);
 
 // ============ RECENT RECORDS (last 5) ============
 $recentActivity = $pdo->query("
@@ -103,7 +84,6 @@ echo json_encode([
     'totalRecords'    => (int)$totalRecords,
     'recordsThisMonth'=> (int)$recordsThisMonth,
     'topFunds'        => $topFunds,
-    'fundBalances'    => $fundBalances,
     'categoryBalances' => $categoryBalances,
     'recentActivity'  => $recentActivity,
 ]);

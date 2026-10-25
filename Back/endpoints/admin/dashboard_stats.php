@@ -35,7 +35,7 @@ $totalRevenue = $pdo->query("
 // ============ CATEGORY BALANCES ============
 $categoryBalances = $pdo->query("
     SELECT c.id, c.name, c.allocated_amount, c.spent_amount,
-           c.allocated_amount - c.spent_amount AS balance
+           c.allocated_amount - c.spent_amount AS balance, c.is_custom
     FROM budget_categories c
     ORDER BY id ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
@@ -45,6 +45,7 @@ foreach ($categoryBalances as &$category) {
     $category['allocated_amount'] = (float)$category['allocated_amount'];
     $category['spent_amount'] = (float)$category['spent_amount'];
     $category['balance'] = (float)$category['balance'];
+    $category['is_custom'] = (bool)$category['is_custom'];
 }
 unset($category);
 

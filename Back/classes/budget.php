@@ -27,8 +27,9 @@ class Budget
             'SK' => round($total * 0.10, 2),
             'BDRRMF' => round($total * 0.05, 2),
             'GAD' => round($total * 0.05, 2),
-            'SCPWD & BCPC' => round($total * 0.01, 2),
+            'SCPWD' => round($total * 0.02, 2),
             'PSA' => round($total * 0.55, 2),
+            'BCPC' => round($total * 0.01, 2),
         ];
     }
 
