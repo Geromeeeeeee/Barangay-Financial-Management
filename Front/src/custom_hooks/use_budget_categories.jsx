@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/
 
 export default function useBudgetCategories() {
     const [categories, setCategories] = useState([]);
+    const [income, setIncome] = useState({ nta: 0, local_income: 0, total_annual_income: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -18,6 +19,7 @@ export default function useBudgetCategories() {
             .then((response) => {
                 if (response?.data?.status !== "success") throw new Error(response?.data?.message || "Failed to load categories.");
                 setCategories(response.data.data || []);
+                setIncome(response.data.income || { nta: 0, local_income: 0, total_annual_income: 0 });
                 setError("");
             })
             .catch((requestError) => setError(requestError.response?.data?.message || requestError.message))
@@ -37,6 +39,7 @@ export default function useBudgetCategories() {
     }).then((response) => {
         if (response?.data?.status !== "success") throw new Error(response?.data?.message || "Failed to save subcategory.");
         setCategories(response.data.data || []);
+        setIncome(response.data.income || { nta: 0, local_income: 0, total_annual_income: 0 });
     }), []);
 
     const deleteSubcategory = useCallback((id) => axios.delete(`${API_URL}budget/categories.php?id=${id}`, {
@@ -44,7 +47,19 @@ export default function useBudgetCategories() {
     }).then((response) => {
         if (response?.data?.status !== "success") throw new Error(response?.data?.message || "Failed to delete subcategory.");
         setCategories(response.data.data || []);
+        setIncome(response.data.income || { nta: 0, local_income: 0, total_annual_income: 0 });
     }), []);
 
-    return { categories, loading, error, refetch, saveSubcategory, deleteSubcategory };
+    const saveMajorCategory = useCallback((payload) => axios.post(`${API_URL}budget/categories.php`, {
+        ...payload,
+        action: "add_major_category",
+    }, {
+        withCredentials: true
+    }).then((response) => {
+        if (response?.data?.status !== "success") throw new Error(response?.data?.message || "Failed to save major category.");
+        setCategories(response.data.data || []);
+        setIncome(response.data.income || { nta: 0, local_income: 0, total_annual_income: 0 });
+    }), []);
+
+    return { categories, income, loading, error, refetch, saveSubcategory, deleteSubcategory, saveMajorCategory };
 }

@@ -6,6 +6,12 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/
 export function useTreasurerStats() {
     const [stats, setStats] = useState({
         totalRevenue: 0,
+        nta: 0,
+        localIncome: 0,
+        totalAnnualIncome: 0,
+        totalAllocated: 0,
+        totalExpenditures: 0,
+        totalRemaining: 0,
         revenueThisMonth: 0,
         totalRecords: 0,
         recordsThisMonth: 0,

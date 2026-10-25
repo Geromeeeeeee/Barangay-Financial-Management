@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/budget.php';
+
 class Expenditure {
     private PDO $database;
 
@@ -18,6 +20,7 @@ class Expenditure {
             $allocation_val = null;
 
             if ($category_id) {
+                Budget::refreshAllocations($this->database);
                 $category = $this->database->prepare('
                     SELECT c.allocated_amount, c.spent_amount,
                            COALESCE(SUM(s.allocated_amount), 0) AS reserved_amount

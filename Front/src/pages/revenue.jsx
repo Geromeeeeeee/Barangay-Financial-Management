@@ -71,7 +71,9 @@ export default function Revenue () {
                                 <th>Source</th>
                                 <th>Fund Allocation</th>
                                 <th>Document</th>
-                                <th className="right">Amount</th>
+                                <th className="right">NTA</th>
+                                <th className="right">Local Income</th>
+                                <th className="right">Total Annual Income</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -91,7 +93,9 @@ export default function Revenue () {
                                             </a>
                                         ) : <span className="muted">—</span>}
                                     </td>
-                                    <td className="right amount">{peso(r.amount)}</td>
+                                    <td className="right amount">{peso(r.nta)}</td>
+                                    <td className="right amount">{peso(r.local_income)}</td>
+                                    <td className="right amount">{peso(r.total_annual_income ?? r.amount)}</td>
                                 </tr>
                             ))}
                         </tbody>

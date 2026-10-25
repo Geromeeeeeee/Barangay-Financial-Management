@@ -2,6 +2,9 @@
 session_start();
 
 require_once '../../header.php';
+require_once '../../classes/budget.php';
+
+Budget::refreshAllocations($pdo);
 
 // ============ TOTAL USERS ============
 $totalUsers = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
@@ -31,9 +34,9 @@ $totalRevenue = $pdo->query("
 
 // ============ CATEGORY BALANCES ============
 $categoryBalances = $pdo->query("
-    SELECT id, name, allocated_amount, spent_amount,
-           allocated_amount - spent_amount AS balance
-    FROM budget_categories
+    SELECT c.id, c.name, c.allocated_amount, c.spent_amount,
+           c.allocated_amount - c.spent_amount AS balance
+    FROM budget_categories c
     ORDER BY id ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -44,6 +47,13 @@ foreach ($categoryBalances as &$category) {
     $category['balance'] = (float)$category['balance'];
 }
 unset($category);
+
+$income = Budget::income($pdo);
+$totalAllocated = $pdo->query("SELECT COALESCE(SUM(allocated_amount), 0) FROM budget_categories")->fetchColumn();
+$totalExpenditures = $pdo->query("SELECT COALESCE(SUM(amount), 0) FROM expenditures")->fetchColumn();
+$totalRemaining = array_reduce($categoryBalances, static function ($total, $category) {
+    return $total + (float)$category['balance'];
+}, 0.0);
 
 // ============ RECENT REVENUE RECORDS (last 5) ============
 $recentActivity = $pdo->query("
@@ -69,6 +79,12 @@ echo json_encode([
     'activeCodes'       => (int)$activeCodes,
     'recordsThisMonth'  => (int)$recordsThisMonth,
     'totalRevenue'      => (float)$totalRevenue,
+    'nta'               => $income['nta'],
+    'localIncome'       => $income['local_income'],
+    'totalAnnualIncome' => $income['total_annual_income'],
+    'totalAllocated'    => (float)$totalAllocated,
+    'totalExpenditures' => (float)$totalExpenditures,
+    'totalRemaining'    => round($totalRemaining, 2),
     'categoryBalances'  => $categoryBalances,
     'recentActivity'    => $recentActivity,
     'recentRequests'    => $recentRequests,

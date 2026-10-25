@@ -11,8 +11,8 @@ export default function SKDashboard({ user }) {
     const { stats, loading, error } = useDashboardStats();
     const { projects, submitProject, fetchProjects } = useProjects();
 
-    // Filter to show ONLY the SK budget category (e.g., Category 6)
-    const skBudget = stats.categoryBalances?.find(c => c.name === "Category 6") || { balance: 0, allocated_amount: 0 };
+    // The SK dashboard uses the predefined SK major category.
+    const skBudget = stats.categoryBalances?.find(c => c.name === "SK") || { balance: 0, allocated_amount: 0 };
 
     const formatPeso = (val) => "₱" + Number(val || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 });
 

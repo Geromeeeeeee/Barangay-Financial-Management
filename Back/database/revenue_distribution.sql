@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS budget_categories (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL UNIQUE,
     percentage DECIMAL(5,2) NOT NULL,
+    is_custom TINYINT(1) NOT NULL DEFAULT 0,
     allocated_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
     spent_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -37,8 +38,29 @@ ALTER TABLE revenues
     ADD COLUMN request_key CHAR(36) NULL,
     ADD UNIQUE KEY unique_revenue_request_key (request_key);
 
+UPDATE budget_categories
+SET name = CASE id
+    WHEN 1 THEN 'Development Fund'
+    WHEN 2 THEN 'SK'
+    WHEN 3 THEN 'BDRRMF'
+    WHEN 4 THEN 'GAD'
+    WHEN 5 THEN 'SCPWD & BCPC'
+    WHEN 6 THEN 'PSA'
+    ELSE name
+END,
+percentage = CASE id
+    WHEN 1 THEN 20.00
+    WHEN 2 THEN 10.00
+    WHEN 3 THEN 5.00
+    WHEN 4 THEN 5.00
+    WHEN 5 THEN 1.00
+    WHEN 6 THEN 55.00
+    ELSE percentage
+END
+WHERE id BETWEEN 1 AND 6;
+
 INSERT INTO budget_categories (name, percentage)
 VALUES
-    ('Category 1', 55.00), ('Category 2', 20.00), ('Category 3', 10.00),
-    ('Category 4', 5.00), ('Category 5', 5.00), ('Category 6', 5.00)
+    ('Development Fund', 20.00), ('SK', 10.00), ('BDRRMF', 5.00),
+    ('GAD', 5.00), ('SCPWD & BCPC', 1.00), ('PSA', 55.00)
 ON DUPLICATE KEY UPDATE percentage = VALUES(percentage);

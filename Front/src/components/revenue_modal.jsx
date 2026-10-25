@@ -8,9 +8,12 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/
 export default function Revenue_Modal({ setIsModalOpen }) {
     const [requestKey] = useState(() => crypto.randomUUID());
     const [fundAllocation, setFundAllocation] = useState('General')
+    const [nta, setNta] = useState('')
+    const [localIncome, setLocalIncome] = useState('')
     const [loading, setLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
     const { isTreasurer } = useRole()
+    const totalAnnualIncome = (Number(nta) || 0) + (Number(localIncome) || 0)
 
     const handleSubmit = async (event) => {
         event.preventDefault()
@@ -18,7 +21,6 @@ export default function Revenue_Modal({ setIsModalOpen }) {
         setErrorMessage('')
 
         const formData = new FormData(event.target);
-        const amount = formData.get('amount');
         const source = formData.get('description');
 
         let finalFundAllocation = formData.get('fundAllocation');
@@ -27,6 +29,7 @@ export default function Revenue_Modal({ setIsModalOpen }) {
         } else if (finalFundAllocation === 'General') {
             finalFundAllocation = '';
         }
+        formData.set('amount', totalAnnualIncome.toFixed(2));
         formData.set('source', source);
         formData.set('fund_allocation', finalFundAllocation || '');
         formData.set('request_key', requestKey);
@@ -65,14 +68,39 @@ export default function Revenue_Modal({ setIsModalOpen }) {
 
                 <form onSubmit={handleSubmit} className="revenue-form">
                     <label>
-                        <span>Amount</span>
+                        <span>NTA (National Tax Allotment)</span>
                         <input
-                            name="amount"
+                            name="nta"
                             type="number"
                             min="0"
                             step="0.01"
                             placeholder="0.00"
                             required
+                            value={nta}
+                            onChange={(event) => setNta(event.target.value)}
+                        />
+                    </label>
+
+                    <label>
+                        <span>Local Income</span>
+                        <input
+                            name="local_income"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                            required
+                            value={localIncome}
+                            onChange={(event) => setLocalIncome(event.target.value)}
+                        />
+                    </label>
+
+                    <label>
+                        <span>Total Annual Income</span>
+                        <input
+                            type="number"
+                            value={totalAnnualIncome.toFixed(2)}
+                            readOnly
                         />
                     </label>
 

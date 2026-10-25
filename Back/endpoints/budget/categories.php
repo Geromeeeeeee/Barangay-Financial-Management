@@ -1,14 +1,16 @@
 <?php
 session_start();
 require_once '../../header.php';
+require_once '../../classes/budget.php';
 
 function category_payload(PDO $pdo): array {
+    $income = Budget::refreshAllocations($pdo);
     $categories = $pdo->query("
-        SELECT c.id, c.name, c.percentage, c.allocated_amount, c.spent_amount,
+        SELECT c.id, c.name, c.percentage, c.is_custom, c.allocated_amount, c.spent_amount,
                c.allocated_amount - c.spent_amount - COALESCE(SUM(s.allocated_amount), 0) AS balance
         FROM budget_categories c
         LEFT JOIN budget_subcategories s ON s.category_id = c.id
-        GROUP BY c.id, c.name, c.percentage, c.allocated_amount, c.spent_amount
+        GROUP BY c.id, c.name, c.percentage, c.is_custom, c.allocated_amount, c.spent_amount
         ORDER BY c.id
     ")->fetchAll(PDO::FETCH_ASSOC);
     $subcategories = $pdo->query("
@@ -19,6 +21,7 @@ function category_payload(PDO $pdo): array {
     foreach ($categories as &$category) {
         $category['id'] = (int)$category['id'];
         $category['percentage'] = (float)$category['percentage'];
+        $category['is_custom'] = (bool)$category['is_custom'];
         $category['allocated_amount'] = (float)$category['allocated_amount'];
         $category['spent_amount'] = (float)$category['spent_amount'];
         $category['balance'] = (float)$category['balance'];
@@ -34,7 +37,10 @@ function category_payload(PDO $pdo): array {
             }
         }
     }
-    return $categories;
+    return [
+        'categories' => $categories,
+        'income' => $income,
+    ];
 }
 
 if (!isset($_SESSION['uid'])) {
@@ -48,7 +54,8 @@ try {
     $data = json_decode(file_get_contents('php://input'), true) ?: [];
 
     if ($method === 'GET') {
-        echo json_encode(['status' => 'success', 'data' => category_payload($pdo)]);
+        $payload = category_payload($pdo);
+        echo json_encode(['status' => 'success', 'data' => $payload['categories'], 'income' => $payload['income']]);
         exit;
     }
 
@@ -63,6 +70,33 @@ try {
     }
 
     $id = (int)($data['id'] ?? $_GET['id'] ?? 0);
+    if (($data['action'] ?? '') === 'add_major_category') {
+        if (strtolower((string)($_SESSION['role'] ?? '')) !== 'treasurer') {
+            throw new Exception('Only treasurers can create major categories.');
+        }
+        $name = trim((string)($data['name'] ?? ''));
+        $amount = round((float)($data['allocated_amount'] ?? -1), 2);
+        if ($name === '') throw new Exception('A category name is required.');
+        if (!is_numeric($data['allocated_amount'] ?? null) || $amount < 0) {
+            throw new Exception('The allocation amount must be a non-negative number.');
+        }
+        $duplicate = $pdo->prepare('SELECT id FROM budget_categories WHERE LOWER(name) = LOWER(:name)');
+        $duplicate->execute(['name' => $name]);
+        if ($duplicate->fetchColumn()) throw new Exception('A category with that name already exists.');
+        $income = Budget::refreshAllocations($pdo);
+        $allocated = $pdo->query('SELECT COALESCE(SUM(allocated_amount), 0) FROM budget_categories')->fetchColumn();
+        if ((float)$allocated + $amount > (float)$income['total_annual_income'] + 0.005) {
+            throw new Exception('The custom allocation exceeds the available annual income.');
+        }
+        $stmt = $pdo->prepare('
+            INSERT INTO budget_categories (name, percentage, is_custom, allocated_amount)
+            VALUES (:name, 0, 1, :allocated_amount)
+        ');
+        $stmt->execute(['name' => $name, 'allocated_amount' => $amount]);
+        $payload = category_payload($pdo);
+        echo json_encode(['status' => 'success', 'data' => $payload['categories'], 'income' => $payload['income']]);
+        exit;
+    }
     if ($method === 'DELETE') {
         $stmt = $pdo->prepare('SELECT spent_amount FROM budget_subcategories WHERE id = :id');
         $stmt->execute(['id' => $id]);
@@ -96,7 +130,8 @@ try {
         }
         $pdo->commit();
     }
-    echo json_encode(['status' => 'success', 'data' => category_payload($pdo)]);
+    $payload = category_payload($pdo);
+    echo json_encode(['status' => 'success', 'data' => $payload['categories'], 'income' => $payload['income']]);
 } catch (Exception $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
     http_response_code(400);

@@ -16,6 +16,8 @@ $data = stripos($contentType, 'multipart/form-data') !== false
     : (json_decode(file_get_contents("php://input"), true) ?: []);
 
 $amount          = $data['amount']          ?? 0;
+$nta             = array_key_exists('nta', $data) ? $data['nta'] : $amount;
+$localIncome     = $data['local_income']    ?? 0;
 $source          = $data['source']          ?? '';
 $fund_allocation = $data['fund_allocation'] ?? '';
 $created_by      = $_SESSION['uid'];
@@ -26,8 +28,12 @@ $attachmentSize = null;
 $revenue = new Revenue($pdo);
 
 try {
-    if (!is_numeric($amount) || (float)$amount <= 0 || trim((string)$source) === '') {
-        throw new InvalidArgumentException('A positive amount and source are required.');
+    if (!is_numeric($nta) || (float)$nta < 0 || !is_numeric($localIncome) || (float)$localIncome < 0) {
+        throw new InvalidArgumentException('NTA and Local Income must be valid non-negative amounts.');
+    }
+    $amount = round((float)$nta + (float)$localIncome, 2);
+    if ($amount <= 0 || trim((string)$source) === '') {
+        throw new InvalidArgumentException('A positive total annual income and source are required.');
     }
     $isTreasurer = strtolower((string)($_SESSION['role'] ?? '')) === 'treasurer';
     $file = $_FILES['supporting_document'] ?? null;
@@ -60,8 +66,15 @@ try {
         $attachmentMime = $mimeType;
         $attachmentSize = (int)$file['size'];
     }
-    $revenue->record_revenue($amount, $source, $fund_allocation, $created_by, $request_key, $attachmentPath, $attachmentName, $attachmentMime, $attachmentSize);
-    echo json_encode(['status' => 'revenue_recorded']);
+    $revenue->record_revenue($nta, $localIncome, $source, $fund_allocation, $created_by, $request_key, $attachmentPath, $attachmentName, $attachmentMime, $attachmentSize);
+    echo json_encode([
+        'status' => 'revenue_recorded',
+        'data' => [
+            'nta' => round((float)$nta, 2),
+            'local_income' => round((float)$localIncome, 2),
+            'total_annual_income' => $amount,
+        ],
+    ]);
 } catch (Exception $e) {
     if ($uploadedPath && is_file($uploadedPath)) unlink($uploadedPath);
     http_response_code($e instanceof InvalidArgumentException ? 400 : 500);

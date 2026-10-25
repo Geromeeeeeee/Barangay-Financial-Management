@@ -18,6 +18,12 @@ try {
 
     $revenue = new Revenue($pdo);
     $revenues = $revenue->get_revenue($filters);
+    foreach ($revenues as &$record) {
+        $record['nta'] = (float)$record['nta'];
+        $record['local_income'] = (float)$record['local_income'];
+        $record['total_annual_income'] = round($record['nta'] + $record['local_income'], 2);
+    }
+    unset($record);
 
     echo json_encode([
         'status' => 'success',

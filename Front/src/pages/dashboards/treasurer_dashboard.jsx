@@ -1,8 +1,8 @@
 import "../../styles/dashboard.css";
 import "../../styles/treasurer_dashboard.css";
 import {
-    IconMoney, IconTrendDown, IconBank, IconReceipt, IconChart, IconPeso,
-    StatCard, ActivityRow, QuickAction, DashboardHero,
+    IconMoney, IconChart,
+    StatCard, ActivityRow, DashboardHero,
 } from "../../components/dashboard_widgets";
 import { useTreasurerStats } from "../../custom_hooks/use_treasurer_stats";
 
@@ -19,41 +19,63 @@ export default function TreasurerDashboard({ user }) {
         return "Excellent";
     };
 
+    const uniqueCategories = Array.from(
+        new Map(
+            (stats.categoryBalances || []).map((category) => [
+                category.name.trim().toLowerCase(),
+                category,
+            ])
+        ).values()
+    );
+
     return (
         <div className="dashboard-page treasurer-view">
             <DashboardHero user={user} />
 
             {error && <div className="alert alert-error">{error}</div>}
 
-            {/* ===== STAT CARDS ===== */}
-            <section className="stat-grid">
-              <StatCard
-               Icon={IconPeso}
-               label="Total Revenue"
-               value={loading ? "…" : formatPeso(stats.totalRevenue)}
-               trend="All time"
-            accent="green"
-           />
+            <section className="stat-grid budget-summary">
                 <StatCard
-               Icon={IconPeso}
-               label="This Month"
-               value={loading ? "…" : formatPeso(stats.revenueThisMonth)}
-               trend="Current month"
-             accent="blue"
-           />
+                    Icon={IconMoney}
+                    label="NTA"
+                    value={loading ? "…" : formatPeso(stats.nta)}
+                    trend="Annual income"
+                    accent="blue"
+                />
                 <StatCard
-                    Icon={IconReceipt}
-                    label="Total Records"
-                    value={loading ? "…" : stats.totalRecords}
-                    trend="All entries"
+                    Icon={IconMoney}
+                    label="Local Income"
+                    value={loading ? "…" : formatPeso(stats.localIncome)}
+                    trend="Annual income"
+                    accent="green"
+                />
+                <StatCard
+                    Icon={IconMoney}
+                    label="Total Annual Income"
+                    value={loading ? "…" : formatPeso(stats.totalAnnualIncome)}
+                    trend="NTA + Local Income"
                     accent="purple"
                 />
                 <StatCard
-                    Icon={IconBank}
-                    label="Records This Month"
-                    value={loading ? "…" : stats.recordsThisMonth}
-                    trend="New this month"
+                    Icon={IconChart}
+                    label="Total Allocated"
+                    value={loading ? "…" : formatPeso(stats.totalAllocated)}
+                    trend="All major categories"
                     accent="amber"
+                />
+                <StatCard
+                    Icon={IconChart}
+                    label="Total Expenditures"
+                    value={loading ? "…" : formatPeso(stats.totalExpenditures)}
+                    trend="Recorded spending"
+                    accent="red"
+                />
+                <StatCard
+                    Icon={IconMoney}
+                    label="Total Remaining"
+                    value={loading ? "…" : formatPeso(stats.totalRemaining)}
+                    trend="Category balances"
+                    accent="green"
                 />
             </section>
 
@@ -96,13 +118,13 @@ export default function TreasurerDashboard({ user }) {
 
                     {loading && <p className="muted">Loading…</p>}
 
-                    {!loading && stats.categoryBalances.length === 0 && (
+                    {!loading && uniqueCategories.length === 0 && (
                         <p className="muted">No category data yet.</p>
                     )}
 
-                    {!loading && stats.categoryBalances.length > 0 && (
+                    {!loading && uniqueCategories.length > 0 && (
                         <div className="fund-grid">
-                            {stats.categoryBalances.map((category) => {
+                            {uniqueCategories.map((category) => {
                                 const allocated = Number(category.allocated_amount || 0);
                                 const spent = Number(category.spent_amount || 0);
                                 const percentage = allocated > 0 ? Math.min((spent / allocated) * 100, 100) : 0;

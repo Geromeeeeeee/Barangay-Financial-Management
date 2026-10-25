@@ -16,12 +16,13 @@ export default function Expenditure() {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [subcategoryForm, setSubcategoryForm] = useState(null);
+    const [majorCategoryForm, setMajorCategoryForm] = useState(false);
     const [currentPage, setCurrentPage] = useState(1)
     const {filters, months, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { expenditures, loading, error, refetch } = useExpenditure(filterParams);
     const {totalPages, displayedRecords} = usePagination({currentPage, filters, records: expenditures})
     const {peso, date} = useFormat();
-    const { categories, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory } = useBudgetCategories();
+    const { categories, income, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory, saveMajorCategory } = useBudgetCategories();
     const {isTreasurer} = useRole();
     const canModify = isTreasurer;
 
@@ -47,7 +48,16 @@ export default function Expenditure() {
             {error && <div className="expenditure-error">{error}</div>}
             {categoriesError && <div className="expenditure-error">{categoriesError}</div>}
             {!categoriesLoading && categories.length > 0 && (
-                <div className="expenditure-categories">
+                <div className="expenditure-category-manager">
+                    {canModify && (
+                        <button type="button" className="expenditure-open-btn" onClick={() => setMajorCategoryForm(true)}>
+                            + Add Major Category
+                        </button>
+                    )}
+                    <p className="expenditure-allocation-summary">
+                        Total annual income: {peso(income.total_annual_income)} · Allocated: {peso(categories.reduce((total, category) => total + Number(category.allocated_amount || 0), 0))}
+                    </p>
+                    <div className="expenditure-categories">
                     {categories.map((category) => (
                         <section className="expenditure-category" key={category.id}>
                             <div className="expenditure-category-head">
@@ -80,6 +90,7 @@ export default function Expenditure() {
                             )}
                         </section>
                     ))}
+                    </div>
                 </div>
             )}
             <div className="expenditure-card">
@@ -127,8 +138,38 @@ export default function Expenditure() {
             </div>
             {isModalOpen && canModify && <ExpenditureModal setIsModalOpen={handleCloseModal} categories={categories} selectedCategory={selectedCategory} />}
             {subcategoryForm && canModify && <SubcategoryForm subcategory={subcategoryForm} onClose={() => setSubcategoryForm(null)} onSave={saveSubcategory} />}
+            {majorCategoryForm && canModify && <MajorCategoryForm onClose={() => setMajorCategoryForm(false)} onSave={saveMajorCategory} />}
         </div>
     );
+}
+
+function MajorCategoryForm({ onClose, onSave }) {
+    const [name, setName] = useState("");
+    const [amount, setAmount] = useState("");
+    const [error, setError] = useState("");
+
+    const submit = async (event) => {
+        event.preventDefault();
+        try {
+            await onSave({ name, allocated_amount: Number(amount) });
+            onClose();
+        } catch (requestError) {
+            setError(requestError.response?.data?.message || requestError.message);
+        }
+    };
+
+    return <div className="expenditure-modal-background" onClick={onClose}>
+        <form className="expenditure-modal expenditure-form" onSubmit={submit} onClick={(event) => event.stopPropagation()}>
+            <h2>Add Major Category</h2>
+            {error && <div className="expenditure-modal-error">{error}</div>}
+            <label><span>Category name</span><input value={name} onChange={(event) => setName(event.target.value)} required /></label>
+            <label><span>Allocation amount (PHP)</span><input type="number" min="0" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} required /></label>
+            <div className="expenditure-modal-actions">
+                <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
+                <button type="submit" className="btn-save">Save</button>
+            </div>
+        </form>
+    </div>;
 }
 
 function SubcategoryForm({ subcategory, onClose, onSave }) {

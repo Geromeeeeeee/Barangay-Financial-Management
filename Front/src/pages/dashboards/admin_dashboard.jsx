@@ -55,6 +55,51 @@ export default function AdminDashboard({ user }) {
                 />
             </section>
 
+            <section className="stat-grid budget-summary">
+                <StatCard
+                    Icon={IconMoney}
+                    label="NTA"
+                    value={loading ? "…" : formatPeso(stats.nta)}
+                    trend="Annual income"
+                    accent="blue"
+                />
+                <StatCard
+                    Icon={IconMoney}
+                    label="Local Income"
+                    value={loading ? "…" : formatPeso(stats.localIncome)}
+                    trend="Annual income"
+                    accent="green"
+                />
+                <StatCard
+                    Icon={IconMoney}
+                    label="Total Annual Income"
+                    value={loading ? "…" : formatPeso(stats.totalAnnualIncome)}
+                    trend="NTA + Local Income"
+                    accent="purple"
+                />
+                <StatCard
+                    Icon={IconChart}
+                    label="Total Allocated"
+                    value={loading ? "…" : formatPeso(stats.totalAllocated)}
+                    trend="All major categories"
+                    accent="amber"
+                />
+                <StatCard
+                    Icon={IconChart}
+                    label="Total Expenditures"
+                    value={loading ? "…" : formatPeso(stats.totalExpenditures)}
+                    trend="Recorded spending"
+                    accent="red"
+                />
+                <StatCard
+                    Icon={IconMoney}
+                    label="Total Remaining"
+                    value={loading ? "…" : formatPeso(stats.totalRemaining)}
+                    trend="Category balances"
+                    accent="green"
+                />
+            </section>
+
             {/* ===== CATEGORY BALANCES ===== */}
             <section className="dash-card admin-funds-card">
                 <div className="dash-card-head">

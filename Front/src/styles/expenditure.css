@@ -176,6 +176,8 @@
     grid-template-rows: repeat(2, 1fr);
     gap: 8px; 
 }
+.expenditure-category-manager { display: grid; gap: 12px; margin-bottom: 20px; }
+.expenditure-allocation-summary { margin: 0; color: #64748b; font-size: .82rem; }
 .expenditure-category { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; }
 .expenditure-category-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
 .expenditure-category h2 { margin: 0; color: #0f172a; font-size: 1.05rem; }

@@ -31,6 +31,7 @@ CREATE TABLE `budget_categories` (
   `id` int UNSIGNED NOT NULL,
   `name` varchar(120) NOT NULL,
   `percentage` decimal(5,2) NOT NULL,
+  `is_custom` tinyint(1) NOT NULL DEFAULT '0',
   `allocated_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
   `spent_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
@@ -40,13 +41,13 @@ CREATE TABLE `budget_categories` (
 -- Dumping data for table `budget_categories`
 --
 
-INSERT INTO `budget_categories` (`id`, `name`, `percentage`, `allocated_amount`, `spent_amount`, `created_at`) VALUES
-(1, 'Category 1', 55.00, 12361332.50, 44125.00, '2026-10-13 09:33:21'),
-(2, 'Category 2', 20.00, 4495030.00, 10000.00, '2026-10-13 09:33:21'),
-(3, 'Category 3', 10.00, 2247515.00, 0.00, '2026-10-13 09:33:21'),
-(4, 'Category 4', 5.00, 1123757.50, 0.00, '2026-10-13 09:33:21'),
-(5, 'Category 5', 5.00, 1123757.50, 432123.00, '2026-10-13 09:33:21'),
-(6, 'Category 6', 5.00, 1123757.50, 0.00, '2026-10-13 09:33:21');
+INSERT INTO `budget_categories` (`id`, `name`, `percentage`, `is_custom`, `allocated_amount`, `spent_amount`, `created_at`) VALUES
+(1, 'Development Fund', 20.00, 0, 0.00, 44125.00, '2026-10-13 09:33:21'),
+(2, 'SK', 10.00, 0, 0.00, 10000.00, '2026-10-13 09:33:21'),
+(3, 'BDRRMF', 5.00, 0, 0.00, 0.00, '2026-10-13 09:33:21'),
+(4, 'GAD', 5.00, 0, 0.00, 0.00, '2026-10-13 09:33:21'),
+(5, 'SCPWD & BCPC', 1.00, 0, 0.00, 432123.00, '2026-10-13 09:33:21'),
+(6, 'PSA', 55.00, 0, 0.00, 0.00, '2026-10-13 09:33:21');
 
 -- --------------------------------------------------------
 
@@ -171,6 +172,8 @@ INSERT INTO `invite_codes` (`id`, `code`, `role`, `recipient_email`, `expires_at
 CREATE TABLE `revenues` (
   `id` int NOT NULL AUTO_INCREMENT,
   `amount` decimal(12,2) NOT NULL,
+  `nta` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `local_income` decimal(12,2) NOT NULL DEFAULT '0.00',
   `source` varchar(100) NOT NULL,
   `fund_allocation` varchar(100) DEFAULT NULL,
   `created_by` int DEFAULT NULL,
@@ -198,6 +201,10 @@ INSERT INTO `revenues` (`id`, `amount`, `source`, `fund_allocation`, `created_by
 (9, 450000.00, 'City Hall', NULL, 14, '2026-10-13 09:39:40', '52190f7f-95a3-4c49-9442-5e9ce93248ac'),
 (10, 22000000.00, 'City Hall', NULL, 14, '2026-10-14 10:11:05', 'b1f0a6e1-b4fa-4efb-b177-c39129e3addd'),
 (11, 150.00, 'hjkhjk', NULL, 26, '2026-10-14 16:35:20', 'a126ae41-e266-4388-a54a-6f718d6ca0ce');
+
+UPDATE `revenues`
+SET `nta` = `amount`, `local_income` = 0.00
+WHERE `nta` = 0.00 AND `local_income` = 0.00;
 
 -- --------------------------------------------------------
 
