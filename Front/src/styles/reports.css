@@ -1,4 +1,6 @@
-.reports-page { max-width: 1000px; margin: 0 auto; }
+.reports-page { max-width: 900px; margin: 0 auto; font-family: 'Inter', sans-serif; }
+
+
 .reports-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
 .reports-header h1 { margin: 0 0 4px; font-size: 1.6rem; color: #0f172a; }
 .reports-header p { margin: 0; color: #64748b; font-size: 0.9rem; }
@@ -6,39 +8,97 @@
 .report-actions { display: flex; gap: 10px; align-items: center; }
 .report-actions select, .report-actions input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; }
 .report-actions input { width: 80px; }
-.btn-print { padding: 8px 16px; background: #1e40af; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+.btn-print { padding: 8px 16px; background: #1e293b; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
 
-.report-document { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-.print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1e40af; padding-bottom: 20px; }
-.print-header h2 { margin: 0; font-size: 1.6rem; color: #0f172a; }
-.print-header h3 { margin: 5px 0 0; font-size: 1.1rem; color: #64748b; font-weight: 500; }
+.report-document {
+    background: white;
+    padding: 50px 60px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #e2e8f0;
+    color: #000;
+    font-family: 'Times New Roman', Times, serif; 
+}
 
-.report-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px; }
-.summary-card { padding: 16px; border-radius: 10px; display: flex; flex-direction: column; gap: 6px; border: 1px solid #e2e8f0; }
-.summary-card span { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-.summary-card strong { font-size: 1.4rem; }
-.summary-card.green { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
-.summary-card.red { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-.summary-card.blue { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
 
-.report-document h4 { font-size: 1.1rem; color: #0f172a; margin: 25px 0 12px; }
-.report-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-bottom: 20px; }
-.report-table th, .report-table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
-.report-table th { text-align: left; background: #f8fafc; font-size: 0.75rem; text-transform: uppercase; color: #64748b; }
+.print-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 20px; 
+    gap: 20px; 
+}
+
+.print-header-left { 
+    flex: 1; 
+    text-align: center; 
+    
+}
+
+.print-header-left p { 
+    margin: 2px 0; 
+    font-size: 0.95rem; 
+}
+
+.print-header-left h2 { 
+    margin: 8px 0; 
+    font-size: 1.15rem; 
+    font-weight: bold; 
+    white-space: nowrap; 
+}
+.print-logo { 
+    width: 90px; 
+    height: 90px; 
+    object-fit: contain; 
+    flex-shrink: 0; 
+}
+
+.print-header-right { 
+    flex: 1; 
+    text-align: center; 
+    font-size: 1.05rem; 
+    font-weight: bold; 
+}
+
+.print-header-right p { 
+    margin: 4px 0; 
+}
+
+.print-divider { border-bottom: 2px solid #000; margin-bottom: 20px; }
+
+/* Tables */
+.report-document h4 { font-size: 1.05rem; margin: 24px 0 10px; text-transform: uppercase; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 4px; }
+.report-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-bottom: 20px; }
+.report-table th, .report-table td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; }
+.report-table th { text-align: left; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; }
 .report-table .right { text-align: right; }
-.report-table .center { text-align: center; color: #94a3b8; font-style: italic; }
+.report-table .center { text-align: center; }
+.report-table .empty-row { text-align: center; font-style: italic; color: #64748b; }
 
-.print-footer { margin-top: 40px; border-top: 1px dashed #cbd5e1; padding-top: 20px; font-size: 0.85rem; color: #64748b; display: flex; justify-content: space-between; }
-.signature-line { margin-top: 30px; font-weight: 600; color: #0f172a; }
+/* Total Rows */
+.total-row td { font-weight: bold; border-bottom: 2px solid #000; border-top: 1px solid #000; background-color: #f8fafc; }
+
+/* Net Income Box */
+.report-summary-box { margin-top: 30px; display: flex; justify-content: flex-end; }
+.summary-line { display: flex; justify-content: space-between; width: 350px; padding: 12px 16px; border: 2px solid #000; background: #f8fafc; font-size: 1.05rem; }
+.summary-line strong { font-size: 1.1rem; }
+
+/* Footer & Signatures */
+.print-footer { display: flex; justify-content: space-between; margin-top: 60px; }
+.signature-block { width: 250px; text-align: center; }
+.signature-block p { margin: 0 0 40px 0; font-size: 0.95rem; }
+.signature-line { border-bottom: 1px solid #000; margin-bottom: 4px; }
+.signature-name { font-weight: bold; text-transform: uppercase; }
+
+.print-timestamp { margin-top: 40px; font-size: 0.8rem; color: #64748b; font-family: 'Inter', sans-serif; text-align: right; }
 
 /* ================= PRINT STYLES ================= */
 @media print {
     body { background: white; }
-    .sidebar, .reports-header, .report-actions, .logout-btn { display: none !important; }
-    .dashboard-container { display: block; }
-    .main-content { padding: 0 !important; overflow: visible !important; background: white !important; }
+    .topnav-header, .reports-header, .logout-btn-top, .topnav-links { display: none !important; }
+    .topnav-layout, .topnav-content { height: auto; overflow: visible; background: white; }
+    .topnav-content { padding: 0 !important; }
     .report-document { box-shadow: none; border: none; padding: 0; }
-    .report-summary { break-inside: avoid; }
-    .report-table { break-inside: auto; }
-    .report-table tr { break-inside: avoid; break-after: auto; }
+    .report-table th { background: transparent !important; }
+    .total-row td { background: transparent !important; }
+    .report-summary-box .summary-line { background: transparent !important; }
 }

@@ -6,32 +6,38 @@ $month = (int)($_GET['month'] ?? date('m'));
 $year  = (int)($_GET['year'] ?? date('Y'));
 
 try {
-    // 1. Get Revenues for the month
+    // 1. Get Summarized Revenues (Grouped by Source)
     $stmt = $pdo->prepare("
-        SELECT id, source, fund_allocation, amount, created_at 
+        SELECT source, 
+               SUM(amount) AS total_amount,
+               COUNT(*) AS entry_count
         FROM revenues 
         WHERE MONTH(created_at) = :month AND YEAR(created_at) = :year
-        ORDER BY created_at ASC
+        GROUP BY source
+        ORDER BY total_amount DESC
     ");
     $stmt->execute(['month' => $month, 'year' => $year]);
     $revenues = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. Get Expenditures for the month (assuming you have an expenditures table)
+    // 2. Get Summarized Expenditures (Grouped by Description)
     $stmt = $pdo->prepare("
-        SELECT id, description AS source, amount, created_at 
+        SELECT description AS source, 
+               SUM(amount) AS total_amount,
+               COUNT(*) AS entry_count
         FROM expenditures 
         WHERE MONTH(created_at) = :month AND YEAR(created_at) = :year
-        ORDER BY created_at ASC
+        GROUP BY description
+        ORDER BY total_amount DESC
     ");
     $stmt->execute(['month' => $month, 'year' => $year]);
     $expenditures = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3. Calculate Totals
+    // 3. Calculate Grand Totals
     $totalRevenue = 0;
-    foreach ($revenues as $r) { $totalRevenue += (float)$r['amount']; }
+    foreach ($revenues as $r) { $totalRevenue += (float)$r['total_amount']; }
 
     $totalExpenditure = 0;
-    foreach ($expenditures as $e) { $totalExpenditure += (float)$e['amount']; }
+    foreach ($expenditures as $e) { $totalExpenditure += (float)$e['total_amount']; }
 
     echo json_encode([
         'success' => true,

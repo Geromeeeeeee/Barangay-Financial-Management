@@ -2,6 +2,7 @@
 session_start();
 require_once '../../header.php';
 require_once '../../classes/expenditure.php';
+require_once '../../classes/audit.php';
 
 if (!isset($_SESSION['uid'])) {
     http_response_code(401);
@@ -33,6 +34,7 @@ $attachmentSize  = null;
 $uploadedPath    = null;
 
 $expenditure = new Expenditure($pdo);
+$audit = new Audit($pdo);
 
 try {
     $file = $_FILES['supporting_document'] ?? null;
@@ -87,6 +89,9 @@ try {
         $attachmentMime,
         $attachmentSize
     );
+
+    $audit->log('Record Expenditure', "Recorded expenditure of ₱" . number_format((float)$amount, 2) . " for {$description}");
+
     echo json_encode(['status' => 'expenditure_recorded']);
 } catch (Exception $e) {
     if ($uploadedPath && is_file($uploadedPath)) {

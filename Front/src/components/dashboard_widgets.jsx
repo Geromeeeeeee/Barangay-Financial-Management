@@ -110,7 +110,14 @@ export function StatCard({ Icon, label, value, trend, accent }) {
     return (
         <div className={`stat-card stat-${accent}`}>
             <div className="stat-top">
-                <span className="stat-icon"><Icon /></span>
+                <span className="stat-icon">
+                    {/* If Icon is a string (like "₱"), render as text. Otherwise, render as SVG component */}
+                    {typeof Icon === "string" ? (
+                        <span style={{ fontSize: "1.1rem", fontWeight: "bold" }}>{Icon}</span>
+                    ) : (
+                        <Icon />
+                    )}
+                </span>
                 <span className="stat-label">{label}</span>
             </div>
             <div className="stat-value">{value}</div>
@@ -145,7 +152,6 @@ export function QuickAction({ to, Icon, label }) {
 export function DashboardHero({ user }) {
     const greeting = getGreeting();
 
-    // 👇 Translates the raw database role into a pretty display name
     const formatRole = (rawRole) => {
         if (!rawRole) return "";
         const roleMap = {

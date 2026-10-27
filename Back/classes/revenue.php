@@ -18,9 +18,10 @@ class Revenue {
             if ($request_key) {
                 $existing = $this->database->prepare('SELECT id FROM revenues WHERE request_key = :request_key');
                 $existing->execute(['request_key' => $request_key]);
-                if ($existing->fetchColumn()) {
+                $existing_id = $existing->fetchColumn();
+                if ($existing_id) {
                     $this->database->commit();
-                    return true;
+                    return $existing_id; 
                 }
             }
 
@@ -60,9 +61,13 @@ class Revenue {
                 'attachment_size' => $attachment_size,
             ]);
 
+            $newRevenueId = $this->database->lastInsertId();
+
             Budget::refreshAllocations($this->database);
             $this->database->commit();
-            return true;
+            
+            return $newRevenueId; 
+
         } catch (Exception $e) {
             if ($this->database->inTransaction()) {
                 $this->database->rollBack();
@@ -75,16 +80,27 @@ class Revenue {
         $conditions = [];
         $parameters = [];
 
-        if ($filters['month'] !== null && $filters['month'] !== '') {
-            $conditions[] = 'MONTH(created_at) = :month';
+        if (isset($filters['month']) && $filters['month'] !== null && $filters['month'] !== '') {
+            $conditions[] = 'MONTH(r.created_at) = :month';
             $parameters['month'] = $filters['month'];
         }
-        if ($filters['year'] !== null && $filters['year'] !== '') {
-            $conditions[] = 'YEAR(created_at) = :year';
+        if (isset($filters['year']) && $filters['year'] !== null && $filters['year'] !== '') {
+            $conditions[] = 'YEAR(r.created_at) = :year';
             $parameters['year'] = $filters['year'];
         }
+        
         $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
-        $stmt = $this->database->prepare("SELECT * FROM revenues{$where} ORDER BY created_at DESC");
+        
+        // 👇 THIS IS THE FIX: Joining the attachments table and counting the rows
+        $stmt = $this->database->prepare("
+            SELECT r.*, 
+                   COUNT(ra.id) as attachment_count
+            FROM revenues r
+            LEFT JOIN revenue_attachments ra ON r.id = ra.revenue_id
+            {$where}
+            GROUP BY r.id
+            ORDER BY r.created_at DESC
+        ");
         $stmt->execute($parameters);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

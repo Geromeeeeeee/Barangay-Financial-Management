@@ -65,8 +65,6 @@ function InviteCodeField({ code, setCode, status, message }) {
     );
 }
 
-// ======================== MAIN PAGE ========================
-
 export default function Auth_Page() {
     const [isLogin, setIsLogin] = useState(true);
     const [stat, setStat] = useStat();
@@ -75,8 +73,8 @@ export default function Auth_Page() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPass, setShowConfirmPass] = useState(false);
     const [showForgot, setShowForgot] = useState(false);
+    const [isTransitioning, setIsTransitioning] = useState(false);
 
-    // Invite code state
     const [inviteCode, setInviteCode] = useState("");
     const [codeStatus, setCodeStatus] = useState(null);
     const [codeMessage, setCodeMessage] = useState("");
@@ -110,125 +108,151 @@ export default function Auth_Page() {
         return () => clearTimeout(t);
     }, [inviteCode, isLogin]);
 
+    const handleToggleMode = (mode) => {
+        setIsTransitioning(true);
+        setTimeout(() => {
+            setIsLogin(mode);
+            setIsTransitioning(false);
+        }, 200);
+    };
+
     if (showSplash) return <Splash_Screen />;
 
     return (
         <main className="auth-page">
-            <div className="auth-shell">
-                
-                {/* ===== LEFT: FORM ===== */}
-                <div className="auth-form-side">
-                    <div className="brand-mark">
-                        <div className="brand-icon">
-                            <img src={sealLogo} alt="Seal" className="brand-icon-img" />
-                        </div>
-                        <div>
-                            <div className="brand-name">Barangay Malagasang II-A</div>
-                            <div className="brand-sub">Management System</div>
-                        </div>
-                    </div>
-
-                    <div className="form-header">
-                        <h1>{isLogin ? "Welcome" : "Request an account"}</h1>
-                        {!isLogin && <p>You'll need an invite code from your barangay administrator.</p>}
-                    </div>
-
-                    {err && <div className="alert alert-error">{err}</div>}
-                    {stat && <div className="alert alert-success">{stat}</div>}
-
-                    <form onSubmit={handleSubmit} className="auth-form">
+            <div className={`auth-shell-container ${isTransitioning ? 'fade-scale-out' : 'fade-scale-in'}`}>
+                <div className={isLogin ? "auth-shell" : "auth-shell-centered"}>
+                    
+                    <div className={`auth-form-side ${!isLogin ? 'signup-view' : ''}`}>
                         
-                        {!isLogin && (
-                            <>
-                                <InviteCodeField 
-                                    code={inviteCode} setCode={setInviteCode} 
-                                    status={codeStatus} message={codeMessage} 
-                                />
-                                <div className="field-row">
-                                    <label className="field">
-                                        <span>First name</span>
-                                        <input type="text" placeholder="Juan" required name="firstName" value={accountDetails.firstName} onChange={handleFormChange} />
-                                    </label>
-                                    <label className="field">
-                                        <span>Last name</span>
-                                        <input type="text" placeholder="Dela Cruz" required name="lastName" value={accountDetails.lastName} onChange={handleFormChange} />
-                                    </label>
-                                </div>
-                                <label className="field">
-                                    <span>Email address</span>
-                                    <input type="email" placeholder="juan@example.com" required name="email" value={accountDetails.email} onChange={handleFormChange} />
-                                </label>
-                            </>
-                        )}
-
-                        <label className="field">
-                            <span>Username</span>
-                            <input type="text" placeholder="Enter your username" required name="userName" value={accountDetails.userName} onChange={handleFormChange} />
-                        </label>
-
-                        <PasswordField 
-                            label="Password" name="password" value={accountDetails.password} onChange={handleFormChange} 
-                            show={showPassword} toggleShow={() => setShowPassword(!showPassword)} 
-                        />
-
-                        {!isLogin && (
-                            <>
-                                <PasswordField 
-                                    label="Confirm password" name="confirmPass" value={accountDetails.confirmPass} onChange={handleFormChange} 
-                                    show={showConfirmPass} toggleShow={() => setShowConfirmPass(!showConfirmPass)} 
-                                />
-                                <div className="info-note">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
-                                    </svg>
-                                    <span>Use the exact email address that received the invite code.</span>
-                                </div>
-                            </>
-                        )}
-
                         {isLogin && (
-                            <div className="form-extras">
-                                <label className="checkbox">
-                                    <input type="checkbox" />
-                                    <span>Remember me</span>
-                                </label>
-                                <button type="button" className="forgot" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} onClick={() => setShowForgot(true)}>
-                                    Forgot password?
-                                </button>
+                            <div className="brand-mark stagger-1">
+                                <div className="brand-icon">
+                                    <img src={sealLogo} alt="Seal" className="brand-icon-img" />
+                                </div>
+                                <div>
+                                    <div className="brand-name">Barangay Malagasang II-A</div>
+                                    <div className="brand-sub">Management System</div>
+                                </div>
                             </div>
                         )}
 
-                        <button className="submit-button" type="submit" disabled={!isLogin && codeStatus !== "valid"}>
-                            {isLogin ? "Sign in" : "Submit request"}
-                        </button>
-
-                        <p className="auth-switch">
-                            {isLogin ? "Need access?" : "Already have an account?"}{" "}
-                            <button type="button" className="link-btn" onClick={() => setIsLogin(!isLogin)}>
-                                {isLogin ? "Request an account" : "Sign in"}
-                            </button>
-                        </p>
-                    </form>
-                </div>
-
-                {/* ===== RIGHT: BRANDING ===== */}
-                <aside className="auth-brand-side">
-                    <div className="brand-side-content">
-                        <div className="seal-wrap">
-                            <img src={sealLogo} alt="Seal" className="seal-img" />
+                        <div className="form-header stagger-2">
+                            {!isLogin && (
+                                <button 
+                                    type="button" 
+                                    className="back-btn" 
+                                    onClick={() => handleToggleMode(true)}
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px', marginRight: '6px' }}>
+                                        <line x1="19" y1="12" x2="5" y2="12" />
+                                        <polyline points="12 19 5 12 12 5" />
+                                    </svg>
+                                    Back to Sign In
+                                </button>
+                            )}
+                            <h1>{isLogin ? "Welcome" : "Register an account"}</h1>
+                            {!isLogin && <p>You'll need an invite code from your barangay administrator.</p>}
                         </div>
-                        <h2 className="welcome-title">Maligayang pagdating, Kabarangay!</h2>
-                        <p className="welcome-sub">Welcome to Barangay Malagasang II-A</p>
-                        <div className="welcome-divider" />
-                        <p className="welcome-text">
-                            {isLogin
-                                ? "Mag-sign in upang ma-access ang mga talaan ng pondo at serbisyo ng barangay."
-                                : "Kailangan mo ng invite code mula sa barangay administrator upang makapagrehistro."}
-                        </p>
-                    </div>
-                    <div className="brand-footer">City of Imus · Cavite</div>
-                </aside>
 
+                        {err && <div className="alert alert-error stagger-3">{err}</div>}
+                        {stat && <div className="alert alert-success stagger-3">{stat}</div>}
+
+                        <form onSubmit={handleSubmit} className="auth-form stagger-4">
+                            
+                            {!isLogin ? (
+                                <>
+                                    <InviteCodeField code={inviteCode} setCode={setInviteCode} status={codeStatus} message={codeMessage} />
+                                    
+                                    <div className="field-row">
+                                        <label className="field">
+                                            <span>First name</span>
+                                            <input type="text" placeholder="Juan" required name="firstName" value={accountDetails.firstName} onChange={handleFormChange} />
+                                        </label>
+                                        <label className="field">
+                                            <span>Last name</span>
+                                            <input type="text" placeholder="Dela Cruz" required name="lastName" value={accountDetails.lastName} onChange={handleFormChange} />
+                                        </label>
+                                    </div>
+                                    
+                                    <div className="field-row">
+                                        <label className="field">
+                                            <span>Email address</span>
+                                            <input type="email" placeholder="juan@example.com" required name="email" value={accountDetails.email} onChange={handleFormChange} />
+                                        </label>
+                                        <label className="field">
+                                            <span>Username</span>
+                                            <input type="text" placeholder="Enter your username" required name="userName" value={accountDetails.userName} onChange={handleFormChange} />
+                                        </label>
+                                    </div>
+                                </>
+                            ) : (
+                                <label className="field">
+                                    <span>Username</span>
+                                    <input type="text" placeholder="Enter your username" required name="userName" value={accountDetails.userName} onChange={handleFormChange} />
+                                </label>
+                            )}
+
+                            <PasswordField label="Password" name="password" value={accountDetails.password} onChange={handleFormChange} show={showPassword} toggleShow={() => setShowPassword(!showPassword)} />
+
+                            {!isLogin && (
+                                <>
+                                    <PasswordField label="Confirm password" name="confirmPass" value={accountDetails.confirmPass} onChange={handleFormChange} show={showConfirmPass} toggleShow={() => setShowConfirmPass(!showConfirmPass)} />
+                                    
+                                    <div className="info-note">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" />
+                                        </svg>
+                                        <span>Use the exact email address that received the invite code.</span>
+                                    </div>
+                                </>
+                            )}
+
+                            {isLogin && (
+                                <div className="form-extras">
+                                    <label className="checkbox">
+                                        <input type="checkbox" />
+                                        <span>Remember me</span>
+                                    </label>
+                                    <button type="button" className="forgot" onClick={() => setShowForgot(true)}>
+                                        Forgot password?
+                                    </button>
+                                </div>
+                            )}
+
+                            <button className="submit-button" type="submit" disabled={!isLogin && codeStatus !== "valid"}>
+                                {isLogin ? "Sign in" : "Register account"}
+                            </button>
+
+                            {isLogin && (
+                                <p className="auth-switch">
+                                    Need access?{" "}
+                                    <button type="button" className="link-btn" onClick={() => handleToggleMode(false)}>
+                                        Register an account
+                                    </button>
+                                </p>
+                            )}
+                        </form>
+                    </div>
+
+                    {isLogin && (
+                        <aside className="auth-brand-side">
+                            <div className="brand-side-content">
+                                <div className="seal-wrap">
+                                    <img src={sealLogo} alt="Seal" className="seal-img" />
+                                </div>
+                                <h2 className="welcome-title">Maligayang pagdating, Kabarangay!</h2>
+                                <p className="welcome-sub">Welcome to Barangay Malagasang II-A</p>
+                                <div className="welcome-divider" />
+                                <p className="welcome-text">
+                                    "Mag-sign in upang ma-access ang mga talaan ng pondo at serbisyo ng barangay."
+                                </p>
+                            </div>
+                            <div className="brand-footer">City of Imus · Cavite</div>
+                        </aside>
+                    )}
+
+                </div>
             </div>
             
             {showForgot && <ForgotPasswordModal onClose={() => setShowForgot(false)} />}

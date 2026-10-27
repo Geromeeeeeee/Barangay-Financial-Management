@@ -1,5 +1,6 @@
 import "../../styles/dashboard.css";
 import "../../styles/sk_dashboard.css";
+import DashboardChart from "../../components/dashboard_chart"; 
 import { 
     IconUsers, IconMoney, IconChart, 
     StatCard, ActivityRow, DashboardHero 
@@ -11,7 +12,6 @@ export default function SKDashboard({ user }) {
     const { stats, loading, error } = useDashboardStats();
     const { projects, submitProject, fetchProjects } = useProjects();
 
-    // The SK dashboard uses the predefined SK major category.
     const skBudget = stats.categoryBalances?.find(c => c.name === "SK") || { balance: 0, allocated_amount: 0 };
 
     const formatPeso = (val) => "₱" + Number(val || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 });
@@ -61,8 +61,9 @@ export default function SKDashboard({ user }) {
                 />
             </section>
 
+        
+            <DashboardChart />
             <section className="dash-columns">
-                {/* LEFT: Project Request History */}
                 <div className="dash-card">
                     <div className="dash-card-head">
                         <h2>My Project Requests</h2>
@@ -85,8 +86,6 @@ export default function SKDashboard({ user }) {
                         </ul>
                     )}
                 </div>
-                
-                {/* RIGHT: Project Request Form */}
                 <div className="dash-card">
                     <div className="dash-card-head">
                         <h2>Request a New Project</h2>

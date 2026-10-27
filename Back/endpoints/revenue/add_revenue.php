@@ -3,6 +3,7 @@ session_start();
 
 require_once '../../header.php';
 require_once '../../classes/revenue.php';
+require_once '../../classes/audit.php';
 
 if (!isset($_SESSION['uid'])) {
     http_response_code(401);
@@ -22,51 +23,95 @@ $source          = $data['source']          ?? '';
 $fund_allocation = $data['fund_allocation'] ?? '';
 $created_by      = $_SESSION['uid'];
 $request_key     = $data['request_key']     ?? null;
-$attachmentPath = $attachmentName = $attachmentMime = $uploadedPath = null;
-$attachmentSize = null;
 
 $revenue = new Revenue($pdo);
+$audit = new Audit($pdo);
 
 try {
     if (!is_numeric($nta) || (float)$nta < 0 || !is_numeric($localIncome) || (float)$localIncome < 0) {
         throw new InvalidArgumentException('NTA and Local Income must be valid non-negative amounts.');
     }
+    
     $amount = round((float)$nta + (float)$localIncome, 2);
     if ($amount <= 0 || trim((string)$source) === '') {
         throw new InvalidArgumentException('A positive total annual income and source are required.');
     }
+    
     $isTreasurer = strtolower((string)($_SESSION['role'] ?? '')) === 'treasurer';
-    $file = $_FILES['supporting_document'] ?? null;
-    if ($isTreasurer && (!$file || $file['error'] === UPLOAD_ERR_NO_FILE)) {
-        throw new InvalidArgumentException('Treasurers must upload a supporting document.');
+    
+    $files = $_FILES['attachments'] ?? null;
+    if ($isTreasurer && (!$files || $files['error'][0] === UPLOAD_ERR_NO_FILE)) {
+        throw new InvalidArgumentException('Treasurers must upload at least one supporting document.');
     }
-    if ($file && $file['error'] !== UPLOAD_ERR_NO_FILE) {
+
+    $uploadedFilesData = [];
+    $uploadedPaths = [];
+
+    if ($files && $files['error'][0] !== UPLOAD_ERR_NO_FILE) {
         if (!$isTreasurer) {
             throw new InvalidArgumentException('Only treasurers can upload supporting documents.');
         }
-        if ($file['error'] !== UPLOAD_ERR_OK || $file['size'] > 5 * 1024 * 1024) {
-            throw new InvalidArgumentException('The supporting document could not be uploaded or exceeds 5 MB.');
-        }
+
         $allowedMimeTypes = ['application/pdf' => 'pdf', 'image/jpeg' => 'jpg', 'image/png' => 'png'];
-        $mimeType = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-        if (!isset($allowedMimeTypes[$mimeType])) {
-            throw new InvalidArgumentException('Only PDF, JPG, and PNG supporting documents are allowed.');
-        }
         $uploadDirectory = __DIR__ . '/../../uploads/revenues';
+        
         if (!is_dir($uploadDirectory) && !mkdir($uploadDirectory, 0750, true)) {
             throw new RuntimeException('The supporting document could not be stored.');
         }
-        $safeFilename = bin2hex(random_bytes(16)) . '.' . $allowedMimeTypes[$mimeType];
-        $uploadedPath = $uploadDirectory . DIRECTORY_SEPARATOR . $safeFilename;
-        if (!move_uploaded_file($file['tmp_name'], $uploadedPath)) {
-            throw new RuntimeException('The supporting document could not be stored.');
+
+        $file_count = count($files['name']);
+
+        for ($i = 0; $i < $file_count; $i++) {
+            if ($files['error'][$i] === UPLOAD_ERR_NO_FILE) continue;
+
+            if ($files['error'][$i] !== UPLOAD_ERR_OK || $files['size'][$i] > 5 * 1024 * 1024) {
+                throw new InvalidArgumentException('One or more files could not be uploaded or exceed 5 MB.');
+            }
+
+            $mimeType = (new finfo(FILEINFO_MIME_TYPE))->file($files['tmp_name'][$i]);
+            if (!isset($allowedMimeTypes[$mimeType])) {
+                throw new InvalidArgumentException('Only PDF, JPG, and PNG documents are allowed.');
+            }
+
+            $safeFilename = bin2hex(random_bytes(16)) . '.' . $allowedMimeTypes[$mimeType];
+            $uploadedPath = $uploadDirectory . DIRECTORY_SEPARATOR . $safeFilename;
+
+            if (!move_uploaded_file($files['tmp_name'][$i], $uploadedPath)) {
+                throw new RuntimeException('A supporting document could not be stored.');
+            }
+
+            $uploadedPaths[] = $uploadedPath;
+            
+            $uploadedFilesData[] = [
+                'path' => 'uploads/revenues/' . $safeFilename,
+                'name' => basename((string)$files['name'][$i]),
+                'mime' => $mimeType,
+                'size' => (int)$files['size'][$i]
+            ];
         }
-        $attachmentPath = 'uploads/revenues/' . $safeFilename;
-        $attachmentName = basename((string)$file['name']);
-        $attachmentMime = $mimeType;
-        $attachmentSize = (int)$file['size'];
     }
-    $revenue->record_revenue($nta, $localIncome, $source, $fund_allocation, $created_by, $request_key, $attachmentPath, $attachmentName, $attachmentMime, $attachmentSize);
+
+    $revenue_id = $revenue->record_revenue($nta, $localIncome, $source, $fund_allocation, $created_by, $request_key);
+
+    if (!empty($uploadedFilesData) && $revenue_id) {
+        $stmt = $pdo->prepare("
+            INSERT INTO revenue_attachments (revenue_id, file_path, file_name, file_type, file_size) 
+            VALUES (:rev_id, :path, :name, :type, :size)
+        ");
+        
+        foreach ($uploadedFilesData as $fileData) {
+            $stmt->execute([
+                'rev_id' => $revenue_id,
+                'path'   => $fileData['path'],
+                'name'   => $fileData['name'],
+                'type'   => $fileData['mime'],
+                'size'   => $fileData['size']
+            ]);
+        }
+    }
+
+    $audit->log('Record Revenue', "Recorded revenue of ₱" . number_format($amount, 2) . " for {$source}");
+
     echo json_encode([
         'status' => 'revenue_recorded',
         'data' => [
@@ -75,8 +120,13 @@ try {
             'total_annual_income' => $amount,
         ],
     ]);
+
 } catch (Exception $e) {
-    if ($uploadedPath && is_file($uploadedPath)) unlink($uploadedPath);
+    if (isset($uploadedPaths) && is_array($uploadedPaths)) {
+        foreach ($uploadedPaths as $path) {
+            if (is_file($path)) unlink($path);
+        }
+    }
     http_response_code($e instanceof InvalidArgumentException ? 400 : 500);
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }

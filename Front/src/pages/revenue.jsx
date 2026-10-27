@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import BackButton from '../components/back_button'
 import Revenue_Modal from '../components/revenue_modal'
+import FileListModal from '../components/file_list_modal'
 import useRevenue from '../custom_hooks/use_revenue'
 import { useRole } from '../custom_hooks/use_role'
 import useFilter from '../custom_hooks/use_filter'
@@ -13,6 +15,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/
 
 export default function Revenue () {
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [viewFilesId, setViewFilesId] = useState(null)
     const [currentPage, setCurrentPage] = useState(1)
     const {filters, months, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { revenues, loading, error, refetch } = useRevenue(filterParams)
@@ -29,6 +32,8 @@ export default function Revenue () {
 
     return (
         <div className="revenue-page">
+            <BackButton />
+            
             <header className="revenue-header">
                 <div>
                     <h1>Revenues</h1>
@@ -87,11 +92,25 @@ export default function Revenue () {
                                             : <span className="muted">—</span>}
                                     </td>
                                     <td>
-                                        {r.attachment_path ? (
-                                            <a href={`${API_URL}revenue/download_attachment.php?id=${encodeURIComponent(r.id)}`} target="_blank" rel="noreferrer">
-                                                {r.attachment_name || "View document"}
-                                            </a>
-                                        ) : <span className="muted">—</span>}
+                                        {r.attachment_count > 0 ? (
+                                            <button 
+                                                className="fund-pill" 
+                                                style={{ 
+                                                    background: '#e0f2fe', 
+                                                    color: '#0369a1', 
+                                                    fontWeight: 'bold',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    padding: '4px 10px'
+                                                }}
+                                                title={`${r.attachment_count} file(s) attached`}
+                                                onClick={() => setViewFilesId(r.id)}
+                                            >
+                                                📎 {r.attachment_count} File(s)
+                                            </button>
+                                        ) : (
+                                            <span className="muted">—</span>
+                                        )}
                                     </td>
                                     <td className="right amount">{peso(r.nta)}</td>
                                     <td className="right amount">{peso(r.local_income)}</td>
@@ -107,6 +126,10 @@ export default function Revenue () {
 
             {isModalOpen && canRecord && (
                 <Revenue_Modal setIsModalOpen={handleCloseModal} />
+            )}
+            
+            {viewFilesId && (
+                <FileListModal revenueId={viewFilesId} onClose={() => setViewFilesId(null)} />
             )}
         </div>
     )

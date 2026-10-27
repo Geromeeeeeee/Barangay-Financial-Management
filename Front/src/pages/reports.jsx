@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import BackButton from "../components/back_button";
+import sealLogo from "../assets/barangay-malagasang-logo.jpg";
 import "../styles/reports.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
@@ -39,11 +41,12 @@ export default function Reports() {
 
     return (
         <div className="reports-page">
-            {/* Header */}
+            <BackButton />
+            
             <header className="reports-header">
                 <div>
                     <h1>Financial Reports</h1>
-                    <p>Monthly revenue and expenditure summary</p>
+                    <p>Generate official monthly statements</p>
                 </div>
                 <div className="report-actions">
                     <select value={month} onChange={(e) => setMonth(Number(e.target.value))}>
@@ -58,83 +61,101 @@ export default function Reports() {
 
             {!loading && data && (
                 <div className="report-document">
-                    {/* Print Header */}
                     <div className="print-header">
-                        <h2>Barangay Malagasang II-A</h2>
-                        <h3>Financial Statement - {months[month - 1]} {year}</h3>
-                    </div>
-
-                    {/* Summary Cards */}
-                    <div className="report-summary">
-                        <div className="summary-card green">
-                            <span>Total Revenue</span>
-                            <strong>{formatPeso(data.totalRevenue)}</strong>
+                        <div className="print-header-left">
+                            <p>Republic of the Philippines</p>
+                            <p>Province of Cavite</p>
+                            <p>City of Imus</p>
+                            <h2>BARANGAY MALAGASANG II-A</h2>
+                            <p>Office of the Barangay Treasurer</p>
                         </div>
-                        <div className="summary-card red">
-                            <span>Total Expenditures</span>
-                            <strong>{formatPeso(data.totalExpenditure)}</strong>
-                        </div>
-                        <div className="summary-card blue">
-                            <span>Net Income</span>
-                            <strong>{formatPeso(data.netIncome)}</strong>
+                        <img src={sealLogo} alt="Barangay Seal" className="print-logo" />
+                        <div className="print-header-right">
+                            <p>Statement of Income and Expenses</p>
+                            <p>For the Month of {months[month - 1]} {year}</p>
                         </div>
                     </div>
 
-                    {/* Revenues Table */}
-                    <h4>Revenue Breakdown</h4>
+                    <div className="print-divider"></div>
+
+                    <h4>PART I: REVENUE SOURCES</h4>
                     <table className="report-table">
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Source</th>
-                                <th>Fund Allocation</th>
-                                <th className="right">Amount</th>
+                                <th>Source of Revenue</th>
+                                <th className="center">No. of Entries</th>
+                                <th className="right">Total Amount</th>
                             </tr>
                         </thead>
                         <tbody>
                             {data.revenues.length === 0 ? (
-                                <tr><td colSpan="4" className="center">No revenues recorded this month.</td></tr>
+                                <tr><td colSpan="3" className="center empty-row">No revenues recorded for this period.</td></tr>
                             ) : (
-                                data.revenues.map(r => (
-                                    <tr key={r.id}>
-                                        <td>{new Date(r.created_at).toLocaleDateString()}</td>
+                                data.revenues.map((r, index) => (
+                                    <tr key={index}>
                                         <td>{r.source}</td>
-                                        <td>{r.fund_allocation || "General"}</td>
-                                        <td className="right">{formatPeso(r.amount)}</td>
+                                        <td className="center">{r.entry_count}</td>
+                                        <td className="right">{formatPeso(r.total_amount)}</td>
                                     </tr>
                                 ))
                             )}
+                            <tr className="total-row">
+                                <td colSpan="2">TOTAL REVENUE</td>
+                                <td className="right">{formatPeso(data.totalRevenue)}</td>
+                            </tr>
                         </tbody>
                     </table>
 
-                    {/* Expenditures Table */}
-                    <h4>Expenditure Breakdown</h4>
+                    <h4>PART II: EXPENDITURES</h4>
                     <table className="report-table">
                         <thead>
                             <tr>
-                                <th>Date</th>
                                 <th>Description</th>
-                                <th className="right">Amount</th>
+                                <th className="center">No. of Entries</th>
+                                <th className="right">Total Amount</th>
                             </tr>
                         </thead>
                         <tbody>
                             {data.expenditures.length === 0 ? (
-                                <tr><td colSpan="3" className="center">No expenditures recorded this month.</td></tr>
+                                <tr><td colSpan="3" className="center empty-row">No expenditures recorded for this period.</td></tr>
                             ) : (
-                                data.expenditures.map(e => (
-                                    <tr key={e.id}>
-                                        <td>{new Date(e.created_at).toLocaleDateString()}</td>
+                                data.expenditures.map((e, index) => (
+                                    <tr key={index}>
                                         <td>{e.source}</td>
-                                        <td className="right">{formatPeso(e.amount)}</td>
+                                        <td className="center">{e.entry_count}</td>
+                                        <td className="right">{formatPeso(e.total_amount)}</td>
                                     </tr>
                                 ))
                             )}
+                            <tr className="total-row">
+                                <td colSpan="2">TOTAL EXPENDITURES</td>
+                                <td className="right">{formatPeso(data.totalExpenditure)}</td>
+                            </tr>
                         </tbody>
                     </table>
+
+                    <div className="report-summary-box">
+                        <div className="summary-line">
+                            <span>NET INCOME (Revenue - Expenditures):</span>
+                            <strong>{formatPeso(data.netIncome)}</strong>
+                        </div>
+                    </div>
                     
                     <div className="print-footer">
-                        <p>Generated on {new Date().toLocaleString()}</p>
-                        <div className="signature-line">Prepared by: ____________________</div>
+                        <div className="signature-block">
+                            <p>Prepared by:</p>
+                            <div className="signature-line"></div>
+                            <p className="signature-name">Barangay Treasurer</p>
+                        </div>
+                        <div className="signature-block">
+                            <p>Approved by:</p>
+                            <div className="signature-line"></div>
+                            <p className="signature-name">Barangay Captain</p>
+                        </div>
+                    </div>
+
+                    <div className="print-timestamp">
+                        Generated on: {new Date().toLocaleString()}
                     </div>
                 </div>
             )}

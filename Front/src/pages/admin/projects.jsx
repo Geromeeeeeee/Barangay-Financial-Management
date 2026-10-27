@@ -1,4 +1,5 @@
 import { useProjects } from "../../custom_hooks/use_projects";
+import BackButton from "../../components/back_button";
 import "../../styles/admin.css";
 
 export default function ProjectsPage() {
@@ -8,6 +9,9 @@ export default function ProjectsPage() {
 
     return (
         <div className="admin-page">
+            {/* 👇 ADDED BACK BUTTON HERE */}
+            <BackButton />
+
             <header className="admin-header">
                 <h1>Project Requests</h1>
                 <p>Review and approve budget requests from the SK and Staff.</p>

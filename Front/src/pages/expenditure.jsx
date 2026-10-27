@@ -1,4 +1,5 @@
 import { useState } from "react";
+import BackButton from "../components/back_button";
 import ExpenditureModal from "../components/expenditure_modal";
 import useExpenditure from "../custom_hooks/use_expenditure";
 import useFormat from "../custom_hooks/use_format";
@@ -36,6 +37,8 @@ export default function Expenditure() {
 
     return (
         <div className="expenditure-page">
+            <BackButton />
+
             <header className="expenditure-header">
                 <div>
                     <h1>Expenditures</h1>

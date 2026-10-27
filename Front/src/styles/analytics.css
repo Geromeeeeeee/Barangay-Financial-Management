@@ -1,0 +1,49 @@
+.analytics-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    font-family: 'Inter', sans-serif;
+}
+
+.analytics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 24px;
+}
+
+.analytics-header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px;
+}
+
+.analytics-header p {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.analytics-filters select {
+    padding: 8px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0f172a;
+    background: #fff;
+    cursor: pointer;
+}
+
+.chart-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 12px -5px rgba(15, 23, 42, 0.05);
+}
+
+.chart-wrapper {
+    width: 100%;
+}

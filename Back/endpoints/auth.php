@@ -4,6 +4,7 @@ session_start();
 require_once '../header.php';
 require_once '../classes/user.php';
 require_once '../classes/invite.php';
+require_once '../classes/audit.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 
@@ -17,10 +18,10 @@ $username     = $data['userName']    ?? '';
 $invite_code  = $data['inviteCode']  ?? '';
 
 $user = new User($pdo);
+$audit = new Audit($pdo);
 
 if(isset($action) && !empty($action)){
 
-       // ============ SIGN UP ============
     if($action === 'signup'){
         $result = $user->sign_up(
             $email, $password, $first_name, $last_name,
@@ -28,7 +29,7 @@ if(isset($action) && !empty($action)){
         );
 
         if($result['success']){
-            // 👈 Changed from 'account_pending' to 'account_created'
+            $audit->log('Sign Up', "Created new account: {$username} ({$email})");
             echo json_encode(['status' => 'account_created']);
         } else {
             echo json_encode([
@@ -39,7 +40,6 @@ if(isset($action) && !empty($action)){
         exit();
     }
 
-    // ============ LOGIN ============
     if($action === 'login'){
         $result = $user->login($username, $password);
         if($result['success']){
@@ -63,14 +63,12 @@ if(isset($action) && !empty($action)){
         exit();
     }
 
-    // ============ LOGOUT ============
     if($action === 'logOut'){
         $user->Logout();
         echo json_encode(['status'=>'logged_out']);
         exit();
     }
 
-    // ============ VALIDATE INVITE ============
     if($action === 'validateInvite'){
         $invite = new Invite($pdo);
         $check = $invite->validate_code($invite_code);
@@ -78,7 +76,6 @@ if(isset($action) && !empty($action)){
         exit();
     }
 
-    // ============ GET CURRENT USER (for session restore) ============
     if($action === 'me'){
         if(!isset($_SESSION['uid'])){
             echo json_encode(['success' => false, 'message' => 'Not logged in']);
@@ -103,7 +100,7 @@ if(isset($action) && !empty($action)){
         exit();
     }
 
-    // Unknown action
     echo json_encode(['status' => 'invalid_action']);
     exit();
 }
+?>

@@ -1,8 +1,10 @@
-import { useState } from "react"
-import { Outlet, Link, useNavigate } from "react-router-dom"
+import { useState, useEffect, useRef } from "react"
+import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom"
 import { useRole } from "../custom_hooks/use_role"
 import axios from "axios"
 import sealLogo from "../assets/barangay-malagasang-logo.jpg"
+import NotificationBell from "../components/notification_bell"
+import UserMenu from "../components/user_menu"
 import '../styles/layout.css'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
@@ -10,9 +12,13 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/
 export default function DashboardLayout() {
     const { isAdmin, isTreasurer, isStaff, isSK } = useRole(); 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
+    
+    const navRef = useRef(null);
+    const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
     const confirmLogout = async () => {
         setLoggingOut(true);
@@ -26,50 +32,75 @@ export default function DashboardLayout() {
         }
     };
 
+    useEffect(() => {
+        const updateIndicator = () => {
+            if (!navRef.current) return;
+            const activeLink = navRef.current.querySelector('.nav-item.active');
+            if (activeLink) {
+                setIndicatorStyle({
+                    left: activeLink.offsetLeft,
+                    width: activeLink.offsetWidth
+                });
+            }
+        };
+
+        const timeout = setTimeout(updateIndicator, 50);
+        window.addEventListener('resize', updateIndicator);
+        
+        return () => {
+            clearTimeout(timeout);
+            window.removeEventListener('resize', updateIndicator);
+        };
+    }, [location.pathname, isAdmin, isTreasurer, isStaff, isSK]);
+
+    const linkClass = ({ isActive }) => `nav-item ${isActive ? 'active' : ''}`;
+
     return (
-        <div className="dashboard-container">
-            <aside className="sidebar">
-                <div className="sidebar-brand">
-                    <img src={sealLogo} alt="Malagasang II-A Seal" className="sidebar-logo" />
-                    <h3>Malagasang II-A <br /> Finance</h3>
+        <div className="topnav-layout">
+            
+            <header className="topnav-header">
+                <div className="topnav-brand">
+                    <img src={sealLogo} alt="Malagasang II-A Seal" className="topnav-logo" />
+                    <h2>Malagasang II-A</h2>
                 </div>
 
-                <nav>
-                    <Link to="/Dashboard">Dashboard</Link>
+                <div className="topnav-links" ref={navRef}>
+                    <NavLink to="/Dashboard" className={linkClass}>
+                        Dashboard
+                    </NavLink>
 
                     {(isAdmin || isTreasurer || isSK) && (
                         <>
-                            <Link to="/Revenue">Revenue</Link>
-                            <Link to="/Expenditure">Expenditures</Link>
+                            <NavLink to="/Revenue" className={linkClass}>Revenue</NavLink>
+                            <NavLink to="/Expenditure" className={linkClass}>Expenditures</NavLink>
                         </>
                     )}
                     
                     {(isStaff || isTreasurer) && (
-                        <Link to="/Reports">Reports</Link>
+                        <NavLink to="/Reports" className={linkClass}>Reports</NavLink>
                     )}
                     
                     {isTreasurer && (
-                        <Link to="/admin/projects">Project Requests</Link>
+                        <NavLink to="/admin/projects" className={linkClass}>Project Requests</NavLink>
                     )}
 
                     {isAdmin && (
-                        <Link to="/admin/invite-codes">Invite Codes</Link>
+                        <>
+                            <NavLink to="/admin/invite-codes" className={linkClass}>Invite Codes</NavLink>
+                            <NavLink to="/admin/audit-trail" className={linkClass}>Audit Trail</NavLink>
+                        </>
                     )}
-                </nav>
 
-                <div className="sidebar-footer">
-                    <button type="button" className="logout-btn" onClick={() => setShowLogoutConfirm(true)}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                            <polyline points="16 17 21 12 16 7" />
-                            <line x1="21" y1="12" x2="9" y2="12" />
-                        </svg>
-                        <span>Log out</span>
-                    </button>
+                    <span className="nav-indicator" style={indicatorStyle} />
                 </div>
-            </aside>
 
-            <main className="main-content" style={{ flex: 1, padding: '30px', overflowY: 'auto', background: '#f8fafc' }}>
+                <div className="topnav-actions" style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                    <NotificationBell /> 
+                    <UserMenu onLogoutClick={() => setShowLogoutConfirm(true)} />
+                </div>
+            </header>
+
+            <main className="topnav-content">
                 <Outlet />
             </main>
 

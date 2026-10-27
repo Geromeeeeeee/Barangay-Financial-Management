@@ -1,7 +1,8 @@
 import "../../styles/dashboard.css";
 import "../../styles/staff_dashboard.css";
+import DashboardChart from "../../components/dashboard_chart"; // 👈 Import the chart
 import {
-    IconFile, IconClock, IconCheckCircle, IconThumbsUp, IconMoney, IconChart,
+    IconFile, IconClock, IconThumbsUp, IconMoney, IconChart,
     StatCard, ActivityRow, QuickAction, DashboardHero,
 } from "../../components/dashboard_widgets";
 import { useStaffStats } from "../../custom_hooks/use_staff_stats";
@@ -17,8 +18,6 @@ export default function StaffDashboard({ user }) {
             <DashboardHero user={user} />
 
             {error && <div className="alert alert-error">{error}</div>}
-
-            {/* ===== STAT CARDS ===== */}
             <section className="stat-grid">
                 <StatCard
                     Icon={IconFile}
@@ -50,10 +49,9 @@ export default function StaffDashboard({ user }) {
                 />
             </section>
 
-            {/* ===== TWO COLUMN ===== */}
+           
+            <DashboardChart />
             <section className="dash-columns">
-
-                {/* My Recent Entries */}
                 <div className="dash-card">
                     <div className="dash-card-head">
                         <h2>My Recent Entries</h2>
