@@ -35,9 +35,16 @@ $totalRevenue = $pdo->query("
 // ============ CATEGORY BALANCES ============
 $categoryBalances = $pdo->query("
     SELECT c.id, c.name, c.allocated_amount, c.spent_amount,
-           c.allocated_amount - c.spent_amount AS balance, c.is_custom
+           c.allocated_amount - c.spent_amount - COALESCE(SUM(s.allocated_amount), 0) AS balance, c.is_custom
     FROM budget_categories c
+    LEFT JOIN budget_subcategories s ON s.category_id = c.id
+    GROUP BY c.id, c.name, c.allocated_amount, c.spent_amount, c.is_custom
     ORDER BY id ASC
+")->fetchAll(PDO::FETCH_ASSOC);
+$subcategories = $pdo->query("
+    SELECT id, category_id, name, allocated_amount, spent_amount,
+           allocated_amount - spent_amount AS balance
+    FROM budget_subcategories ORDER BY category_id, name
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($categoryBalances as &$category) {
@@ -46,6 +53,17 @@ foreach ($categoryBalances as &$category) {
     $category['spent_amount'] = (float)$category['spent_amount'];
     $category['balance'] = (float)$category['balance'];
     $category['is_custom'] = (bool)$category['is_custom'];
+    $category['subcategories'] = [];
+    foreach ($subcategories as $subcategory) {
+        if ((int)$subcategory['category_id'] === $category['id']) {
+            $subcategory['id'] = (int)$subcategory['id'];
+            $subcategory['category_id'] = (int)$subcategory['category_id'];
+            $subcategory['allocated_amount'] = (float)$subcategory['allocated_amount'];
+            $subcategory['spent_amount'] = (float)$subcategory['spent_amount'];
+            $subcategory['balance'] = (float)$subcategory['balance'];
+            $category['subcategories'][] = $subcategory;
+        }
+    }
 }
 unset($category);
 

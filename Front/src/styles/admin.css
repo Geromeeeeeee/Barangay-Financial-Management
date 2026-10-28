@@ -70,6 +70,16 @@
 
 .admin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 
+.project-attachments {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.project-attachments a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
 .admin-table th {
     text-align: left;
     padding: 10px 8px;

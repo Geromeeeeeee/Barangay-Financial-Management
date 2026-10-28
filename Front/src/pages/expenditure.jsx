@@ -24,8 +24,9 @@ export default function Expenditure() {
     const {totalPages, displayedRecords} = usePagination({currentPage, filters, records: expenditures})
     const {peso, date} = useFormat();
     const { categories, income, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory, saveMajorCategory } = useBudgetCategories();
-    const {isTreasurer} = useRole();
+    const {isTreasurer, isSK} = useRole();
     const canModify = isTreasurer;
+    const displayedCategories = isSK ? categories.filter((category)=>category.name === "SK") : categories
 
     const handleCloseModal = (open) => {
         setIsModalOpen(open);
@@ -61,7 +62,7 @@ export default function Expenditure() {
                         Total annual income: {peso(income.total_annual_income)} · Allocated: {peso(categories.reduce((total, category) => total + Number(category.allocated_amount || 0), 0))}
                     </p>
                     <div className="expenditure-categories">
-                    {categories.map((category) => (
+                    {displayedCategories.map((category) => (
                         <section className="expenditure-category" key={category.id}>
                             <div className="expenditure-category-head">
                                 <div>
@@ -92,7 +93,8 @@ export default function Expenditure() {
                                 <button type="button" onClick={() => setSubcategoryForm({ category_id: category.id, name: "", allocated_amount: "" })}>+ Add subcategory</button>
                             )}
                         </section>
-                    ))}
+                    ))
+                    }
                     </div>
                 </div>
             )}
@@ -119,7 +121,7 @@ export default function Expenditure() {
                                         ? <span className="fund-pill">{expenditure.subcategory_name || expenditure.category_name || expenditure.fund_allocation}</span>
                                         : <span className="muted">—</span>}</td>
                                     <td>
-                                        {expenditure.attachment_path ? (
+                                        {Number(expenditure.attachment_count) > 0 ? (
                                             <button
                                                 type="button"
                                                 className="fund-pill"
@@ -133,7 +135,7 @@ export default function Expenditure() {
                                                 }}
                                                 onClick={() => setViewFile(expenditure)}
                                             >
-                                                📎 View document
+                                                📎 View document{Number(expenditure.attachment_count) > 1 ? `s (${expenditure.attachment_count})` : ''}
                                             </button>
                                         ) : <span className="muted">—</span>}
                                     </td>

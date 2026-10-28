@@ -10,14 +10,22 @@ export default function FileListModal({ revenueId, expenditure, onClose }) {
 
     useEffect(() => {
         if (expenditure) {
-            setFiles([{
-                id: expenditure.id,
-                file_name: expenditure.attachment_name,
-                file_size: expenditure.attachment_size,
-                view_url: `${API_URL}expenditure/view_attachment.php?id=${expenditure.id}`,
-                download_url: `${API_URL}expenditure/download_attachment.php?id=${expenditure.id}`,
-            }]);
-            setLoading(false);
+            axios.get(`${API_URL}expenditure/get_attachments.php?expenditure_id=${expenditure.id}`, { withCredentials: true })
+                .then(res => {
+                    if (res.data.status === 'success') {
+                        setFiles(res.data.data.map((file) => ({
+                            ...file,
+                            view_url: file.legacy
+                                ? `${API_URL}expenditure/view_attachment.php?id=${expenditure.id}`
+                                : `${API_URL}expenditure/view_attachment.php?attachment_id=${file.id}`,
+                            download_url: file.legacy
+                                ? `${API_URL}expenditure/download_attachment.php?id=${expenditure.id}`
+                                : `${API_URL}expenditure/download_attachment.php?attachment_id=${file.id}`,
+                        })));
+                    }
+                })
+                .catch(err => console.error(err))
+                .finally(() => setLoading(false));
             return;
         }
 

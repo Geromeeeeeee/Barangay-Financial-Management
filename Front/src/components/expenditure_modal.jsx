@@ -7,8 +7,17 @@ export default function ExpenditureModal({ setIsModalOpen, categories = [], sele
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("")
+    const [files, setFiles] = useState([])
     const {isTreasurer} = useRole();
-    const {handleSubmit} = useSubmitExpenditure({setLoading, setErrorMessage, selectedCategory, setSuccessMessage});
+    const {handleSubmit} = useSubmitExpenditure({setLoading, setErrorMessage, selectedCategory, selectedFiles: files, setSuccessMessage});
+
+    const handleFileChange = (event) => {
+        setFiles(Array.from(event.target.files || []))
+    }
+
+    const removeFile = (indexToRemove) => {
+        setFiles((currentFiles) => currentFiles.filter((_, index) => index !== indexToRemove))
+    }
 
     if(successMessage){
         return(
@@ -60,8 +69,24 @@ export default function ExpenditureModal({ setIsModalOpen, categories = [], sele
                     </label>
                     {isTreasurer && (
                         <label>
-                            <span>Supporting document <small>(optional, PDF/JPG/PNG up to 5 MB)</small></span>
-                            <input name="supporting_document" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" />
+                            <span>Supporting documents <small>(optional, up to 5 files, PDF/JPG/PNG up to 5 MB each)</small></span>
+                            <input
+                                name="supporting_documents[]"
+                                type="file"
+                                multiple
+                                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                onChange={handleFileChange}
+                            />
+                            {files.length > 0 && (
+                                <ul className="expenditure-selected-files">
+                                    {files.map((file, index) => (
+                                        <li key={`${file.name}-${index}`}>
+                                            <span>{file.name}</span>
+                                            <button type="button" onClick={() => removeFile(index)}>Remove</button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </label>
                     )}
                     <div className="expenditure-modal-actions">

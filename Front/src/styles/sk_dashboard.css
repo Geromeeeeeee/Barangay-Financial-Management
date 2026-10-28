@@ -52,3 +52,44 @@
 .sk-project-form button:hover {
     background: #15803d;
 }
+
+.sk-attachment-label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: #475569;
+    font-size: 0.85rem;
+}
+
+.sk-selected-files {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sk-selected-files li {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    color: #334155;
+}
+
+.sk-selected-files button {
+    padding: 0;
+    color: #b91c1c;
+    background: transparent;
+    font-size: 0.8rem;
+}
+
+.sk-request-files {
+    margin: -4px 0 8px 26px;
+    padding-left: 16px;
+    font-size: 0.8rem;
+}
+
+.sk-request-files a {
+    color: #2563eb;
+}

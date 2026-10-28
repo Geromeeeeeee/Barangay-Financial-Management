@@ -21,7 +21,6 @@ export function useProjects() {
     };
 
     const submitProject = async (projectData) => {
-        // 👇 Changed to add_project.php (from earlier)
         await axios.post(`${API_URL}projects/add_project.php`, projectData, { withCredentials: true });
         fetchProjects();
     };

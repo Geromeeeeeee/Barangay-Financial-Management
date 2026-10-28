@@ -15,13 +15,11 @@ if (!$id) {
     exit();
 }
 
-$stmt = $pdo->prepare('
-    SELECT attachment_path, attachment_name, attachment_mime
-    FROM expenditures
-    WHERE id = :id
-    LIMIT 1
-');
-$stmt->execute(['id' => $id]);
+$attachmentId = filter_input(INPUT_GET, 'attachment_id', FILTER_VALIDATE_INT);
+$stmt = $attachmentId
+    ? $pdo->prepare('SELECT file_path AS attachment_path, file_name AS attachment_name, file_type AS attachment_mime FROM expenditure_attachments WHERE id = :id LIMIT 1')
+    : $pdo->prepare('SELECT attachment_path, attachment_name, attachment_mime FROM expenditures WHERE id = :id LIMIT 1');
+$stmt->execute(['id' => $attachmentId ?: $id]);
 $attachment = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$attachment || empty($attachment['attachment_path'])) {

@@ -9,7 +9,7 @@ class Expenditure {
         $this->database = $pdo;
     }
 
-    public function record_expenditure($amount, $description, $fund_allocation, $created_by = null, $category_id = null, $subcategory_id = null, $attachment_path = null, $attachment_name = null, $attachment_mime = null, $attachment_size = null)
+    public function record_expenditure($amount, $description, $fund_allocation, $created_by = null, $category_id = null, $subcategory_id = null, $attachment_path = null, $attachment_name = null, $attachment_mime = null, $attachment_size = null, array $attachments = [])
     {
         try {
             $this->database->beginTransaction();
@@ -89,8 +89,26 @@ class Expenditure {
                 'attachment_size' => $attachment_size,
             ]);
 
+            if ($attachments) {
+                $stmtInsertAttachment = $this->database->prepare('
+                    INSERT INTO expenditure_attachments
+                        (expenditure_id, file_path, file_name, file_type, file_size)
+                    VALUES (:expenditure_id, :file_path, :file_name, :file_type, :file_size)
+                ');
+                $expenditureId = (int)$this->database->lastInsertId();
+                foreach ($attachments as $attachment) {
+                    $stmtInsertAttachment->execute([
+                        'expenditure_id' => $expenditureId,
+                        'file_path' => $attachment['path'],
+                        'file_name' => $attachment['name'],
+                        'file_type' => $attachment['mime'],
+                        'file_size' => $attachment['size'],
+                    ]);
+                }
+            }
+
             $this->database->commit();
-            return true;
+            return (int)$this->database->lastInsertId();
         } catch (Exception $e) {
             if ($this->database->inTransaction()) $this->database->rollBack();
             throw $e;
@@ -111,7 +129,9 @@ class Expenditure {
         }
         $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
         $stmt = $this->database->prepare("
-            SELECT e.*, c.name AS category_name, s.name AS subcategory_name
+            SELECT e.*, c.name AS category_name, s.name AS subcategory_name,
+                   (SELECT COUNT(*) FROM expenditure_attachments ea WHERE ea.expenditure_id = e.id)
+                   + CASE WHEN e.attachment_path IS NULL THEN 0 ELSE 1 END AS attachment_count
             FROM expenditures e
             LEFT JOIN budget_categories c ON c.id = e.category_id
             LEFT JOIN budget_subcategories s ON s.id = e.subcategory_id

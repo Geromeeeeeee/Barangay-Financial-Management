@@ -1,7 +1,7 @@
 import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
-export default function useSubmitExpenditure({setLoading, setErrorMessage, selectedCategory, setSuccessMessage}){
+export default function useSubmitExpenditure({setLoading, setErrorMessage, selectedCategory, selectedFiles = [], setSuccessMessage}){
     const handleSubmit = async (event) =>{
         event.preventDefault();
         setLoading(true);
@@ -9,6 +9,8 @@ export default function useSubmitExpenditure({setLoading, setErrorMessage, selec
 
         const formData = new FormData(event.target);
         try {
+            formData.delete("supporting_documents[]");
+            selectedFiles.forEach((file) => formData.append("supporting_documents[]", file));
             formData.set("category_id", selectedCategory?.id || formData.get("categoryId") || "");
             formData.set("subcategory_id", formData.get("subcategoryId") || "");
 
