@@ -5,7 +5,6 @@ import '../styles/revenue.css'
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
 export default function Revenue_Modal({ setIsModalOpen }) {
-    const [fundAllocation, setFundAllocation] = useState('General')
     const [loading, setLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
     const [files, setFiles] = useState([])
@@ -26,12 +25,6 @@ export default function Revenue_Modal({ setIsModalOpen }) {
         setErrorMessage('')
 
         const formData = new FormData(event.target)
-        
-        if (formData.get('fundAllocation') === 'new') {
-            formData.set('fund_allocation', formData.get('newFundAllocation'))
-        } else if (formData.get('fundAllocation') === 'General') {
-            formData.set('fund_allocation', '')
-        }
 
         try {
             const response = await axios.post(`${API_URL}revenue/add_revenue.php`, formData, {
@@ -103,25 +96,6 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                         <span>Source</span>
                         <input name="source" type="text" placeholder="e.g., Clearance Fee" required />
                     </label>
-
-                    <label>
-                        <span>Fund allocation</span>
-                        <select
-                            name="fundAllocation"
-                            value={fundAllocation}
-                            onChange={(event) => setFundAllocation(event.target.value)}
-                        >
-                            <option value="General">General</option>
-                            <option value="new">Create new fund allocation</option>
-                        </select>
-                    </label>
-
-                    {fundAllocation === 'new' && (
-                        <label>
-                            <span>New fund allocation</span>
-                            <input name="newFundAllocation" type="text" placeholder="Enter allocation name" autoFocus required />
-                        </label>
-                    )}
 
                     <label>
                         <span>Supporting Documents (Select multiple)</span>

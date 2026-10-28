@@ -36,7 +36,7 @@ $totalAmount = $totalAmount->fetchColumn();
 
 // ============ RECENT ENTRIES ============
 $recent = $pdo->prepare("
-    SELECT id, source, amount, fund_allocation, created_at
+    SELECT id, source, amount, created_at
     FROM revenues
     WHERE created_by = :uid
     ORDER BY created_at DESC

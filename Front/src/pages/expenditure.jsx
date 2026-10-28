@@ -19,7 +19,7 @@ export default function Expenditure() {
     const [subcategoryForm, setSubcategoryForm] = useState(null);
     const [majorCategoryForm, setMajorCategoryForm] = useState(false);
     const [currentPage, setCurrentPage] = useState(1)
-    const {filters, months, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
+    const {filters, months, years, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { expenditures, loading, error, refetch } = useExpenditure(filterParams);
     const {totalPages, displayedRecords} = usePagination({currentPage, filters, records: expenditures})
     const {peso, date} = useFormat();
@@ -97,7 +97,7 @@ export default function Expenditure() {
                 </div>
             )}
             <div className="expenditure-card">
-                <Filter filters={filters} updateFilter={updateFilter} months={months} clearFilters={clearFilters}/>
+                <Filter filters={filters} updateFilter={updateFilter} months={months} years={years} clearFilters={clearFilters}/>
                 {loading && <p className="muted">Loading records...</p>}
                 {!loading && expenditures.length === 0 && (
                     <div className="expenditure-empty">

@@ -12,6 +12,8 @@ export default function useFilter ({setCurrentPage}) {
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ]
+    const currentYear = new Date().getFullYear()
+    const years = Array.from({length: 6}, (_, index) => currentYear - index)
 
     const updateFilter = (event) => {
         const { name, value } = event.target
@@ -38,5 +40,5 @@ export default function useFilter ({setCurrentPage}) {
         year: filters.year
     }), [filters.month, filters.year])
 
-    return{filters, months, updateFilter, clearFilters, filterParams}
+    return{filters, months, years, updateFilter, clearFilters, filterParams}
 }

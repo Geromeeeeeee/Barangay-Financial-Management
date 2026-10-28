@@ -16,7 +16,6 @@ export function useTreasurerStats() {
         revenueThisMonth: 0,
         totalRecords: 0,
         recordsThisMonth: 0,
-        topFunds: [],
         fundBalances: [],
         categoryBalances: [],
         recentActivity: [],

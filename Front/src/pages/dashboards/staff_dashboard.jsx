@@ -71,7 +71,7 @@ export default function StaffDashboard({ user }) {
                                     key={row.id}
                                     dot="green"
                                     title={row.source}
-                                    meta={`${formatPeso(row.amount)} · ${row.fund_allocation}`}
+                                    meta={formatPeso(row.amount)}
                                     time={timeAgo(row.created_at)}
                                 />
                             ))}

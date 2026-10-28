@@ -104,7 +104,7 @@ export default function AdminDashboard({ user }) {
                                     key={`rev-${row.id}`}
                                     dot="green"
                                     title={`Revenue: ${row.source}`}
-                                    meta={`₱${Number(row.amount).toLocaleString()} · ${row.fund_allocation}`}
+                                    meta={`₱${Number(row.amount).toLocaleString()}`}
                                     time={timeAgo(row.created_at)}
                                 />
                             ))}

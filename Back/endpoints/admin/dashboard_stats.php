@@ -58,7 +58,7 @@ $totalRemaining = array_reduce($categoryBalances, static function ($total, $cate
 
 // ============ RECENT REVENUE RECORDS (last 5) ============
 $recentActivity = $pdo->query("
-    SELECT id, source, amount, fund_allocation, created_at
+    SELECT id, source, amount, created_at
     FROM revenues
     ORDER BY created_at DESC
     LIMIT 5

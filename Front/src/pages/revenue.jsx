@@ -17,7 +17,7 @@ export default function Revenue () {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [viewFilesId, setViewFilesId] = useState(null)
     const [currentPage, setCurrentPage] = useState(1)
-    const {filters, months, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
+    const {filters, months, years, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { revenues, loading, error, refetch } = useRevenue(filterParams)
     const {totalPages, displayedRecords} = usePagination({currentPage, filters, records: revenues})
     const { isTreasurer, isStaff } = useRole()
@@ -58,7 +58,7 @@ export default function Revenue () {
             {error && <div className="revenue-error">{error}</div>}
 
             <div className="revenue-card">
-                <Filter filters={filters} updateFilter={updateFilter} months={months} clearFilters={clearFilters}/>
+                <Filter filters={filters} updateFilter={updateFilter} months={months} years={years} clearFilters={clearFilters}/>
                 {loading && <p className="muted">Loading records…</p>}
 
                 {!loading && revenues.length === 0 && (
@@ -74,7 +74,6 @@ export default function Revenue () {
                             <tr>
                                 <th>Date</th>
                                 <th>Source</th>
-                                <th>Fund Allocation</th>
                                 <th>Document</th>
                                 <th className="right">NTA</th>
                                 <th className="right">Local Income</th>
@@ -86,11 +85,6 @@ export default function Revenue () {
                                 <tr key={r.id}>
                                     <td className="muted">{date(r.created_at)}</td>
                                     <td>{r.source}</td>
-                                    <td>
-                                        {r.fund_allocation
-                                            ? <span className="fund-pill">{r.fund_allocation}</span>
-                                            : <span className="muted">—</span>}
-                                    </td>
                                     <td>
                                         {r.attachment_count > 0 ? (
                                             <button 

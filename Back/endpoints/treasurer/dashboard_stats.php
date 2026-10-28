@@ -30,17 +30,6 @@ $recordsThisMonth = $pdo->query("
       AND YEAR(created_at)  = YEAR(NOW())
 ")->fetchColumn();
 
-// ============ TOP FUND ALLOCATIONS ============
-$topFunds = $pdo->query("
-    SELECT fund_allocation,
-           SUM(amount) AS total,
-           COUNT(*) AS entries
-    FROM revenues
-    GROUP BY fund_allocation
-    ORDER BY total DESC
-    LIMIT 5
-")->fetchAll(PDO::FETCH_ASSOC);
-
 $categoryBalances = $pdo->query("
     SELECT id, name, allocated_amount, spent_amount,
            allocated_amount - spent_amount AS balance, percentage, is_custom
@@ -65,7 +54,7 @@ $totalRemaining = array_reduce($categoryBalances, static function ($total, $cate
 
 // ============ RECENT RECORDS (last 5) ============
 $recentActivity = $pdo->query("
-    SELECT id, source, amount, fund_allocation, created_at
+    SELECT id, source, amount, created_at
     FROM revenues
     ORDER BY created_at DESC
     LIMIT 5
@@ -83,7 +72,6 @@ echo json_encode([
     'revenueThisMonth'=> (float)$revenueThisMonth,
     'totalRecords'    => (int)$totalRecords,
     'recordsThisMonth'=> (int)$recordsThisMonth,
-    'topFunds'        => $topFunds,
     'categoryBalances' => $categoryBalances,
     'recentActivity'  => $recentActivity,
 ]);

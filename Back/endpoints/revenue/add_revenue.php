@@ -20,7 +20,6 @@ $amount          = $data['amount']          ?? 0;
 $nta             = array_key_exists('nta', $data) ? $data['nta'] : $amount;
 $localIncome     = $data['local_income']    ?? 0;
 $source          = $data['source']          ?? '';
-$fund_allocation = $data['fund_allocation'] ?? '';
 $created_by      = $_SESSION['uid'];
 $request_key     = $data['request_key']     ?? null;
 
@@ -91,7 +90,7 @@ try {
         }
     }
 
-    $revenue_id = $revenue->record_revenue($nta, $localIncome, $source, $fund_allocation, $created_by, $request_key);
+    $revenue_id = $revenue->record_revenue($nta, $localIncome, $source, $created_by, $request_key);
 
     if (!empty($uploadedFilesData) && $revenue_id) {
         $stmt = $pdo->prepare("
