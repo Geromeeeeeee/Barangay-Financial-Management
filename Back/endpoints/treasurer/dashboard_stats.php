@@ -79,6 +79,13 @@ $recentActivity = $pdo->query("
     LIMIT 5
 ")->fetchAll(PDO::FETCH_ASSOC);
 
+$recentExpenditures = $pdo->query("
+    SELECT id, description, amount, created_at
+    FROM expenditures
+    ORDER BY created_at DESC
+    LIMIT 1
+")->fetchAll(PDO::FETCH_ASSOC);
+
 // ============ RETURN ============
 echo json_encode([
     'totalRevenue'    => (float)$totalRevenue,
@@ -93,4 +100,5 @@ echo json_encode([
     'recordsThisMonth'=> (int)$recordsThisMonth,
     'categoryBalances' => $categoryBalances,
     'recentActivity'  => $recentActivity,
+    'recentExpenditures' => $recentExpenditures,
 ]);

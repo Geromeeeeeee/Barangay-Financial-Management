@@ -19,6 +19,7 @@ export function useTreasurerStats() {
         fundBalances: [],
         categoryBalances: [],
         recentActivity: [],
+        recentExpenditures: [],
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");

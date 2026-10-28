@@ -19,6 +19,7 @@
             totalRemaining: 0,
             categoryBalances: [],
             recentActivity: [],
+            recentExpenditures: [],
             recentRequests: [],
         });
         const [loading, setLoading] = useState(true);

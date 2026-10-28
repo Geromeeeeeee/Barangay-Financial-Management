@@ -1,3 +1,4 @@
+import { useState } from "react";
 import "../../styles/dashboard.css";
 import "../../styles/admin_dashboard.css";
 import eyeOpenIcon from "../../assets/eye_open.svg";
@@ -11,6 +12,10 @@ import DashboardChart from "../../components/dashboard_chart"; // 👈 Import th
 
 export default function AdminDashboard({ user }) {
     const { stats, loading, error, refresh, isVisible, setIsVisible } = useDashboardStats();
+    const [activityType, setActivityType] = useState("revenue");
+    const selectedActivity = activityType === "revenue"
+        ? stats.recentActivity.slice(0, 1)
+        : stats.recentExpenditures.slice(0, 1);
 
     const getCategoryStatus = (percentage) => {
         if (percentage >= 75) return "Critical";
@@ -21,7 +26,52 @@ export default function AdminDashboard({ user }) {
 
     return (
         <div className="dashboard-page admin-view">
-            <DashboardHero user={user} />
+            <div className="dashboard-header">
+                <DashboardHero user={user} />
+                <div className="header-right">
+                    <div className="dash-card-head">
+                        <h2>{activityType === "revenue" ? "Recent Revenue Activity" : "Recent Expenditure Activity"}</h2>
+                        <button className="dash-link" onClick={refresh}>Refresh</button>
+                    </div>
+
+                    {loading && <p className="muted">Loading…</p>}
+                    {!loading && selectedActivity.length === 0 && (
+                        <p className="muted">
+                            No recent {activityType === "revenue" ? "revenue" : "expenditure"} activity.
+                        </p>
+                    )}
+
+                    {!loading && selectedActivity.length > 0 && (
+                        <ul className="activity-list">
+                            {selectedActivity.map((row) => (
+                                <ActivityRow
+                                    key={`${activityType}-${row.id}`}
+                                    dot={activityType === "revenue" ? "green" : "red"}
+                                    title={activityType === "revenue" ? `Revenue: ${row.source}` : `Expenditure: ${row.description}`}
+                                    meta={`₱${Number(row.amount).toLocaleString()}`}
+                                    time={timeAgo(row.created_at)}
+                                />
+                            ))}
+                        </ul>
+                    )}
+                    <div className="activity-toggle" role="group" aria-label="Activity type">
+                        <button
+                            type="button"
+                            className={activityType === "revenue" ? "active" : ""}
+                            onClick={() => setActivityType("revenue")}
+                        >
+                            Recent Revenue
+                        </button>
+                        <button
+                            type="button"
+                            className={activityType === "expenditure" ? "active" : ""}
+                            onClick={() => setActivityType("expenditure")}
+                        >
+                            Recent Expenditures
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             {error && <div className="alert alert-error">{error}</div>}
 
@@ -88,29 +138,6 @@ export default function AdminDashboard({ user }) {
 
             <DashboardChart />
             <section className="dash-columns">
-                <div className="dash-card">
-                    <div className="dash-card-head">
-                        <h2>Recent Revenue Activity</h2>
-                        <button className="dash-link" onClick={refresh}>Refresh</button>
-                    </div>
-
-                    {loading && <p className="muted">Loading…</p>}
-                    {!loading && stats.recentActivity.length === 0 && <p className="muted">No recent revenue activity.</p>}
-
-                    {!loading && stats.recentActivity.length > 0 && (
-                        <ul className="activity-list">
-                            {stats.recentActivity.map((row) => (
-                                <ActivityRow
-                                    key={`rev-${row.id}`}
-                                    dot="green"
-                                    title={`Revenue: ${row.source}`}
-                                    meta={`₱${Number(row.amount).toLocaleString()}`}
-                                    time={timeAgo(row.created_at)}
-                                />
-                            ))}
-                        </ul>
-                    )}
-                </div>
 
                 <div className="dash-card">
                     <div className="dash-card-head">

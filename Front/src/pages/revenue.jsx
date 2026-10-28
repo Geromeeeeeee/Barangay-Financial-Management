@@ -11,8 +11,6 @@ import Filter from '../components/filter'
 import Pagination from '../components/pagination'
 import '../styles/revenue.css'
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
-
 export default function Revenue () {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [viewFilesId, setViewFilesId] = useState(null)
@@ -73,7 +71,7 @@ export default function Revenue () {
                         <thead>
                             <tr>
                                 <th>Date</th>
-                                <th>Source</th>
+                                <th>Particulars</th>
                                 <th>Document</th>
                                 <th className="right">NTA</th>
                                 <th className="right">Local Income</th>

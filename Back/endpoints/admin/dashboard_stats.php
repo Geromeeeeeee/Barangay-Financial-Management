@@ -82,6 +82,13 @@ $recentActivity = $pdo->query("
     LIMIT 5
 ")->fetchAll(PDO::FETCH_ASSOC);
 
+$recentExpenditures = $pdo->query("
+    SELECT id, description, amount, created_at
+    FROM expenditures
+    ORDER BY created_at DESC
+    LIMIT 1
+")->fetchAll(PDO::FETCH_ASSOC);
+
 // ============ PENDING USERS (last 3, for activity feed) ============
 $recentRequests = $pdo->query("
     SELECT id, username, role, created_at
@@ -106,5 +113,6 @@ echo json_encode([
     'totalRemaining'    => round($totalRemaining, 2),
     'categoryBalances'  => $categoryBalances,
     'recentActivity'    => $recentActivity,
+    'recentExpenditures' => $recentExpenditures,
     'recentRequests'    => $recentRequests,
 ]);

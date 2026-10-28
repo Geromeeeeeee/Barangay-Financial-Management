@@ -16,3 +16,28 @@
 .visibility{
     color: #022c22;
 }
+.activity-toggle {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.activity-toggle button {
+    flex: 1;
+    padding: 7px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #fff;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.activity-toggle button.active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #2563eb;
+}
