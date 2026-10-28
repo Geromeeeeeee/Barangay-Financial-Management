@@ -1,6 +1,8 @@
 import "../../styles/dashboard.css";
 import "../../styles/treasurer_dashboard.css";
 import DashboardChart from "../../components/dashboard_chart";
+import eyeOpenIcon from "../../assets/eye_open.svg";
+import eyeCloseIcon from "../../assets/eye_close.svg"
 import {
     IconReceipt, IconBank,
     StatCard, ActivityRow, DashboardHero,
@@ -8,7 +10,7 @@ import {
 import { useTreasurerStats } from "../../custom_hooks/use_treasurer_stats";
 
 export default function TreasurerDashboard({ user }) {
-    const { stats, loading, error, refresh } = useTreasurerStats();
+    const { stats, loading, error, refresh, isVisible, setIsVisible } = useTreasurerStats();
 
     const getCategoryStatus = (percentage) => {
         if (percentage >= 75) return "Critical";
@@ -19,6 +21,7 @@ export default function TreasurerDashboard({ user }) {
 
     const formatPeso = (n) =>
         "₱" + Number(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 });
+
 
     return (
         <div className="dashboard-page treasurer-view">
@@ -58,6 +61,7 @@ export default function TreasurerDashboard({ user }) {
             <section className="dash-card admin-funds-card">
                 <div className="dash-card-head">
                     <h2>Budget Category Balances</h2>
+                    <img src={isVisible ? eyeCloseIcon : eyeOpenIcon} alt="" className="visibility" onClick={()=>setIsVisible(!isVisible)}/>
                 </div>
 
                 {loading && <p className="muted">Loading…</p>}
@@ -83,15 +87,16 @@ export default function TreasurerDashboard({ user }) {
                                     <div className="fund-card-numbers">
                                         <div className="fund-number-row">
                                             <span className="fund-label">Balance</span>
-                                            <span className="fund-value highlight">{formatPeso(balance)}</span>
+                                            {isVisible ? (<span className="fund-value highlight">{formatPeso(balance)}</span>) : '***'}
+                                            
                                         </div>
                                         <div className="fund-number-row">
                                             <span className="fund-label">Allocated</span>
-                                            <span className="fund-value">{formatPeso(allocated)}</span>
+                                             {isVisible ? (<span className="fund-value highlight">{formatPeso(allocated)}</span>) : '***'}
                                         </div>
                                         <div className="fund-number-row">
                                             <span className="fund-label">Spent</span>
-                                            <span className="fund-value">{formatPeso(spent)}</span>
+                                             {isVisible ? (<span className="fund-value highlight">{formatPeso(spent)}</span>) : '***'}
                                         </div>
                                     </div>
 

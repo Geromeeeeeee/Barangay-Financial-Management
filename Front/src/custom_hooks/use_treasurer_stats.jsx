@@ -4,6 +4,7 @@ import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
 export function useTreasurerStats() {
+    const [isVisible, setIsVisible] = useState(true)
     const [stats, setStats] = useState({
         totalRevenue: 0,
         nta: 0,
@@ -44,5 +45,5 @@ export function useTreasurerStats() {
         return () => clearInterval(interval);
     }, []);
 
-    return { stats, loading, error, refresh };
+    return { stats, loading, error, refresh, isVisible, setIsVisible };
 }

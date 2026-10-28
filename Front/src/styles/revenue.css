@@ -282,6 +282,22 @@
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
+.revenue-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 14px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    color: #1e3a8a;
+    font-size: 0.85rem;
+}
+
+.revenue-total strong {
+    font-size: 1rem;
+}
+
 /* ================= FILE LIST MODAL ================= */
 .file-list {
     list-style: none;

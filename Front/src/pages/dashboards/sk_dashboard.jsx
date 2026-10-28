@@ -1,6 +1,6 @@
 import "../../styles/dashboard.css";
 import "../../styles/sk_dashboard.css";
-import DashboardChart from "../../components/dashboard_chart"; 
+import DashboardChart from "../../components/dashboard_chart";
 import { 
     IconUsers, IconMoney, IconChart, 
     StatCard, ActivityRow, DashboardHero 

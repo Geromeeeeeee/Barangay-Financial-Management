@@ -4,6 +4,7 @@
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
     export function useDashboardStats() {
+        const [isVisible, setIsVisible] = useState(true)
         const [stats, setStats] = useState({
             totalUsers: 0,
             pendingApprovals: 0,
@@ -45,5 +46,5 @@
             return () => clearInterval(interval);
         }, []);
 
-        return { stats, loading, error, refresh };
+        return { stats, loading, error, refresh, isVisible, setIsVisible};
     }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import BackButton from "../components/back_button";
 import ExpenditureModal from "../components/expenditure_modal";
+import FileListModal from "../components/file_list_modal";
 import useExpenditure from "../custom_hooks/use_expenditure";
 import useFormat from "../custom_hooks/use_format";
 import useBudgetCategories from "../custom_hooks/use_budget_categories";
@@ -11,11 +12,10 @@ import Filter from "../components/filter";
 import "../styles/expenditure.css";
 import Pagination from "../components/pagination";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
-
 export default function Expenditure() {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [viewFile, setViewFile] = useState(null);
     const [subcategoryForm, setSubcategoryForm] = useState(null);
     const [majorCategoryForm, setMajorCategoryForm] = useState(false);
     const [currentPage, setCurrentPage] = useState(1)
@@ -120,14 +120,21 @@ export default function Expenditure() {
                                         : <span className="muted">—</span>}</td>
                                     <td>
                                         {expenditure.attachment_path ? (
-                                            <a
-                                                className="attachment-link"
-                                                href={`${API_URL}expenditure/download_attachment.php?id=${encodeURIComponent(expenditure.id)}`}
-                                                target="_blank"
-                                                rel="noreferrer"
+                                            <button
+                                                type="button"
+                                                className="fund-pill"
+                                                style={{
+                                                    background: '#e0f2fe',
+                                                    color: '#0369a1',
+                                                    fontWeight: 'bold',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    padding: '4px 10px'
+                                                }}
+                                                onClick={() => setViewFile(expenditure)}
                                             >
-                                                {expenditure.attachment_name || "View document"}
-                                            </a>
+                                                📎 View document
+                                            </button>
                                         ) : <span className="muted">—</span>}
                                     </td>
                                     <td className="right amount">{peso(expenditure.amount)}</td>
@@ -142,6 +149,7 @@ export default function Expenditure() {
             {isModalOpen && canModify && <ExpenditureModal setIsModalOpen={handleCloseModal} categories={categories} selectedCategory={selectedCategory} />}
             {subcategoryForm && canModify && <SubcategoryForm subcategory={subcategoryForm} onClose={() => setSubcategoryForm(null)} onSave={saveSubcategory} />}
             {majorCategoryForm && canModify && <MajorCategoryForm onClose={() => setMajorCategoryForm(false)} onSave={saveMajorCategory} />}
+            {viewFile && <FileListModal expenditure={viewFile} onClose={() => setViewFile(null)} />}
         </div>
     );
 }

@@ -1,5 +1,7 @@
 import "../../styles/dashboard.css";
 import "../../styles/admin_dashboard.css";
+import eyeOpenIcon from "../../assets/eye_open.svg";
+import eyeCloseIcon from "../../assets/eye_close.svg"
 import {
     IconUsers, IconTicket,
     StatCard, ActivityRow, QuickAction, DashboardHero,
@@ -8,7 +10,7 @@ import { useDashboardStats } from "../../custom_hooks/use_dashboard_stats";
 import DashboardChart from "../../components/dashboard_chart"; // 👈 Import the chart
 
 export default function AdminDashboard({ user }) {
-    const { stats, loading, error, refresh } = useDashboardStats();
+    const { stats, loading, error, refresh, isVisible, setIsVisible } = useDashboardStats();
 
     const getCategoryStatus = (percentage) => {
         if (percentage >= 75) return "Critical";
@@ -35,6 +37,7 @@ export default function AdminDashboard({ user }) {
             <section className="dash-card admin-funds-card">
                 <div className="dash-card-head">
                     <h2>Budget Category Balances</h2>
+                    <img src={isVisible ? eyeCloseIcon : eyeOpenIcon} alt="" className="visibility" onClick={()=>setIsVisible(!isVisible)}/>
                 </div>
 
                 {loading && <p className="muted">Loading…</p>}
@@ -55,15 +58,16 @@ export default function AdminDashboard({ user }) {
                                     <div className="fund-card-numbers">
                                         <div className="fund-number-row">
                                             <span className="fund-label">Balance</span>
-                                            <span className="fund-value highlight">{formatPeso(balance)}</span>
+                                            {isVisible ? (<span className="fund-value highlight">{formatPeso(balance)}</span>) : '***'}
+                                            
                                         </div>
                                         <div className="fund-number-row">
                                             <span className="fund-label">Allocated</span>
-                                            <span className="fund-value">{formatPeso(allocated)}</span>
+                                             {isVisible ? (<span className="fund-value highlight">{formatPeso(allocated)}</span>) : '***'}
                                         </div>
                                         <div className="fund-number-row">
                                             <span className="fund-label">Spent</span>
-                                            <span className="fund-value">{formatPeso(spent)}</span>
+                                             {isVisible ? (<span className="fund-value highlight">{formatPeso(spent)}</span>) : '***'}
                                         </div>
                                     </div>
                                     <div className="fund-card-footer">
