@@ -96,6 +96,7 @@ export default function Reports() {
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ];
+    const years = Array.from({ length: 6 }, (_, index) => new Date().getFullYear() - index);
 
     return (
         <div className="reports-page">
@@ -110,7 +111,9 @@ export default function Reports() {
                     <select value={month} onChange={(e) => setMonth(Number(e.target.value))}>
                         {months.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
                     </select>
-                    <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
+                    <select value={year} onChange={(e) => setYear(Number(e.target.value))}>
+                        {years.map((reportYear) => <option key={reportYear} value={reportYear}>{reportYear}</option>)}
+                    </select>
                     <button className="btn-print" onClick={() => window.print()}>Print Report</button>
                     <button className="btn-download" onClick={downloadReport} disabled={!data}>Download Report</button>
                 </div>

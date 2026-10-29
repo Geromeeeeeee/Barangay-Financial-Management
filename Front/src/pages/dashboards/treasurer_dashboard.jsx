@@ -110,13 +110,13 @@ export default function TreasurerDashboard({ user }) {
             </section>
             <section className="dash-card admin-funds-card">
                 <div className="dash-card-head">
-                    <h2>Budget Category Balances</h2>
+                    <h2>Budget Balances</h2>
                     <img src={isVisible ? eyeCloseIcon : eyeOpenIcon} alt="" className="visibility" onClick={()=>setIsVisible(!isVisible)}/>
                 </div>
 
                 {loading && <p className="muted">Loading…</p>}
                 {!loading && stats.categoryBalances.length === 0 && (
-                    <p className="muted">No category data yet.</p>
+                    <p className="muted">No data yet.</p>
                 )}
 
                 {!loading && stats.categoryBalances.length > 0 && (

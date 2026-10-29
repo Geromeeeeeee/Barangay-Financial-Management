@@ -11,6 +11,7 @@ import usePagination from "../custom_hooks/use_pagination";
 import Filter from "../components/filter";
 import "../styles/expenditure.css";
 import Pagination from "../components/pagination";
+import "../styles/treasurer_dashboard.css";
 
 export default function Expenditure() {
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -65,9 +66,22 @@ export default function Expenditure() {
                     {displayedCategories.map((category) => (
                         <section className="expenditure-category" key={category.id}>
                             <div className="expenditure-category-head">
-                                <div>
+
+                                <div className="fund-card-numbers">
                                     <h2>{category.name}</h2>
-                                    <p>{peso(category.allocated_amount)} allocated · {peso(category.spent_amount)} spent · {peso(category.balance)} remaining</p>
+                                    <div className="fund-number-row">
+                                        <span className="fund-label">Allocated</span>
+                                        <span className="fund-value highlight">{peso(category.allocated_amount)}</span>
+                                    </div>
+                                    <div className="fund-number-row">
+                                        <span className="fund-label">Spent</span>
+                                        <span className="fund-value highlight">{peso(category.spent_amount)}</span>
+                                    </div>
+                                    <div className="fund-number-row">
+                                        <span className="fund-label">Remaining</span>
+                                        <span className="fund-value highlight">{peso(category.balance)}</span>
+                                    </div>
+
                                 </div>
                                 {canModify && (
                                     <button type="button" className="expenditure-open-btn" onClick={() => { setSelectedCategory(category); setIsModalOpen(true); }}>
