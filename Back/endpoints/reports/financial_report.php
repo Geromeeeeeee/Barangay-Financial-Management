@@ -2,10 +2,27 @@
 session_start();
 require_once '../../header.php';
 
+if (!isset($_SESSION['uid'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Authentication required.']);
+    exit();
+}
+
+$allowedRoles = ['staff', 'treasurer'];
+if (!in_array(strtolower((string)($_SESSION['role'] ?? '')), $allowedRoles, true)) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'You are not authorized to view reports.']);
+    exit();
+}
+
 $month = (int)($_GET['month'] ?? date('m'));
 $year  = (int)($_GET['year'] ?? date('Y'));
 
 try {
+    if ($month < 1 || $month > 12 || $year < 1) {
+        throw new InvalidArgumentException('Invalid reporting period.');
+    }
+
     // 1. Get Summarized Revenues (Grouped by Source)
     $stmt = $pdo->prepare("
         SELECT source, 
@@ -50,7 +67,10 @@ try {
         'netIncome' => $totalRevenue - $totalExpenditure
     ]);
 
+} catch (InvalidArgumentException $e) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Unable to generate report.']);
 }

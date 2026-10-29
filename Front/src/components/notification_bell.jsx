@@ -3,7 +3,7 @@ import { useNotifications } from "../custom_hooks/use_notifications";
 import "../styles/layout.css";
 
 export default function NotificationBell() {
-    const { notifications, unreadCount, clearUnread } = useNotifications();
+    const { notifications, unreadCount, markAllAsRead, feedback } = useNotifications();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -19,7 +19,6 @@ export default function NotificationBell() {
 
     const handleToggle = () => {
         setIsOpen(!isOpen);
-        if (!isOpen) clearUnread();
     };
 
     const formatTime = (dateString) => {
@@ -41,14 +40,23 @@ export default function NotificationBell() {
                 <div className="notification-dropdown">
                     <div className="notification-header">
                         <h3>Notifications</h3>
+                        <button
+                            type="button"
+                            className="notification-mark-read"
+                            onClick={markAllAsRead}
+                            disabled={unreadCount === 0}
+                        >
+                            Mark all as read
+                        </button>
                     </div>
+                    {feedback && <p className="notification-feedback">{feedback}</p>}
                     <div className="notification-list">
                         {notifications.length === 0 ? (
                             <p className="muted" style={{ padding: '15px', textAlign: 'center' }}>No recent activity</p>
                         ) : (
                             notifications.map((n) => (
-                                <div key={n.id} className="notification-item">
-                                    <div className="notif-dot"></div>
+                                <div key={n.id} className={`notification-item ${Number(n.is_read) ? "read" : "unread"}`}>
+                                    {!Number(n.is_read) && <div className="notif-dot"></div>}
                                     <div className="notif-content">
                                         <p className="notif-title">{n.action}</p>
                                         <p className="notif-desc">{n.details}</p>

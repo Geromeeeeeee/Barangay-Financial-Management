@@ -9,6 +9,10 @@
 .report-actions select, .report-actions input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; }
 .report-actions input { width: 80px; }
 .btn-print { padding: 8px 16px; background: #1e293b; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+.btn-download { padding: 8px 16px; background: #166534; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+.btn-download:disabled { opacity: 0.6; cursor: not-allowed; }
+.report-error { color: #b91c1c; margin: 12px 0; }
+.report-feedback { color: #166534; margin: 12px 0; }
 
 .report-document {
     background: white;

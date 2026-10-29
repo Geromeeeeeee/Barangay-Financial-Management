@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import BackButton from "../components/back_button";
 import sealLogo from "../assets/barangay-malagasang-logo.jpg";
@@ -11,28 +11,86 @@ export default function Reports() {
     const [year, setYear] = useState(new Date().getFullYear());
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [downloadFeedback, setDownloadFeedback] = useState("");
+    const reportRef = useRef(null);
 
-    const fetchReport = async () => {
+    const fetchReport = useCallback(async () => {
         setLoading(true);
+        setError("");
         try {
             const res = await axios.get(`${API_URL}reports/financial_report.php?month=${month}&year=${year}`, {
                 withCredentials: true
             });
             if (res.data.success) {
                 setData(res.data);
+            } else {
+                setError(res.data.message || "Unable to load report.");
             }
         } catch (error) {
             console.error("Failed to load report", error);
+            setError(error.response?.data?.message || "Unable to load report.");
         } finally {
             setLoading(false);
         }
-    };
-
-    useEffect(() => {
-        fetchReport();
     }, [month, year]);
 
+    useEffect(() => {
+        const reportFetch = setTimeout(fetchReport, 0);
+        return () => clearTimeout(reportFetch);
+    }, [fetchReport]);
+
     const formatPeso = (n) => "₱" + Number(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 });
+
+    const downloadReport = () => {
+        setDownloadFeedback("");
+        try {
+            if (!reportRef.current) {
+                throw new Error("Report is not available for download.");
+            }
+
+            const report = reportRef.current.cloneNode(true);
+            report.querySelectorAll("img").forEach((image) => {
+                image.src = new URL(image.getAttribute("src"), window.location.href).href;
+            });
+
+            const css = Array.from(document.styleSheets).flatMap((sheet) => {
+                try {
+                    return Array.from(sheet.cssRules).map((rule) => rule.cssText);
+                } catch (error) {
+                    console.error("Unable to read report styles", error);
+                    return [];
+                }
+            }).join("\n");
+
+            if (!css) {
+                throw new Error("Report styles are unavailable.");
+            }
+
+            const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Financial Report - ${months[month - 1]} ${year}</title>
+<style>${css}</style>
+</head>
+<body>${report.outerHTML}</body>
+</html>`;
+            const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `financial-report-${months[month - 1].toLowerCase()}-${year}.html`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 0);
+            setDownloadFeedback("Report downloaded.");
+        } catch (downloadError) {
+            console.error("Failed to download report", downloadError);
+            setDownloadFeedback("Unable to download report. Please try again.");
+        }
+    };
 
     const months = [
         "January", "February", "March", "April", "May", "June",
@@ -54,13 +112,16 @@ export default function Reports() {
                     </select>
                     <input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
                     <button className="btn-print" onClick={() => window.print()}>Print Report</button>
+                    <button className="btn-download" onClick={downloadReport} disabled={!data}>Download Report</button>
                 </div>
             </header>
 
             {loading && <p>Loading report...</p>}
+            {error && <p className="report-error">{error}</p>}
+            {downloadFeedback && <p className="report-feedback">{downloadFeedback}</p>}
 
             {!loading && data && (
-                <div className="report-document">
+                <div className="report-document" ref={reportRef}>
                     <div className="print-header">
                         <div className="print-header-left">
                             <p>Republic of the Philippines</p>
