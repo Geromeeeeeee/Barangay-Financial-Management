@@ -400,3 +400,12 @@
     justify-content: flex-end;
     gap: 2.5%;
 }
+.revenue-form input[type="number"]::-webkit-inner-spin-button,
+.revenue-form input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.revenue-form input[type="number"] {
+    -moz-appearance: textfield;
+}

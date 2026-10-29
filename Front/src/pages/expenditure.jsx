@@ -10,6 +10,7 @@ import useFilter from "../custom_hooks/use_filter";
 import usePagination from "../custom_hooks/use_pagination";
 import Filter from "../components/filter";
 import "../styles/expenditure.css";
+import "../styles/category_card.css"
 import Pagination from "../components/pagination";
 import "../styles/treasurer_dashboard.css";
 
@@ -67,7 +68,7 @@ export default function Expenditure() {
                         <section className="expenditure-category" key={category.id}>
                             <div className="expenditure-category-head">
 
-                                <div className="fund-card-numbers">
+                                <div>
                                     <h2>{category.name}</h2>
                                     <div className="fund-number-row">
                                         <span className="fund-label">Allocated</span>

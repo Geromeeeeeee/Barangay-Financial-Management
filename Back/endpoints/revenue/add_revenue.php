@@ -16,10 +16,10 @@ $data = stripos($contentType, 'multipart/form-data') !== false
     ? $_POST
     : (json_decode(file_get_contents("php://input"), true) ?: []);
 
-$amount          = $data['amount']          ?? 0;
-$nta             = array_key_exists('nta', $data) ? $data['nta'] : $amount;
-$localIncome     = $data['local_income']    ?? 0;
-$source          = $data['source']          ?? '';
+$amount          = $data['amount']          ?? null;
+$nta             = array_key_exists('nta', $data) ? $data['nta'] : null;
+$localIncome     = $data['local_income']    ?? null;
+$source          = $data['source']         ?? null;
 $created_by      = $_SESSION['uid'];
 $request_key     = $data['request_key']     ?? null;
 
@@ -27,12 +27,14 @@ $revenue = new Revenue($pdo);
 $audit = new Audit($pdo);
 
 try {
-    if (!is_numeric($nta) || (float)$nta < 0 || !is_numeric($localIncome) || (float)$localIncome < 0) {
-        throw new InvalidArgumentException('NTA and Local Income must be valid non-negative amounts.');
+    if ($nta === null || $localIncome === null || trim((string)$nta) === '' || trim((string)$localIncome) === ''
+        || !is_numeric($nta) || (float)$nta < 0
+        || !is_numeric($localIncome) || (float)$localIncome < 0) {
+        throw new InvalidArgumentException('NTA and Local Income are required valid non-negative amounts.');
     }
     
     $amount = round((float)$nta + (float)$localIncome, 2);
-    if ($amount <= 0 || trim((string)$source) === '') {
+    if ($amount <= 0 || $source === null || trim((string)$source) === '') {
         throw new InvalidArgumentException('A positive total annual income and source are required.');
     }
     

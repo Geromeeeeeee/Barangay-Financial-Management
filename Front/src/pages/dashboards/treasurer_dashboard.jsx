@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "../../styles/dashboard.css";
 import "../../styles/treasurer_dashboard.css";
+import "../../styles/category_card.css"
 import DashboardChart from "../../components/dashboard_chart";
 import eyeOpenIcon from "../../assets/eye_open.svg";
 import eyeCloseIcon from "../../assets/eye_close.svg"
@@ -134,7 +135,7 @@ export default function TreasurerDashboard({ user }) {
                                         {category.name}
                                     </div>
 
-                                    <div className="fund-card-numbers">
+                                    <div>
                                         <div className="fund-number-row">
                                             <span className="fund-label">Balance</span>
                                             {isVisible ? (<span className="fund-value highlight">{formatPeso(balance)}</span>) : '***'}

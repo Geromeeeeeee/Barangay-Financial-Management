@@ -21,8 +21,8 @@ $data = stripos($contentType, 'multipart/form-data') !== false
     ? $_POST
     : (json_decode(file_get_contents("php://input"), true) ?: []);
 
-$amount          = $data['amount']          ?? 0;
-$description     = $data['description']     ?? '';
+$amount          = $data['amount']          ?? null;
+$description     = $data['description']     ?? null;
 $fund_allocation = $data['fund_allocation'] ?? '';
 $created_by      = $_SESSION['uid']         ?? null;
 $category_id     = $data['category_id']     ?? null;
@@ -33,6 +33,10 @@ $expenditure = new Expenditure($pdo);
 $audit = new Audit($pdo);
 
 try {
+    if ($amount === null || trim((string)$amount) === '' || $description === null || trim((string)$description) === '') {
+        throw new InvalidArgumentException('Amount and description are required.');
+    }
+
     $files = $_FILES['supporting_documents'] ?? null;
     if (!$files && isset($_FILES['supporting_document'])) {
         $legacyFile = $_FILES['supporting_document'];
