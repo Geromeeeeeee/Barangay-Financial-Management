@@ -17,6 +17,7 @@ $data = stripos($contentType, 'multipart/form-data') !== false
     : (json_decode(file_get_contents("php://input"), true) ?: []);
 
 $amount          = $data['amount']          ?? null;
+$particular      = $data['particular']      ?? null;
 $nta             = array_key_exists('nta', $data) ? $data['nta'] : null;
 $localIncome     = $data['local_income']    ?? null;
 $source          = $data['source']         ?? null;
@@ -27,15 +28,40 @@ $revenue = new Revenue($pdo);
 $audit = new Audit($pdo);
 
 try {
-    if ($nta === null || $localIncome === null || trim((string)$nta) === '' || trim((string)$localIncome) === ''
-        || !is_numeric($nta) || (float)$nta < 0
-        || !is_numeric($localIncome) || (float)$localIncome < 0) {
-        throw new InvalidArgumentException('NTA and Local Income are required valid non-negative amounts.');
-    }
-    
-    $amount = round((float)$nta + (float)$localIncome, 2);
-    if ($amount <= 0 || $source === null || trim((string)$source) === '') {
-        throw new InvalidArgumentException('A positive total annual income and source are required.');
+    if ($particular !== null) {
+        if (!is_numeric($amount) || (float)$amount <= 0) {
+            throw new InvalidArgumentException('A positive amount is required.');
+        }
+
+        $amount = round((float)$amount, 2);
+        if ($particular === 'NTA') {
+            $nta = $amount;
+            $localIncome = 0;
+            $source = 'NTA';
+        } elseif ($particular === 'Local Income') {
+            $nta = 0;
+            $localIncome = $amount;
+            $source = 'Local Income';
+        } elseif ($particular === 'Others') {
+            $nta = 0;
+            $localIncome = 0;
+            if ($source === null || trim((string)$source) === '') {
+                throw new InvalidArgumentException('A specific revenue particular/source is required.');
+            }
+        } else {
+            throw new InvalidArgumentException('Invalid revenue particular/source.');
+        }
+    } else {
+        if ($nta === null || $localIncome === null || trim((string)$nta) === '' || trim((string)$localIncome) === ''
+            || !is_numeric($nta) || (float)$nta < 0
+            || !is_numeric($localIncome) || (float)$localIncome < 0) {
+            throw new InvalidArgumentException('NTA and Local Income are required valid non-negative amounts.');
+        }
+
+        $amount = round((float)$nta + (float)$localIncome, 2);
+        if ($amount <= 0 || $source === null || trim((string)$source) === '') {
+            throw new InvalidArgumentException('A positive total annual income and source are required.');
+        }
     }
     
     $isTreasurer = strtolower((string)($_SESSION['role'] ?? '')) === 'treasurer';
@@ -92,7 +118,7 @@ try {
         }
     }
 
-    $revenue_id = $revenue->record_revenue($nta, $localIncome, $source, $created_by, $request_key);
+    $revenue_id = $revenue->record_revenue($nta, $localIncome, $source, $created_by, $request_key, null, null, null, null, $amount, $particular ?? 'Others');
 
     if (!empty($uploadedFilesData) && $revenue_id) {
         $stmt = $pdo->prepare("

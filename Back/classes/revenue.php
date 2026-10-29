@@ -9,11 +9,13 @@ class Revenue {
         $this->database = $pdo;
     }
 
-    public function record_revenue($nta, $local_income, $source, $created_by = null, $request_key = null, $attachment_path = null, $attachment_name = null, $attachment_mime = null, $attachment_size = null)
+    public function record_revenue($nta, $local_income, $source, $created_by = null, $request_key = null, $attachment_path = null, $attachment_name = null, $attachment_mime = null, $attachment_size = null, $amount = null, $particular = 'Others')
     {
         try {
             $this->database->beginTransaction();
-            $amount = round((float)$nta + (float)$local_income, 2);
+            $amount = $amount === null
+                ? round((float)$nta + (float)$local_income, 2)
+                : round((float)$amount, 2);
 
             if ($request_key) {
                 $existing = $this->database->prepare('SELECT id FROM revenues WHERE request_key = :request_key');
@@ -26,14 +28,15 @@ class Revenue {
             }
 
             $stmtInsertRevenue = $this->database->prepare('
-                INSERT INTO revenues (amount, nta, local_income, source, created_by, request_key, attachment_path, attachment_name, attachment_mime, attachment_size)
-                VALUES (:amount, :nta, :local_income, :source, :created_by, :request_key, :attachment_path, :attachment_name, :attachment_mime, :attachment_size)
+                INSERT INTO revenues (amount, nta, local_income, source, particular, created_by, request_key, attachment_path, attachment_name, attachment_mime, attachment_size)
+                VALUES (:amount, :nta, :local_income, :source, :particular, :created_by, :request_key, :attachment_path, :attachment_name, :attachment_mime, :attachment_size)
             ');
             $stmtInsertRevenue->execute([
                 'amount'          => $amount,
                 'nta'             => round((float)$nta, 2),
                 'local_income'    => round((float)$local_income, 2),
                 'source'          => $source,
+                'particular'      => $particular,
                 'created_by'      => $created_by,
                 'request_key'     => $request_key,
                 'attachment_path' => $attachment_path,

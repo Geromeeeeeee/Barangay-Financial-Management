@@ -8,8 +8,9 @@ export default function Revenue_Modal({ setIsModalOpen }) {
     const [loading, setLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
     const [files, setFiles] = useState([])
-    const [nta, setNta] = useState('')
-    const [localIncome, setLocalIncome] = useState('')
+    const [amount, setAmount] = useState('')
+    const [particular, setParticular] = useState('NTA')
+    const [customSource, setCustomSource] = useState('')
 
     const handleFileChange = (e) => {
         setFiles(Array.from(e.target.files))
@@ -58,43 +59,42 @@ export default function Revenue_Modal({ setIsModalOpen }) {
 
                 <form onSubmit={handleSubmit} className="revenue-form">
                     <label>
-                        <span>National Tax Allotment (NTA)</span>
+                        <span>Particular/Source</span>
+                        <select
+                            name="particular"
+                            value={particular}
+                            onChange={(event) => setParticular(event.target.value)}
+                        >
+                            <option value="NTA">NTA</option>
+                            <option value="Local Income">Local Income</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </label>
+                    {particular === 'Others' && (
+                        <label>
+                            <span>Specific Revenue Particular/Source</span>
+                            <input
+                                name="source"
+                                type="text"
+                                value={customSource}
+                                onChange={(event) => setCustomSource(event.target.value)}
+                                placeholder="e.g., Clearance Fee"
+                                required
+                            />
+                        </label>
+                    )}
+                    <label>
+                        <span>Amount</span>
                         <input
-                            name="nta"
+                            name="amount"
                             type="number"
                             min="0"
                             step="0.01"
-                            value={nta}
-                            onChange={(event) => setNta(event.target.value)}
+                            value={amount}
+                            onChange={(event) => setAmount(event.target.value)}
                             placeholder="0.00"
                             required
                         />
-                    </label>
-                    <label>
-                        <span>Local Income</span>
-                        <input
-                            name="local_income"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={localIncome}
-                            onChange={(event) => setLocalIncome(event.target.value)}
-                            placeholder="0.00"
-                            required
-                        />
-                    </label>
-                    <div className="revenue-total">
-                        <span>Total Annual Income</span>
-                        <strong>
-                            ₱{(Number(nta || 0) + Number(localIncome || 0)).toLocaleString('en-PH', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            })}
-                        </strong>
-                    </div>
-                    <label>
-                        <span>Source</span>
-                        <input name="source" type="text" placeholder="e.g., Clearance Fee" required />
                     </label>
 
                     <label>

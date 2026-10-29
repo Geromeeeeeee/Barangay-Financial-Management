@@ -72,10 +72,8 @@ export default function Revenue () {
                             <tr>
                                 <th>Date</th>
                                 <th>Particulars</th>
-                                <th>Document</th>
-                                <th className="right">NTA</th>
-                                <th className="right">Local Income</th>
-                                <th className="right">Total Annual Income</th>
+                                <th>Supporting Document</th>
+                                <th className="right">Amount</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -85,9 +83,10 @@ export default function Revenue () {
                                     <td>{r.source}</td>
                                     <td>
                                         {r.attachment_count > 0 ? (
-                                            <button 
-                                                className="fund-pill" 
-                                                style={{ 
+                                            <button
+                                                type="button"
+                                                className="fund-pill"
+                                                style={{
                                                     background: '#e0f2fe', 
                                                     color: '#0369a1', 
                                                     fontWeight: 'bold',
@@ -95,18 +94,15 @@ export default function Revenue () {
                                                     cursor: 'pointer',
                                                     padding: '4px 10px'
                                                 }}
-                                                title={`${r.attachment_count} file(s) attached`}
                                                 onClick={() => setViewFilesId(r.id)}
                                             >
-                                                📎 {r.attachment_count} File(s)
+                                                📎 View document{Number(r.attachment_count) > 1 ? `s (${r.attachment_count})` : ''}
                                             </button>
                                         ) : (
                                             <span className="muted">—</span>
                                         )}
                                     </td>
-                                    <td className="right amount">{peso(r.nta)}</td>
-                                    <td className="right amount">{peso(r.local_income)}</td>
-                                    <td className="right amount">{peso(r.total_annual_income ?? r.amount)}</td>
+                                    <td className="right amount">{peso(r.amount)}</td>
                                 </tr>
                             ))}
                         </tbody>

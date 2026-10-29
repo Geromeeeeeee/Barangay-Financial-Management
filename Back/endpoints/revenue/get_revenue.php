@@ -21,7 +21,7 @@ try {
     foreach ($revenues as &$record) {
         $record['nta'] = (float)$record['nta'];
         $record['local_income'] = (float)$record['local_income'];
-        $record['total_annual_income'] = round($record['nta'] + $record['local_income'], 2);
+        $record['total_annual_income'] = round((float)$record['amount'], 2);
     }
     unset($record);
 
