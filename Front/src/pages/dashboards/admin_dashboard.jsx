@@ -1,21 +1,32 @@
 import { useState } from "react";
 import "../../styles/dashboard.css";
 import "../../styles/admin_dashboard.css";
+import DashboardChart from "../../components/dashboard_chart";
 import eyeOpenIcon from "../../assets/eye_open.svg";
-import eyeCloseIcon from "../../assets/eye_close.svg"
+import eyeCloseIcon from "../../assets/eye_close.svg";
 import {
     IconUsers, IconTicket,
     StatCard, ActivityRow, QuickAction, DashboardHero,
 } from "../../components/dashboard_widgets";
 import { useDashboardStats } from "../../custom_hooks/use_dashboard_stats";
-import DashboardChart from "../../components/dashboard_chart"; // 👈 Import the chart
 
 export default function AdminDashboard({ user }) {
-    const { stats, loading, error, refresh, isVisible, setIsVisible } = useDashboardStats();
+    const { stats, loading, error, refresh } = useDashboardStats();
     const [activityType, setActivityType] = useState("revenue");
+    
+    const [showBalances, setShowBalances] = useState(true);
+    const [hiddenCategories, setHiddenCategories] = useState({});
+
+    const toggleCategory = (id) => {
+        setHiddenCategories(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }));
+    };
+
     const selectedActivity = activityType === "revenue"
-        ? stats.recentActivity.slice(0, 1)
-        : stats.recentExpenditures.slice(0, 1);
+        ? stats.recentActivity.slice(0, 2)
+        : stats.recentExpenditures?.slice(0, 2) || [];
 
     const getCategoryStatus = (percentage) => {
         if (percentage >= 75) return "Critical";
@@ -26,19 +37,22 @@ export default function AdminDashboard({ user }) {
 
     return (
         <div className="dashboard-page admin-view">
-            <div className="dashboard-header">
-                <DashboardHero user={user} />
-                <div className="header-right">
-                    <div className="dash-card-head">
-                        <h2>{activityType === "revenue" ? "Recent Revenue Activity" : "Recent Expenditure Activity"}</h2>
+            {error && <div className="alert alert-error">{error}</div>}
+
+            <div className="top-split-layout">
+                <div className="hero-wrapper">
+                    <DashboardHero user={user} />
+                </div>
+
+                <div className="activity-wrapper dash-card">
+                    <div className="dash-card-head" style={{ marginBottom: '10px' }}>
+                        <h2>{activityType === "revenue" ? "Recent Revenue" : "Recent Expenditures"}</h2>
                         <button className="dash-link" onClick={refresh}>Refresh</button>
                     </div>
 
                     {loading && <p className="muted">Loading…</p>}
                     {!loading && selectedActivity.length === 0 && (
-                        <p className="muted">
-                            No recent {activityType === "revenue" ? "revenue" : "expenditure"} activity.
-                        </p>
+                        <p className="muted">No recent activity.</p>
                     )}
 
                     {!loading && selectedActivity.length > 0 && (
@@ -47,47 +61,50 @@ export default function AdminDashboard({ user }) {
                                 <ActivityRow
                                     key={`${activityType}-${row.id}`}
                                     dot={activityType === "revenue" ? "green" : "red"}
-                                    title={activityType === "revenue" ? `Revenue: ${row.source}` : `Expenditure: ${row.description}`}
+                                    title={activityType === "revenue" ? row.source : `Expenditure: ${row.description}`}
                                     meta={`₱${Number(row.amount).toLocaleString()}`}
                                     time={timeAgo(row.created_at)}
                                 />
                             ))}
                         </ul>
                     )}
-                    <div className="activity-toggle" role="group" aria-label="Activity type">
+                    
+                    <div className="activity-toggle">
                         <button
                             type="button"
                             className={activityType === "revenue" ? "active" : ""}
                             onClick={() => setActivityType("revenue")}
                         >
-                            Recent Revenue
+                            Revenue
                         </button>
                         <button
                             type="button"
                             className={activityType === "expenditure" ? "active" : ""}
                             onClick={() => setActivityType("expenditure")}
                         >
-                            Recent Expenditures
+                            Expenditures
                         </button>
                     </div>
                 </div>
             </div>
 
-            {error && <div className="alert alert-error">{error}</div>}
-
             <section className="stat-grid">
-                <StatCard Icon="₱" label="Total Revenue" value={loading ? "…" : formatPeso(stats.totalRevenue)} trend="All time collection" accent="green" />
-                <StatCard Icon="₱" label="Annual Income" value={loading ? "…" : formatPeso(stats.totalAnnualIncome)} trend="NTA + Local Income" accent="blue" />
-                <StatCard Icon="₱" label="Total Allocated" value={loading ? "…" : formatPeso(stats.totalAllocated)} trend="All major categories" accent="purple" />
-                <StatCard Icon="₱" label="Total Expenditures" value={loading ? "…" : formatPeso(stats.totalExpenditures)} trend="Recorded spending" accent="red" />
-                <StatCard Icon="₱" label="Total Remaining" value={loading ? "…" : formatPeso(stats.totalRemaining)} trend="Category balances" accent="amber" />
+                <StatCard Icon="₱" label="Total Revenue" value={loading ? "…" : (showBalances ? formatPeso(stats.totalRevenue) : "***")} trend="All time collection" accent="green" />
+                <StatCard Icon="₱" label="Annual Income" value={loading ? "…" : (showBalances ? formatPeso(stats.totalAnnualIncome) : "***")} trend="NTA + Local Income" accent="blue" />
+                <StatCard Icon="₱" label="Total Allocated" value={loading ? "…" : (showBalances ? formatPeso(stats.totalAllocated) : "***")} trend="All major categories" accent="purple" />
+                <StatCard Icon="₱" label="Total Expenditures" value={loading ? "…" : (showBalances ? formatPeso(stats.totalExpenditures) : "***")} trend="Recorded spending" accent="red" />
+                <StatCard Icon="₱" label="Total Remaining" value={loading ? "…" : (showBalances ? formatPeso(stats.totalRemaining) : "***")} trend="Category balances" accent="amber" />
             </section>
 
-            {/* ===== BUDGET CATEGORIES ===== */}
             <section className="dash-card admin-funds-card">
                 <div className="dash-card-head">
                     <h2>Budget Category Balances</h2>
-                    <img src={isVisible ? eyeCloseIcon : eyeOpenIcon} alt="" className="visibility" onClick={()=>setIsVisible(!isVisible)}/>
+                    <img 
+                        src={showBalances ? eyeCloseIcon : eyeOpenIcon} 
+                        alt="Toggle All" 
+                        style={{ cursor: 'pointer', width: '20px', height: '20px' }} 
+                        onClick={() => setShowBalances(!showBalances)}
+                    />
                 </div>
 
                 {loading && <p className="muted">Loading…</p>}
@@ -101,23 +118,34 @@ export default function AdminDashboard({ user }) {
                             const balance = Number(category.balance || 0);
                             const percentage = allocated > 0 ? Math.min((spent / allocated) * 100, 100) : 0;
                             const status = getCategoryStatus(percentage);
+                            const isCardHidden = !showBalances || hiddenCategories[category.id];
 
                             return (
                                 <div key={category.id} className="fund-card">
-                                    <div className="fund-card-title">{category.name}</div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px dashed #cbd5e1', paddingBottom: '8px' }}>
+                                        <div className="fund-card-title" style={{ margin: 0, padding: 0, border: 'none' }}>
+                                            {category.name}
+                                        </div>
+                                        <img 
+                                            src={isCardHidden ? eyeCloseIcon : eyeOpenIcon} 
+                                            alt="Toggle" 
+                                            style={{ cursor: 'pointer', width: '18px', height: '18px', opacity: 0.7 }} 
+                                            onClick={() => toggleCategory(category.id)}
+                                        />
+                                    </div>
+
                                     <div className="fund-card-numbers">
                                         <div className="fund-number-row">
                                             <span className="fund-label">Balance</span>
-                                            {isVisible ? (<span className="fund-value highlight">{formatPeso(balance)}</span>) : '***'}
-                                            
+                                            <span className="fund-value highlight">{isCardHidden ? "***" : formatPeso(balance)}</span>
                                         </div>
                                         <div className="fund-number-row">
                                             <span className="fund-label">Allocated</span>
-                                             {isVisible ? (<span className="fund-value highlight">{formatPeso(allocated)}</span>) : '***'}
+                                            <span className="fund-value">{isCardHidden ? "***" : formatPeso(allocated)}</span>
                                         </div>
                                         <div className="fund-number-row">
                                             <span className="fund-label">Spent</span>
-                                             {isVisible ? (<span className="fund-value highlight">{formatPeso(spent)}</span>) : '***'}
+                                            <span className="fund-value">{isCardHidden ? "***" : formatPeso(spent)}</span>
                                         </div>
                                     </div>
                                     <div className="fund-card-footer">
@@ -137,20 +165,18 @@ export default function AdminDashboard({ user }) {
             </section>
 
             <DashboardChart />
-            <section className="dash-columns">
 
-                <div className="dash-card">
-                    <div className="dash-card-head">
-                        <h2>Quick Actions</h2>
-                    </div>
-                    <div className="quick-actions">
-                        <QuickAction to="/admin/invite-codes"  Icon={IconTicket} label="Generate Invite Code" />
-                        <QuickAction to="/Revenue"             Icon={IconUsers}  label="Monitor Revenue Records" />
-                    </div>
-                    <div className="dash-note">
-                        <strong>Note:</strong> Your dashboard auto-refreshes every 30 seconds,
-                        so numbers stay current as the treasurer adds records.
-                    </div>
+            <section className="dash-card" style={{ marginTop: '20px' }}>
+                <div className="dash-card-head">
+                    <h2>Quick Actions</h2>
+                </div>
+                <div className="quick-actions">
+                    <QuickAction to="/admin/invite-codes"  Icon={IconTicket} label="Generate Invite Code" />
+                    <QuickAction to="/Revenue"             Icon={IconUsers}  label="Monitor Revenue Records" />
+                </div>
+                <div className="dash-note">
+                    <strong>Note:</strong> Your dashboard auto-refreshes every 5 minutes,
+                    so numbers stay current as the treasurer adds records.
                 </div>
             </section>
         </div>
@@ -172,5 +198,7 @@ function timeAgo(dateString) {
     if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
     if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
 
-    return new Date(dateString).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
+    return new Date(dateString).toLocaleDateString("en-PH", {
+        month: "short", day: "numeric", year: "numeric",
+    });
 }

@@ -20,11 +20,12 @@ if (!$u) {
 echo json_encode([
     'status' => 'logged',
     'user' => [
-        'id'        => $u['id'],
-        'username'  => $u['username'],
-        'firstName' => $u['first_name'],
-        'lastName'  => $u['last_name'],
-        'email'     => $u['email'],
-        'role'      => $u['role'],
+        'id'              => $u['id'],
+        'username'        => $u['username'],
+        'firstName'       => $u['first_name'],
+        'lastName'        => $u['last_name'],
+        'email'           => $u['email'],
+        'role'            => $u['role'],
+        'profile_picture' => $u['profile_picture'] ?? null 
     ]
 ]);

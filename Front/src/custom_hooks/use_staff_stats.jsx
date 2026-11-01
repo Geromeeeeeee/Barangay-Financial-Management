@@ -30,7 +30,7 @@ export function useStaffStats() {
 
     useEffect(() => {
         refresh();
-        const interval = setInterval(refresh, 30000);
+        const interval = setInterval(refresh, 300000);
         return () => clearInterval(interval);
     }, []);
 

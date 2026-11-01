@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useRole } from "../custom_hooks/use_role";
-import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
+const BASE_URL = "http://localhost/Capstone/Back/";
 
 export default function UserMenu({ onLogoutClick }) {
     const { user } = useRole();
@@ -19,12 +18,18 @@ export default function UserMenu({ onLogoutClick }) {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
     const initials = user ? `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase() : "?";
+    const avatarSrc = user?.profile_picture ? `${BASE_URL}${user.profile_picture}` : null;
 
     return (
         <div className="user-menu-wrapper" ref={dropdownRef}>
             <button className="user-avatar" onClick={() => setIsOpen(!isOpen)}>
-                {initials}
+                {avatarSrc ? (
+                    <img src={avatarSrc} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+                ) : (
+                    initials
+                )}
             </button>
 
             {isOpen && (

@@ -50,19 +50,19 @@ class User {
         return([
             'success' => true,
             'user' => [
-                'id'         => $user['id'],
-                'username'   => $user['username'],
-                'first_name' => $user['first_name'],
-                'last_name'  => $user['last_name'],
-                'email'      => $user['email'],
-                'role'       => $user['role'],
+                'id'              => $user['id'],
+                'username'        => $user['username'],
+                'first_name'      => $user['first_name'],
+                'last_name'       => $user['last_name'],
+                'email'           => $user['email'],
+                'role'            => $user['role'],
+                'profile_picture' => $user['profile_picture'] ?? null // 👈 ADDED THIS LINE
             ]
         ]);
     }
 
     // ===== SIGN UP =====
     public function sign_up ($email, $password, $first_name, $last_name, $role, $username, $invite_code) {
-        // 1. Validate invite code
         require_once __DIR__ . '/invite.php';
         $invite = new Invite($this->database);
         $check = $invite->validate_code($invite_code);
@@ -75,7 +75,6 @@ class User {
             ];
         }
 
-        // 2. Email must match the invite
         if (isset($check['email']) && strtolower(trim($email)) !== strtolower(trim($check['email']))) {
             return [
                 'success' => false,
@@ -84,7 +83,6 @@ class User {
             ];
         }
 
-        // 3. Username format
         if (!preg_match('/^(?![.])(?!.*[.]{2})(?![.])[a-z0-9.]{6,30}$/i', $username)) {
             return [
                 'success' => false,
@@ -93,7 +91,6 @@ class User {
             ];
         }
 
-        // 4. Password strength
         if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d!@#$%^&*]{6,12}$/', $password)) {
             return [
                 'success' => false,
@@ -102,7 +99,6 @@ class User {
             ];
         }
 
-        // 5. Username already taken?
         $user = $this->get_user($username);
         if ($user) {
             return [
@@ -112,7 +108,6 @@ class User {
             ];
         }
 
-        // 6. Email already registered?
         $stmt = $this->database->prepare('SELECT id FROM users WHERE email = :email LIMIT 1');
         $stmt->execute(['email' => $email]);
         if ($stmt->fetch()) {
@@ -123,7 +118,6 @@ class User {
             ];
         }
 
-        // 7. Insert user as ACTIVE (no admin approval needed)
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         $stmt = $this->database->prepare("
             INSERT INTO users
@@ -142,7 +136,6 @@ class User {
 
         $new_user_id = $this->database->lastInsertId();
 
-        // 8. Mark code as used
         $invite->mark_used($check['id'], $new_user_id);
 
         return [

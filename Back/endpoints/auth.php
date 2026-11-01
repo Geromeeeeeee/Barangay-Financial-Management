@@ -49,12 +49,13 @@ if(isset($action) && !empty($action)){
             echo json_encode([
                 'status' => 'logged',
                 'user' => [
-                    'id'        => $result['user']['id'],
-                    'username'  => $result['user']['username'],
-                    'firstName' => $result['user']['first_name'],
-                    'lastName'  => $result['user']['last_name'],
-                    'email'     => $result['user']['email'],
-                    'role'      => $result['user']['role'],
+                    'id'              => $result['user']['id'],
+                    'username'        => $result['user']['username'],
+                    'firstName'       => $result['user']['first_name'],
+                    'lastName'        => $result['user']['last_name'],
+                    'email'           => $result['user']['email'],
+                    'role'            => $result['user']['role'],
+                    'profile_picture' => $result['user']['profile_picture'] ?? null // 👈 ADDED
                 ]
             ]);
         } else {
@@ -89,12 +90,13 @@ if(isset($action) && !empty($action)){
         echo json_encode([
             'success' => true,
             'user' => [
-                'id'         => $u['id'],
-                'username'   => $u['username'],
-                'firstName'  => $u['first_name'],
-                'lastName'   => $u['last_name'],
-                'email'      => $u['email'],
-                'role'       => $u['role'],
+                'id'              => $u['id'],
+                'username'        => $u['username'],
+                'firstName'       => $u['first_name'],
+                'lastName'        => $u['last_name'],
+                'email'           => $u['email'],
+                'role'            => $u['role'],
+                'profile_picture' => $u['profile_picture'] ?? null 
             ]
         ]);
         exit();
