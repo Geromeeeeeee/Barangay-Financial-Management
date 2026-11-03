@@ -1,11 +1,32 @@
-import { timeAgo } from "../pages/dashboards/admin_dashboard";
 import { ActivityRow } from "./dashboard_widgets";
+import "../styles/dashboard.css"
+import refreshIcon from "../assets/refresh.svg"
 
-export default function RecentActivity(){
+function timeAgo(dateString) {
+    if (!dateString) return "";
+    const then = new Date(dateString.replace(" ", "T")).getTime();
+    const now = Date.now();
+    const diff = Math.floor((now - then) / 1000);
+
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+
+    return new Date(dateString).toLocaleDateString("en-PH", {
+        month: "short", day: "numeric", year: "numeric",
+    });
+}
+
+export default function RecentActivity({activityType, refresh, loading, selectedActivity, setActivityType}){
+    return(
     <div className="activity-wrapper dash-card">
         <div className="dash-card-head" style={{ marginBottom: '10px' }}>
             <h2>{activityType === "revenue" ? "Recent Revenue" : "Recent Expenditures"}</h2>
-            <button className="dash-link" onClick={refresh}>Refresh</button>
+            <button className="dash-link refresh-button" onClick={refresh}>
+                <img src={refreshIcon} alt="" />
+                Refresh
+            </button>
         </div>
 
         {loading && <p className="muted">Loading…</p>}
@@ -44,4 +65,5 @@ export default function RecentActivity(){
             </button>
         </div>
     </div>
+    )
 }

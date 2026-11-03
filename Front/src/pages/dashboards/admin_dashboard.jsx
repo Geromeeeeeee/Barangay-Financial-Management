@@ -6,9 +6,10 @@ import eyeOpenIcon from "../../assets/eye_open.svg";
 import eyeCloseIcon from "../../assets/eye_close.svg";
 import {
     IconUsers, IconTicket,
-    StatCard, ActivityRow, QuickAction, DashboardHero,
+    StatCard, QuickAction, DashboardHero,
 } from "../../components/dashboard_widgets";
 import { useDashboardStats } from "../../custom_hooks/use_dashboard_stats";
+import RecentActivity from "../../components/recent_activity";
 
 export default function AdminDashboard({ user }) {
     const { stats, loading, error, refresh } = useDashboardStats();
@@ -44,48 +45,7 @@ export default function AdminDashboard({ user }) {
                     <DashboardHero user={user} />
                 </div>
 
-                <div className="activity-wrapper dash-card">
-                    <div className="dash-card-head" style={{ marginBottom: '10px' }}>
-                        <h2>{activityType === "revenue" ? "Recent Revenue" : "Recent Expenditures"}</h2>
-                        <button className="dash-link" onClick={refresh}>Refresh</button>
-                    </div>
-
-                    {loading && <p className="muted">Loading…</p>}
-                    {!loading && selectedActivity.length === 0 && (
-                        <p className="muted">No recent activity.</p>
-                    )}
-
-                    {!loading && selectedActivity.length > 0 && (
-                        <ul className="activity-list">
-                            {selectedActivity.map((row) => (
-                                <ActivityRow
-                                    key={`${activityType}-${row.id}`}
-                                    dot={activityType === "revenue" ? "green" : "red"}
-                                    title={activityType === "revenue" ? row.source : `Expenditure: ${row.description}`}
-                                    meta={`₱${Number(row.amount).toLocaleString()}`}
-                                    time={timeAgo(row.created_at)}
-                                />
-                            ))}
-                        </ul>
-                    )}
-                    
-                    <div className="activity-toggle">
-                        <button
-                            type="button"
-                            className={activityType === "revenue" ? "active" : ""}
-                            onClick={() => setActivityType("revenue")}
-                        >
-                            Revenue
-                        </button>
-                        <button
-                            type="button"
-                            className={activityType === "expenditure" ? "active" : ""}
-                            onClick={() => setActivityType("expenditure")}
-                        >
-                            Expenditures
-                        </button>
-                    </div>
-                </div>
+                <RecentActivity activityType={activityType} refresh={refresh} loading={loading} selectedActivity={selectedActivity} setActivityType={setActivityType}/>
             </div>
 
             <section className="stat-grid">
@@ -185,20 +145,4 @@ export default function AdminDashboard({ user }) {
 
 function formatPeso(value) {
     return "₱" + Number(value || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 });
-}
-
-function timeAgo(dateString) {
-    if (!dateString) return "";
-    const then = new Date(dateString.replace(" ", "T")).getTime();
-    const now = Date.now();
-    const diff = Math.floor((now - then) / 1000);
-
-    if (diff < 60) return "just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
-
-    return new Date(dateString).toLocaleDateString("en-PH", {
-        month: "short", day: "numeric", year: "numeric",
-    });
 }

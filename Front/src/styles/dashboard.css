@@ -278,6 +278,17 @@
     flex-shrink: 0;
 }
 
+.refresh-button{
+    display: flex;
+    align-items: center;   
+    justify-content: center;
+    background-color: #475569;
+}
+
+.refresh-button img{
+    width: 24px;
+}
+
 /* ================= QUICK ACTIONS ================= */
 .quick-actions {
     display: flex;
