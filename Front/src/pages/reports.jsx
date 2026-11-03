@@ -50,15 +50,31 @@ export default function Reports() {
                 throw new Error("Report is not available for download.");
             }
 
-            const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+            const pdf = new jsPDF({
+                orientation: "portrait",
+                unit: "pt",
+                format: "a4"
+            });
+
+            const margin = 36; // 36pt margins (~0.5 inch)
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const usableWidth = pageWidth - (margin * 2);
+            const renderWidth = 800; // Fixed virtual width for stable layout rendering
+
             await pdf.html(reportRef.current, {
-                margin: [36, 36, 36, 36],
+                margin: [margin, margin, margin, margin],
                 autoPaging: "text",
+                width: usableWidth,
+                windowWidth: renderWidth,
                 html2canvas: {
-                    scale: 0.8,
-                    useCORS: true
+                    scale: usableWidth / renderWidth, // Automatically scale the 800px view to fit A4
+                    useCORS: true,
+                    letterRendering: true,
+                    scrollY: 0,
+                    scrollX: 0
                 }
             });
+
             pdf.save(`financial-report-${months[month - 1].toLowerCase()}-${year}.pdf`);
             setDownloadFeedback("Report downloaded.");
         } catch (downloadError) {

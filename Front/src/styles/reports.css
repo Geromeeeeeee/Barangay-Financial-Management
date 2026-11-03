@@ -1,6 +1,5 @@
 .reports-page { max-width: 900px; margin: 0 auto; font-family: 'Inter', sans-serif; }
 
-
 .reports-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
 .reports-header h1 { margin: 0 0 4px; font-size: 1.6rem; color: #0f172a; }
 .reports-header p { margin: 0; color: #64748b; font-size: 0.9rem; }
@@ -16,13 +15,19 @@
 
 .report-document {
     background: white;
-    padding: 50px 60px;
+    width: 800px; /* Fixed explicit width so html2canvas renders consistently */
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 40px;
+    height: auto;
+    max-height: none;
+    overflow: visible;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     border: 1px solid #e2e8f0;
     color: #000;
     font-family: 'Times New Roman', Times, serif; 
+    box-sizing: border-box;
 }
-
 
 .print-header { 
     display: flex; 
@@ -35,7 +40,6 @@
 .print-header-left { 
     flex: 1; 
     text-align: center; 
-    
 }
 
 .print-header-left p { 
@@ -49,6 +53,7 @@
     font-weight: bold; 
     white-space: nowrap; 
 }
+
 .print-logo { 
     width: 90px; 
     height: 90px; 
@@ -71,9 +76,22 @@
 
 /* Tables */
 .report-document h4 { font-size: 1.05rem; margin: 24px 0 10px; text-transform: uppercase; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 4px; }
-.report-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-bottom: 20px; }
-.report-table th, .report-table td { padding: 10px 8px; border-bottom: 1px solid #e2e8f0; }
+.report-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    font-size: 0.95rem; 
+    margin-bottom: 20px; 
+    table-layout: fixed; /* Prevents columns from overflowing out of bounds */
+}
+.report-table th, .report-table td { 
+    padding: 10px 8px; 
+    border-bottom: 1px solid #e2e8f0; 
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
 .report-table th { text-align: left; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000; }
+.report-table thead { display: table-header-group; }
+.report-table tr { break-inside: avoid; page-break-inside: avoid; }
 .report-table .right { text-align: right; }
 .report-table .center { text-align: center; }
 .report-table .empty-row { text-align: center; font-style: italic; color: #64748b; }
@@ -88,6 +106,7 @@
 
 /* Footer & Signatures */
 .print-footer { display: flex; justify-content: space-between; margin-top: 60px; }
+.report-summary-box, .print-footer { break-inside: avoid; page-break-inside: avoid; }
 .signature-block { width: 250px; text-align: center; }
 .signature-block p { margin: 0 0 40px 0; font-size: 0.95rem; }
 .signature-line { border-bottom: 1px solid #000; margin-bottom: 4px; }
@@ -97,11 +116,34 @@
 
 /* ================= PRINT STYLES ================= */
 @media print {
-    body { background: white; }
-    .topnav-header, .reports-header, .logout-btn-top, .topnav-links { display: none !important; }
-    .topnav-layout, .topnav-content { height: auto; overflow: visible; background: white; }
-    .topnav-content { padding: 0 !important; }
-    .report-document { box-shadow: none; border: none; padding: 0; }
+    @page { size: A4 portrait; margin: 14mm; }
+    html, body, #root, .topnav-layout, .main-wrapper, .topnav-content {
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        background: white !important;
+    }
+    .topnav-content {
+        position: static !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .reports-page {
+        max-width: none;
+        margin: 0;
+    }
+    body { visibility: hidden !important; }
+    .report-document { visibility: visible !important; }
+    .report-document {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-shadow: none;
+        border: none;
+        padding: 0;
+    }
     .report-table th { background: transparent !important; }
     .total-row td { background: transparent !important; }
     .report-summary-box .summary-line { background: transparent !important; }
