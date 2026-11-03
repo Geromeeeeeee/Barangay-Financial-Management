@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
+import { jsPDF } from "jspdf";
 import BackButton from "../components/back_button";
 import sealLogo from "../assets/barangay-malagasang-logo.jpg";
 import "../styles/reports.css";
@@ -42,49 +43,23 @@ export default function Reports() {
 
     const formatPeso = (n) => "₱" + Number(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 });
 
-    const downloadReport = () => {
+    const downloadReport = async () => {
         setDownloadFeedback("");
         try {
             if (!reportRef.current) {
                 throw new Error("Report is not available for download.");
             }
 
-            const report = reportRef.current.cloneNode(true);
-            report.querySelectorAll("img").forEach((image) => {
-                image.src = new URL(image.getAttribute("src"), window.location.href).href;
-            });
-
-            const css = Array.from(document.styleSheets).flatMap((sheet) => {
-                try {
-                    return Array.from(sheet.cssRules).map((rule) => rule.cssText);
-                } catch (error) {
-                    console.error("Unable to read report styles", error);
-                    return [];
+            const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+            await pdf.html(reportRef.current, {
+                margin: [36, 36, 36, 36],
+                autoPaging: "text",
+                html2canvas: {
+                    scale: 0.8,
+                    useCORS: true
                 }
-            }).join("\n");
-
-            if (!css) {
-                throw new Error("Report styles are unavailable.");
-            }
-
-            const html = `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Financial Report - ${months[month - 1]} ${year}</title>
-<style>${css}</style>
-</head>
-<body>${report.outerHTML}</body>
-</html>`;
-            const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `financial-report-${months[month - 1].toLowerCase()}-${year}.html`;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.setTimeout(() => URL.revokeObjectURL(url), 0);
+            });
+            pdf.save(`financial-report-${months[month - 1].toLowerCase()}-${year}.pdf`);
             setDownloadFeedback("Report downloaded.");
         } catch (downloadError) {
             console.error("Failed to download report", downloadError);
