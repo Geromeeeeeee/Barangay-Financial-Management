@@ -3,8 +3,7 @@ import "../../styles/dashboard.css";
 import "../../styles/sk_dashboard.css";
 import DashboardChart from "../../components/dashboard_chart";
 import { 
-    IconUsers, IconMoney, IconChart, 
-    StatCard, ActivityRow, DashboardHero 
+    IconUsers, IconChart, ActivityRow, DashboardHero 
 } from "../../components/dashboard_widgets";
 import { useDashboardStats } from "../../custom_hooks/use_dashboard_stats";
 import { useProjects } from "../../custom_hooks/use_projects";
@@ -51,87 +50,49 @@ export default function SKDashboard({ user }) {
 
     return (
         <div className="dashboard-page sk-view">
-            <DashboardHero user={user} />
+            
+            <div className="sk-top-split">
+                <DashboardHero user={user} />
+                <div className="sk-budget-card">
+                    <div className="sk-budget-inner">
+                        <div className="sk-budget-icon">
+                            ₱
+                        </div>
+                        <div>
+                            <span>Available SK Funds</span>
+                            <strong>{loading ? "…" : formatPeso(skBudget.balance)}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             {error && <div className="alert alert-error">{error}</div>}
 
-            <section className="stat-grid">
-                <StatCard 
-                    Icon={IconMoney} 
-                    label="SK Fund Balance" 
-                    value={loading ? "…" : formatPeso(skBudget.balance)} 
-                    trend="Available for projects" 
-                    accent="green" 
-                />
-                <StatCard 
-                    Icon={IconChart} 
-                    label="Allocated Budget" 
-                    value={loading ? "…" : formatPeso(skBudget.allocated_amount)} 
-                    trend="For the year" 
-                    accent="blue" 
-                />
-                <StatCard 
-                    Icon={IconUsers} 
-                    label="SK Role" 
-                    value={user.role === 'sk_chairman' ? "Chairman" : "Member"} 
-                    trend="Access level" 
-                    accent="purple" 
-                />
-            </section>
-
-        
-            <DashboardChart />
-            <section className="dash-columns">
-                <div className="dash-card">
+            <section className="sk-main-layout">
+                
+                <div className="dash-card sk-action-card">
                     <div className="dash-card-head">
-                        <h2>My Project Requests</h2>
-                        <button className="dash-link" onClick={fetchProjects}>Refresh</button>
-                    </div>
-                    
-                    {projects.length === 0 ? (
-                        <p className="muted">No projects requested yet.</p>
-                    ) : (
-                        <ul className="activity-list">
-                            {projects.map((p) => (
-                                <div key={p.id}>
-                                    <ActivityRow
-                                        dot={p.status === 'approved' ? 'green' : p.status === 'declined' ? 'red' : 'amber'}
-                                        title={p.title}
-                                        meta={`${formatPeso(p.estimated_cost)} · ${p.status.toUpperCase()}`}
-                                        time={new Date(p.created_at).toLocaleDateString()}
-                                    />
-                                    {(p.attachments || []).length > 0 && (
-                                        <ul className="sk-request-files">
-                                            {p.attachments.map((attachment) => (
-                                                <li key={attachment.id}>
-                                                    <a
-                                                        href={`${API_URL}projects/download_attachment.php?id=${attachment.id}`}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                    >
-                                                        {attachment.file_name}
-                                                    </a>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-                <div className="dash-card">
-                    <div className="dash-card-head">
-                        <h2>Request a New Project</h2>
+                        <h2>Submit New Project Request</h2>
                     </div>
                 
                     {user.role === 'sk_chairman' ? (
                         <form onSubmit={handleRequest} className="sk-project-form">
-                            <input name="title" placeholder="Project Title (e.g., Basketball Court)" required />
-                            <input name="cost" type="number" min="0.01" step="0.01" placeholder="Requested Amount (₱)" required />
-                            <textarea name="desc" placeholder="Describe the project..." required rows="3"></textarea>
-                            <label className="sk-attachment-label">
-                                Supporting documents (optional, up to 5 files)
+                            <div className="form-group">
+                                <label>Project Title</label>
+                                <input name="title" placeholder="e.g., Basketball Court Repair" required />
+                            </div>
+                            <div className="form-group">
+                                <label>Requested Amount (₱)</label>
+                                <input name="cost" type="number" min="0.01" step="0.01" placeholder="0.00" required />
+                            </div>
+                            <div className="form-group">
+                                <label>Project Description</label>
+                                <textarea name="desc" placeholder="Describe the purpose and details of the project..." required rows="3"></textarea>
+                            </div>
+                            <div className="form-group">
+                                <label className="sk-attachment-label">
+                                    Supporting Documents (You can attach multiple files, e.g., PDFs, images)
+                                </label>
                                 <input
                                     type="file"
                                     multiple
@@ -148,8 +109,8 @@ export default function SKDashboard({ user }) {
                                         ))}
                                     </ul>
                                 )}
-                            </label>
-                            <button type="submit" className="btn-primary">Submit to Treasurer</button>
+                            </div>
+                            <button type="submit" className="btn-primary sk-submit-btn">Submit to Treasurer</button>
                         </form>
                     ) : (
                         <div className="dash-tip">
@@ -157,27 +118,78 @@ export default function SKDashboard({ user }) {
                         </div>
                     )}
                 </div>
-            </section>
-            <section className="dash-card sk-approved-allocations">
-                <div className="dash-card-head">
-                    <h2>Approved SK Allocations</h2>
+
+                <div className="sk-right-column">
+                    <div className="dash-card sk-status-card">
+                        <div className="dash-card-head">
+                            <h2>Your Requests</h2>
+                            <button className="dash-link" onClick={fetchProjects}>Refresh</button>
+                        </div>
+                        
+                        {projects.length === 0 ? (
+                            <div className="sk-empty-state">
+                                <p>You haven't submitted any project requests yet.</p>
+                            </div>
+                        ) : (
+                            <div className="sk-scroll-area">
+                                <ul className="activity-list">
+                                    {projects.map((p) => (
+                                        <div key={p.id} className="sk-request-item">
+                                            <ActivityRow
+                                                dot={p.status === 'approved' ? 'green' : p.status === 'declined' ? 'red' : 'amber'}
+                                                title={p.title}
+                                                meta={`${formatPeso(p.estimated_cost)} · ${p.status.toUpperCase()}`}
+                                                time={new Date(p.created_at).toLocaleDateString()}
+                                            />
+                                            {(p.attachments || []).length > 0 && (
+                                                <ul className="sk-request-files">
+                                                    {p.attachments.map((attachment) => (
+                                                        <li key={attachment.id}>
+                                                            <a
+                                                                href={`${API_URL}projects/download_attachment.php?id=${attachment.id}`}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                            >
+                                                                📎 {attachment.file_name}
+                                                            </a>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="dash-card sk-approved-allocations">
+                        <div className="dash-card-head">
+                            <h2>Approved SK Allocations</h2>
+                        </div>
+                        <div className="sk-scroll-area">
+                            <ul className="activity-list">
+                                {(skBudget.subcategories || []).length === 0 ? (
+                                    <li className="muted">No approved allocations yet.</li>
+                                ) : (
+                                    skBudget.subcategories.map((subcategory) => (
+                                        <ActivityRow
+                                            key={subcategory.id}
+                                            dot="green"
+                                            title={subcategory.name}
+                                            meta={formatPeso(subcategory.allocated_amount)}
+                                            time="Approved allocation"
+                                        />
+                                    ))
+                                )}
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <ul className="activity-list">
-                    {(skBudget.subcategories || []).length === 0 ? (
-                        <li className="muted">No approved allocations yet.</li>
-                    ) : (
-                        skBudget.subcategories.map((subcategory) => (
-                            <ActivityRow
-                                key={subcategory.id}
-                                dot="green"
-                                title={subcategory.name}
-                                meta={formatPeso(subcategory.allocated_amount)}
-                                time="Approved allocation"
-                            />
-                        ))
-                    )}
-                </ul>
+
             </section>
+            
+            <DashboardChart />
         </div>
     );
 }

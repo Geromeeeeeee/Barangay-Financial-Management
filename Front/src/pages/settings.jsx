@@ -134,7 +134,6 @@ export default function Settings() {
     };
 
     const executeChangePassword = async () => {
-        setShowPasswordModal(false);
         setLoading(true); setMessage({ type: "", text: "" });
         try {
             const res = await axios.post(`${API_URL}user/update_profile.php`, 
@@ -144,11 +143,14 @@ export default function Settings() {
             if (res.data.status === 'success') {
                 setMessage({ type: "success", text: res.data.message });
                 setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
+                setShowPasswordModal(false);
             } else {
                 setMessage({ type: "error", text: res.data.message });
+                setShowPasswordModal(false);
             }
         } catch (err) {
-            setMessage({ type: "error", text: "Failed to change password." });
+            setMessage({ type: "error", text: err.response?.data?.message || "Failed to change password." });
+            setShowPasswordModal(false);
         } finally {
             setLoading(false);
         }
@@ -329,7 +331,18 @@ export default function Settings() {
                                     </div>
                                 </div>
                                 
-                                <div className="form-footer full-width">
+                                <div className="form-footer full-width" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                                    <button 
+                                        type="button" 
+                                        className="btn-outline" 
+                                        onClick={() => {
+                                            setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
+                                            setMessage({ type: "", text: "" });
+                                        }}
+                                        disabled={loading}
+                                    >
+                                        Cancel
+                                    </button>
                                     <button type="submit" className="btn-primary" disabled={loading}>
                                         {loading ? "Updating..." : "Update Password"}
                                     </button>
@@ -356,7 +369,7 @@ export default function Settings() {
                         <p>Are you sure you want to update your profile information?</p>
                         <div className="logout-modal-actions">
                             <button type="button" className="logout-modal-cancel" onClick={() => setShowSaveModal(false)}>Cancel</button>
-                            <button type="button" className="logout-modal-confirm" style={{ background: '#2563eb', boxShadow: 'none' }} onClick={updateProfile}>
+                            <button type="button" className="logout-modal-confirm btn-blue" onClick={updateProfile}>
                                 Yes, Save
                             </button>
                         </div>
@@ -364,11 +377,10 @@ export default function Settings() {
                 </div>
             )}
 
-            {/* 👇 PASSWORD CONFIRMATION MODAL */}
             {showPasswordModal && (
-                <div className="logout-modal-backdrop" onClick={() => setShowPasswordModal(false)}>
+                <div className="logout-modal-backdrop" onClick={() => !loading && setShowPasswordModal(false)}>
                     <div className="logout-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="logout-modal-icon" style={{ background: '#fef2f2', color: '#dc2626' }}>
+                        <div className="logout-modal-icon" style={{ background: '#eff6ff', color: '#2563eb' }}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '24px', height: '24px' }}>
                                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -377,9 +389,21 @@ export default function Settings() {
                         <h3>Update Password?</h3>
                         <p>Are you sure you want to change your password? You will need to use the new password on your next login.</p>
                         <div className="logout-modal-actions">
-                            <button type="button" className="logout-modal-cancel" onClick={() => setShowPasswordModal(false)}>Cancel</button>
-                            <button type="button" className="logout-modal-confirm" onClick={executeChangePassword}>
-                                Yes, Update
+                            <button 
+                                type="button" 
+                                className="logout-modal-cancel" 
+                                onClick={() => setShowPasswordModal(false)} 
+                                disabled={loading}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                type="button" 
+                                className="logout-modal-confirm btn-blue" 
+                                onClick={executeChangePassword}
+                                disabled={loading}
+                            >
+                                {loading ? "Updating..." : "Yes, Update"}
                             </button>
                         </div>
                     </div>
