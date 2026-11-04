@@ -24,8 +24,8 @@ export default function TreasurerDashboard({ user }) {
     };
     
     const selectedActivity = activityType === "revenue"
-        ? stats.recentActivity.slice(0, 2)
-        : stats.recentExpenditures.slice(0, 2);
+        ? stats.recentActivity
+        : stats.recentExpenditures;
 
     const getCategoryStatus = (percentage) => {
         if (percentage >= 75) return "Critical";

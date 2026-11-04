@@ -408,13 +408,35 @@
     gap: 12px;
     padding: 16px;
     border-bottom: 1px solid #f1f5f9;
-    transition: background 0.2s;
+    transition: background 0.2s, opacity 0.2s;
 }
 
-.notification-item.unread { background: #f0fdf4; }
-.notification-item.read { background: #ffffff; }
-.notification-item:hover { background: #f8fafc; }
-.notification-item:last-child { border-bottom: none; }
+.notification-item.unread { 
+    background: #f0fdf4; 
+    opacity: 1;
+}
+
+.notification-item.read { 
+    background: #f8fafc;
+    opacity: 0.75;
+}
+
+.notification-item.read .notif-title {
+    color: #64748b;
+}
+
+.notification-item.read .notif-desc {
+    color: #94a3b8;
+}
+
+.notification-item:hover { 
+    background: #eff6ff; 
+    opacity: 1;
+}
+
+.notification-item:last-child { 
+    border-bottom: none; 
+}
 
 .notif-dot {
     width: 8px;
@@ -541,7 +563,6 @@
     background: #fef2f2;
 }
 
-
 .sidebar-footer {
     padding: 12px 0;
     border-top: 1px solid rgba(255, 255, 255, 0.4);
@@ -563,7 +584,6 @@
     background: rgba(254, 242, 242, 0.6); 
     color: #b91c1c; 
 }
-
 
 @media (max-width: 900px) {
     .sidebar {

@@ -10,6 +10,7 @@ import { useRole } from "../custom_hooks/use_role";
 import useFilter from "../custom_hooks/use_filter";
 import usePagination from "../custom_hooks/use_pagination";
 import Filter from "../components/filter";
+import { useToast } from "../context/toast_context";
 import "../styles/expenditure.css";
 import "../styles/category_card.css"
 import Pagination from "../components/pagination";
@@ -24,31 +25,37 @@ export default function Expenditure() {
     const [subcategoryForm, setSubcategoryForm] = useState(null);
     const [monthlyAllocations, setMonthlyAllocations] = useState([]);
     const [allocationError, setAllocationError] = useState("");
-    const [currentPage, setCurrentPage] = useState(1)
+    const [currentPage, setCurrentPage] = useState(1);
+    const { showToast } = useToast();
+
     const {filters, months, years, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { expenditures, loading, error, refetch } = useExpenditure(filterParams);
-    const {totalPages, displayedRecords} = usePagination({currentPage, filters, records: expenditures})
     const {peso, date} = useFormat();
     const { categories, income, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory } = useBudgetCategories();
     const {isTreasurer, isSK} = useRole();
-    const canModify = isTreasurer;
+    const canModify = isTreasurer || isSK;
     const displayedCategories = isSK ? categories.filter((category)=>category.name === "SK") : categories
+
+    const skFilteredExpenditures = isSK
+        ? expenditures.filter(e => e.category_name === "SK" || e.subcategory_name?.toUpperCase().includes("SK"))
+        : expenditures;
+
+    const {totalPages, displayedRecords} = usePagination({currentPage, filters, records: skFilteredExpenditures})
+    
     const allocationsBySubcategory = monthlyAllocations.reduce((groups, allocation) => {
         const key = String(allocation.subcategory_id);
         if (!groups[key]) groups[key] = [];
         groups[key].push(allocation);
         return groups;
     }, {});
+
     const categoriesWithMonthlyAllocations = displayedCategories
     .map((category) => ({
         ...category,
         subcategories: category.subcategories
-            .filter((subcategory) =>
-                (allocationsBySubcategory[String(subcategory.id)] || []).length > 0
-            )
             .map((subcategory) => ({ ...subcategory, category_name: category.name }))
     }))
-    .filter((category) => category.subcategories.length > 0);
+    .filter((category) => category.subcategories.length > 0 || isSK);
 
     const loadMonthlyAllocations = () => axios.get(`${API_URL}budget/allocations.php`, {
         withCredentials: true
@@ -61,23 +68,32 @@ export default function Expenditure() {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            if (isTreasurer) loadMonthlyAllocations();
+            if (isTreasurer || isSK) loadMonthlyAllocations();
         }, 0);
         return () => clearTimeout(timer);
-    }, [isTreasurer]);
+    }, [isTreasurer, isSK]);
 
     const handleCloseModal = (open) => {
         setIsModalOpen(open);
         if (!open) {
             setSelectedItem(null);
             refetch();
-            if (isTreasurer) loadMonthlyAllocations();
+            if (isTreasurer || isSK) loadMonthlyAllocations();
         }
     };
 
     const openExpenditureModal = (subcategory, allocations) => {
         setSelectedItem({ ...subcategory, allocations });
         setIsModalOpen(true);
+    };
+
+    const handleArchive = async (id) => {
+        try {
+            await deleteSubcategory(id);
+            showToast("Subcategory archived successfully.", "success");
+        } catch (e) {
+            showToast(e.response?.data?.message || e.message, "error");
+        }
     };
 
     return (
@@ -88,7 +104,7 @@ export default function Expenditure() {
                 <div>
                     <h1>Expenditures</h1>
                     <p className="expenditure-sub">
-                        {loading ? "Loading..." : `${expenditures.length} record${expenditures.length !== 1 ? "s" : ""}`}
+                        {loading ? "Loading..." : `${skFilteredExpenditures.length} record${skFilteredExpenditures.length !== 1 ? "s" : ""}`}
                     </p>
                 </div>
             </header>
@@ -99,13 +115,16 @@ export default function Expenditure() {
             {!categoriesLoading && categories.length > 0 && (
                 <div className="expenditure-category-manager">
                     <p className="expenditure-allocation-summary">
-                        Total annual income: {peso(income.total_annual_income)} · Allocated: {peso(categories.reduce((total, category) => total + Number(category.allocated_amount || 0), 0))}
+                        {isSK ? (
+                            <>Allocated SK Budget: {peso(displayedCategories.reduce((total, category) => total + Number(category.allocated_amount || 0), 0))}</>
+                        ) : (
+                            <>Total annual income: {peso(income.total_annual_income)} · Allocated: {peso(categories.reduce((total, category) => total + Number(category.allocated_amount || 0), 0))}</>
+                        )}
                     </p>
                     <div className="expenditure-categories">
                     {categoriesWithMonthlyAllocations.map((category) => (
                         <section className="expenditure-category" key={category.id}>
                             <div className="expenditure-category-head">
-
                                 <div>
                                     <h2>{category.name}</h2>
                                     <div className="fund-number-row">
@@ -120,7 +139,6 @@ export default function Expenditure() {
                                         <span className="fund-label">Remaining</span>
                                         <span className="fund-value highlight">{peso(category.balance)}</span>
                                     </div>
-
                                 </div>
                             </div>
                             <div className="subcategory-list">
@@ -158,7 +176,7 @@ export default function Expenditure() {
                                                 {canModify && subcategory.is_active && (
                                                     <div className="subcategory-actions">
                                                         <button type="button" onClick={() => setSubcategoryForm(subcategory)}>Edit</button>
-                                                        <button type="button" onClick={() => deleteSubcategory(subcategory.id).catch((e) => window.alert(e.response?.data?.message || e.message))}>Archive</button>
+                                                        <button type="button" onClick={() => handleArchive(subcategory.id)}>Archive</button>
                                                     </div>
                                                 )}
                                             </div>
@@ -172,20 +190,19 @@ export default function Expenditure() {
                                 <button type="button" onClick={() => setSubcategoryForm({ category_id: category.id, category_name: category.name, name: "", allocated_amount: "" })}>+ Add subcategory</button>
                             )}
                         </section>
-                    ))
-                    }
+                    ))}
                     </div>
                 </div>
             )}
             <div className="expenditure-card">
                 <Filter filters={filters} updateFilter={updateFilter} months={months} years={years} clearFilters={clearFilters}/>
                 {loading && <p className="muted">Loading records...</p>}
-                {!loading && expenditures.length === 0 && (
+                {!loading && skFilteredExpenditures.length === 0 && (
                     <div className="expenditure-empty">
                         <p>No expenditure records match the selected month and year.</p>
                     </div>
                 )}
-                {!loading && expenditures.length > 0 && (
+                {!loading && skFilteredExpenditures.length > 0 && (
                     <>
                     <table className="expenditure-table">
                         <thead>
@@ -241,21 +258,67 @@ function SubcategoryForm({ subcategory, onClose, onSave }) {
     const [name, setName] = useState(subcategory.name || "");
     const [amount, setAmount] = useState(subcategory.allocated_amount || "");
     const [error, setError] = useState("");
+    const { showToast } = useToast();
     const isMooe = (subcategory.category_name || "").toUpperCase() === "MOOE";
+    
     const submit = async (event) => {
         event.preventDefault();
+        setError("");
         try {
-            await onSave({ id: subcategory.id, category_id: subcategory.category_id, name, allocated_amount: Number(amount) });
+            await onSave({ 
+                id: subcategory.id, 
+                category_id: subcategory.category_id, 
+                name, 
+                allocated_amount: Number(amount) 
+            });
+            showToast(subcategory.id ? "Budget item updated!" : "Budget item added!", "success");
             onClose();
-        } catch (requestError) { setError(requestError.response?.data?.message || requestError.message); }
+        } catch (requestError) { 
+            setError(requestError.response?.data?.message || requestError.message); 
+            showToast("Failed to save budget item.", "error");
+        }
     };
-    return <div className="expenditure-modal-background" onClick={onClose}><form className="expenditure-modal expenditure-form" onSubmit={submit} onClick={(event) => event.stopPropagation()}>
-        <h2>{subcategory.id ? "Edit subcategory" : "Add subcategory"}</h2>
-        {error && <div className="expenditure-modal-error">{error}</div>}
-        <label><span>Name</span><input value={name} onChange={(event) => setName(event.target.value)} required /></label>
-        {isMooe
-            ? <p className="muted">Annual allocation is calculated equally across active MOOE items.</p>
-            : <label><span>Annual allocation (optional)</span><input type="number" min="0" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} /></label>}
-        <div className="expenditure-modal-actions"><button type="button" className="btn-cancel" onClick={onClose}>Cancel</button><button type="submit" className="btn-save">Save</button></div>
-    </form></div>;
+
+    return (
+        <div className="expenditure-modal-background" onClick={onClose}>
+            <form className="expenditure-modal expenditure-form" onSubmit={submit} onClick={(event) => event.stopPropagation()}>
+                <h2>{subcategory.id ? "Edit Budget Item" : "Add Budget Item"}</h2>
+                {subcategory.category_name && (
+                    <p style={{ marginTop: '-10px', marginBottom: '16px', fontSize: '0.85rem', color: '#64748b' }}>
+                        Adding to: <strong>{subcategory.category_name}</strong> category
+                    </p>
+                )}
+                {error && <div className="expenditure-modal-error">{error}</div>}
+                
+                <label>
+                    <span>Item Name</span>
+                    <input 
+                        value={name} 
+                        onChange={(event) => setName(event.target.value)} 
+                        placeholder="e.g., Youth Sports Program"
+                        required 
+                    />
+                </label>
+
+                {isMooe
+                    ? <p className="muted">Annual allocation is calculated equally across active MOOE items.</p>
+                    : <label>
+                        <span>Planned Allocation (₱)</span>
+                        <input 
+                            type="number" 
+                            min="0" 
+                            step="0.01" 
+                            value={amount} 
+                            onChange={(event) => setAmount(event.target.value)} 
+                            placeholder="0.00"
+                        />
+                      </label>}
+
+                <div className="expenditure-modal-actions">
+                    <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
+                    <button type="submit" className="btn-save">Save Plan</button>
+                </div>
+            </form>
+        </div>
+    );
 }

@@ -9,12 +9,10 @@ class Audit {
     }
 
     public function log($action, $details = null) {
-        // Get user info from session if available
         $userId = $_SESSION['uid'] ?? null;
         $username = 'System/Guest';
 
         if ($userId) {
-            // Fetch username from db to ensure accuracy
             $stmt = $this->database->prepare("SELECT username FROM users WHERE id = :id");
             $stmt->execute(['id' => $userId]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -23,7 +21,6 @@ class Audit {
             }
         }
 
-        // Insert log
         $stmt = $this->database->prepare("
             INSERT INTO audit_logs (user_id, username, action, details) 
             VALUES (:uid, :uname, :action, :details)
@@ -34,5 +31,28 @@ class Audit {
             'action' => $action,
             'details' => $details
         ]);
+
+        try {
+            $adminStmt = $this->database->query("SELECT id FROM users WHERE role = 'admin'");
+            $admins = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($admins)) {
+                $notifStmt = $this->database->prepare("
+                    INSERT INTO notifications (user_id, title, message, created_at) 
+                    VALUES (:user_id, :title, :message, NOW())
+                ");
+
+                foreach ($admins as $adminId) {
+                    if ($adminId != $userId) {
+                        $notifStmt->execute([
+                            ':user_id' => $adminId,
+                            ':title' => $action,
+                            ':message' => $details
+                        ]);
+                    }
+                }
+            }
+        } catch (Exception $e) {
+        }
     }
 }

@@ -9,6 +9,7 @@ import usePagination from '../custom_hooks/use_pagination'
 import useFormat from '../custom_hooks/use_format'
 import Filter from '../components/filter'
 import Pagination from '../components/pagination'
+import { useToast } from '../context/toast_context'
 import '../styles/revenue.css'
 import "../styles/expenditure.css";
 import axios from 'axios'
@@ -21,11 +22,22 @@ export default function Revenue () {
     const {filters, months, years, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { revenues, loading, error, refetch } = useRevenue(filterParams)
     const {totalPages, displayedRecords} = usePagination({currentPage, filters, records: revenues})
-    const { isTreasurer, isStaff } = useRole()
+    const { isTreasurer, isStaff, isSK } = useRole()
     const {peso, date} = useFormat()
+    const { showToast } = useToast()
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
-    const canRecord = isTreasurer || isStaff
+    const canRecord = isTreasurer || isStaff || isSK
+
+    const skFilteredRevenues = isSK 
+        ? revenues.filter(r => r.source?.toUpperCase().includes("SK") || r.particular?.toUpperCase().includes("SK"))
+        : revenues;
+
+    const {totalPages: skTotalPages, displayedRecords: skDisplayedRecords} = usePagination({
+        currentPage, 
+        filters, 
+        records: skFilteredRevenues
+    })
 
     const handleCloseModal = (open) => {
         setIsModalOpen(open)
@@ -42,7 +54,7 @@ export default function Revenue () {
                     <p className="revenue-sub">
                         {loading
                             ? "Loading…"
-                            : `${revenues.length} record${revenues.length !== 1 ? "s" : ""}`}
+                            : `${skFilteredRevenues.length} record${skFilteredRevenues.length !== 1 ? "s" : ""}`}
                     </p>
                 </div>
 
@@ -61,13 +73,13 @@ export default function Revenue () {
                 <Filter filters={filters} updateFilter={updateFilter} months={months} years={years} clearFilters={clearFilters}/>
                 {loading && <p className="muted">Loading records…</p>}
 
-                {!loading && revenues.length === 0 && (
+                {!loading && skFilteredRevenues.length === 0 && (
                     <div className="revenue-empty">
                         <p>No revenue records match the selected month and year.</p>
                     </div>
                 )}
 
-                {!loading && revenues.length > 0 && (
+                {!loading && skFilteredRevenues.length > 0 && (
                     <>
                     <table className="revenue-table">
                         <thead>
@@ -80,7 +92,7 @@ export default function Revenue () {
                             </tr>
                         </thead>
                         <tbody>
-                            {displayedRecords.map((r) => (
+                            {skDisplayedRecords.map((r) => (
                                 <tr key={r.id}>
                                     <td className="muted">{date(r.receipt_date || r.created_at)}</td>
                                     <td>{r.record_type === 'monthly_receipt' ? `${r.source} (Monthly receipt)` : r.source}</td>
@@ -117,7 +129,7 @@ export default function Revenue () {
                             ))}
                         </tbody>
                     </table>
-                    <Pagination setCurrentPage={setCurrentPage} currentPage={currentPage} totalPages={totalPages}/>
+                    <Pagination setCurrentPage={setCurrentPage} currentPage={currentPage} totalPages={skTotalPages}/>
                     </>
                 )}
             </div>
@@ -133,6 +145,7 @@ export default function Revenue () {
                 <ReceiptAllocationModal
                     receipt={allocationReceipt}
                     apiUrl={API_URL}
+                    showToast={showToast}
                     onClose={() => setAllocationReceipt(null)}
                     onSaved={refetch}
                 />
@@ -141,7 +154,7 @@ export default function Revenue () {
     )
 }
 
-function ReceiptAllocationModal({ receipt, apiUrl, onClose, onSaved }) {
+function ReceiptAllocationModal({ receipt, apiUrl, onClose, onSaved, showToast }) {
     const [categories, setCategories] = useState([])
     const [history, setHistory] = useState([])
     const [itemType, setItemType] = useState('existing')
@@ -180,6 +193,7 @@ function ReceiptAllocationModal({ receipt, apiUrl, onClose, onSaved }) {
             }, { withCredentials: true })
             await load()
             onSaved()
+            showToast("Funds allocated successfully!", "success")
             setItemType('existing')
             setSubcategoryId('')
             setCategoryId('')
@@ -187,6 +201,7 @@ function ReceiptAllocationModal({ receipt, apiUrl, onClose, onSaved }) {
             setAmount('')
         } catch (requestError) {
             setError(requestError.response?.data?.message || requestError.message)
+            showToast(requestError.response?.data?.message || "Failed to allocate funds.", "error")
         } finally {
             setLoading(false)
         }

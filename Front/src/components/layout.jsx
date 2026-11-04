@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Outlet, NavLink, useNavigate } from "react-router-dom"
 import { useRole } from "../custom_hooks/use_role"
 import axios from "axios"
-import { Home, Inbox, Folder, BarChart, Users, Shield, Settings, FileText, LogOut } from "lucide-react"
+import { Home, Inbox, Folder, BarChart, Users, Shield, Settings, LogOut, FileText } from "lucide-react"
 import sealLogo from "../assets/barangay-malagasang-logo.jpg"
 import NotificationBell from "../components/notification_bell"
 import UserMenu from "../components/user_menu"
@@ -59,17 +59,17 @@ export default function DashboardLayout() {
                         </>
                     )}
                     
-                    {(isStaff || isTreasurer) && (
+                    {isTreasurer && (
                         <NavLink to="/Reports" className={linkClass}>
                             <div className="nav-icon"><BarChart size={22} /></div>
-                            <span className="nav-text">Reports</span>
+                            <span className="nav-text">Financial Reports</span>
                         </NavLink>
                     )}
-                    
-                    {isTreasurer && (
-                        <NavLink to="/admin/projects" className={linkClass}>
+
+                    {(isStaff || isAdmin) && (
+                        <NavLink to="/ClearanceReport" className={linkClass}>
                             <div className="nav-icon"><FileText size={22} /></div>
-                            <span className="nav-text">Project Requests</span>
+                            <span className="nav-text">Clearance Reports</span>
                         </NavLink>
                     )}
 

@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import axios from "axios";
 import { useRole } from "../custom_hooks/use_role";
+import { useToast } from "../context/toast_context";
 import BackButton from "../components/back_button";
 import "../styles/dashboard.css";
 
@@ -44,9 +45,9 @@ const EyeIcon = ({ open }) => {
 
 export default function Settings() {
     const { user } = useRole();
+    const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState("profile");
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState({ type: "", text: "" });
     const fileInputRef = useRef(null);
 
     const [profile, setProfile] = useState({
@@ -92,12 +93,11 @@ export default function Settings() {
         });
         setAvatarFile(null);
         setPreview(user?.profile_picture ? `${BASE_URL}${user.profile_picture}` : null);
-        setMessage({ type: "", text: "" });
     };
 
     const updateProfile = async () => {
         setShowSaveModal(false);
-        setLoading(true); setMessage({ type: "", text: "" });
+        setLoading(true);
         
         const formData = new FormData();
         formData.append("action", "update_info");
@@ -114,7 +114,7 @@ export default function Settings() {
             });
             
             if (res.data.status === 'success') {
-                setMessage({ type: "success", text: res.data.message });
+                showToast(res.data.message, "success");
                 const newPicPath = res.data.profile_picture;
                 setPreview(`${BASE_URL}${newPicPath}`); 
 
@@ -124,32 +124,32 @@ export default function Settings() {
                 localStorage.setItem("user", JSON.stringify(updatedUser));
                 setTimeout(() => window.location.reload(), 1000);
             } else {
-                setMessage({ type: "error", text: res.data.message });
+                showToast(res.data.message, "error");
             }
         } catch (err) {
-            setMessage({ type: "error", text: err.response?.data?.message || "Failed to update profile." });
+            showToast(err.response?.data?.message || "Failed to update profile.", "error");
         } finally {
             setLoading(false);
         }
     };
 
     const executeChangePassword = async () => {
-        setLoading(true); setMessage({ type: "", text: "" });
+        setLoading(true);
         try {
             const res = await axios.post(`${API_URL}user/update_profile.php`, 
                 { action: 'change_password', ...passwords }, 
                 { withCredentials: true }
             );
             if (res.data.status === 'success') {
-                setMessage({ type: "success", text: res.data.message });
+                showToast(res.data.message, "success");
                 setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
                 setShowPasswordModal(false);
             } else {
-                setMessage({ type: "error", text: res.data.message });
+                showToast(res.data.message, "error");
                 setShowPasswordModal(false);
             }
         } catch (err) {
-            setMessage({ type: "error", text: err.response?.data?.message || "Failed to change password." });
+            showToast(err.response?.data?.message || "Failed to change password.", "error");
             setShowPasswordModal(false);
         } finally {
             setLoading(false);
@@ -159,10 +159,10 @@ export default function Settings() {
     const handlePasswordSubmit = (e) => {
         e.preventDefault();
         if (passwords.newPassword !== passwords.confirmPassword) {
-            return setMessage({ type: "error", text: "New passwords do not match." });
+            return showToast("New passwords do not match.", "error");
         }
         if (passwords.newPassword.length < 6) {
-            return setMessage({ type: "error", text: "Password must be at least 6 characters." });
+            return showToast("Password must be at least 6 characters.", "error");
         }
         setShowPasswordModal(true);
     };
@@ -186,25 +186,19 @@ export default function Settings() {
                     <div className="settings-sidebar-title">Account</div>
                     <button 
                         className={`settings-nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
-                        onClick={() => { setActiveTab('profile'); setMessage({type:"", text:""}); }}
+                        onClick={() => setActiveTab('profile')}
                     >
                         <IconUser /> Profile Information
                     </button>
                     <button 
                         className={`settings-nav-btn ${activeTab === 'security' ? 'active' : ''}`}
-                        onClick={() => { setActiveTab('security'); setMessage({type:"", text:""}); }}
+                        onClick={() => setActiveTab('security')}
                     >
                         <IconLock /> Security & Password
                     </button>
                 </aside>
 
                 <main className="settings-content">
-                    {message.text && (
-                        <div className={`alert alert-${message.type === 'success' ? 'success' : 'error'}`} style={{ marginBottom: '20px' }}>
-                            {message.text}
-                        </div>
-                    )}
-
                     {activeTab === 'profile' && (
                         <div className="settings-panel">
                             <div className="settings-panel-header">
@@ -337,7 +331,6 @@ export default function Settings() {
                                         className="btn-outline" 
                                         onClick={() => {
                                             setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" });
-                                            setMessage({ type: "", text: "" });
                                         }}
                                         disabled={loading}
                                     >

@@ -44,17 +44,35 @@ function PasswordField({ label, name, value, onChange, show, toggleShow }) {
 }
 
 function InviteCodeField({ code, setCode, status, message }) {
+    const formatInviteCode = (value) => {
+        const cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        let formatted = cleaned;
+        
+        // Insert dash after the 5th character (e.g., MAL2A-)
+        if (cleaned.length > 5) {
+            formatted = `${cleaned.slice(0, 5)}-${cleaned.slice(5)}`;
+        }
+        
+        // Insert second dash after the 9th character (e.g., MAL2A-B961-)
+        if (cleaned.length > 9) {
+            formatted = `${cleaned.slice(0, 5)}-${cleaned.slice(5, 9)}-${cleaned.slice(9, 13)}`;
+        }
+        
+        return formatted;
+    };
+
     return (
         <label className="field">
             <span>Invite code</span>
             <div className={`invite-wrap invite-${status || "idle"}`}>
                 <input
                     type="text"
-                    placeholder="MAL2A-XXXX-XXXX"
+                    placeholder="MAL2A-B961-1A8F"
                     required
                     value={code}
-                    onChange={(e) => setCode(e.target.value.toUpperCase())}
+                    onChange={(e) => setCode(formatInviteCode(e.target.value))}
                     className="invite-input"
+                    maxLength={15} // 5 + 1 + 4 + 1 + 4 = 15 chars
                 />
                 {status === "checking" && <span className="invite-badge">Checking…</span>}
                 {status === "valid" && <span className="invite-badge invite-valid">✓</span>}

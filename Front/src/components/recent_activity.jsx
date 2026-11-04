@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { ActivityRow } from "./dashboard_widgets";
+import RecentActivityModal from "./recent_activity_modal";
 import "../styles/dashboard.css"
-import refreshIcon from "../assets/refresh.svg"
 
 function timeAgo(dateString) {
     if (!dateString) return "";
@@ -19,51 +20,65 @@ function timeAgo(dateString) {
 }
 
 export default function RecentActivity({activityType, refresh, loading, selectedActivity, setActivityType}){
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
     return(
-    <div className="activity-wrapper dash-card">
-        <div className="dash-card-head" style={{ marginBottom: '10px' }}>
-            <h2>{activityType === "revenue" ? "Recent Revenue" : "Recent Expenditures"}</h2>
-            <button className="dash-link refresh-button" onClick={refresh}>
-                <img src={refreshIcon} alt="" />
-                Refresh
-            </button>
-        </div>
+    <>
+        <div className="activity-wrapper dash-card">
+            <div className="dash-card-head" style={{ marginBottom: '10px' }}>
+                <h2>{activityType === "revenue" ? "Recent Revenue" : "Recent Expenditures"}</h2>
+                <button className="dash-link" onClick={() => setIsModalOpen(true)}>
+                    View All
+                </button>
+            </div>
 
-        {loading && <p className="muted">Loading…</p>}
-        {!loading && selectedActivity.length === 0 && (
-                        <p className="muted">No recent activity.</p>
-        )}
+            {loading && <p className="muted">Loading…</p>}
+            {!loading && selectedActivity.length === 0 && (
+                <p className="muted">No recent activity.</p>
+            )}
 
-        {!loading && selectedActivity.length > 0 && (
-            <ul className="activity-list">
-                {selectedActivity.map((row) => (
-                    <ActivityRow
-                        key={`${activityType}-${row.id}`}
-                        dot={activityType === "revenue" ? "green" : "red"}
-                        title={activityType === "revenue" ? row.source : `Expenditure: ${row.description}`}
-                        meta={`₱${Number(row.amount).toLocaleString()}`}
-                        time={timeAgo(row.created_at)}
-                    />
-                ))}
-            </ul>
-        )}
-                    
-        <div className="activity-toggle">
-            <button
-                type="button"
-                className={activityType === "revenue" ? "active" : ""}
-                onClick={() => setActivityType("revenue")}
-            >
-                Revenue
-            </button>
-            <button
-                type="button"
-                className={activityType === "expenditure" ? "active" : ""}
-                onClick={() => setActivityType("expenditure")}
-            >
-                Expenditures
-            </button>
+            {!loading && selectedActivity.length > 0 && (
+                <div className="recent-revenue-list">
+                    <ul className="activity-list">
+                        {selectedActivity.map((row) => (
+                            <ActivityRow
+                                key={`${activityType}-${row.id}`}
+                                dot={activityType === "revenue" ? "green" : "red"}
+                                title={activityType === "revenue" ? row.source : `Expenditure: ${row.description}`}
+                                meta={`₱${Number(row.amount).toLocaleString()}`}
+                                time={timeAgo(row.created_at)}
+                            />
+                        ))}
+                    </ul>
+                </div>
+            )}
+                        
+            <div className="activity-toggle">
+                <button
+                    type="button"
+                    className={activityType === "revenue" ? "active" : ""}
+                    onClick={() => setActivityType("revenue")}
+                >
+                    Revenue
+                </button>
+                <button
+                    type="button"
+                    className={activityType === "expenditure" ? "active" : ""}
+                    onClick={() => setActivityType("expenditure")}
+                >
+                    Expenditures
+                </button>
+            </div>
         </div>
-    </div>
+        
+        <RecentActivityModal 
+            isOpen={isModalOpen} 
+            onClose={() => setIsModalOpen(false)} 
+            activityType={activityType} 
+            selectedActivity={selectedActivity}
+            refresh={refresh}
+            loading={loading}
+        />
+    </>
     )
 }

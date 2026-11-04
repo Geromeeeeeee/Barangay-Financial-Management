@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import { useToast } from '../context/toast_context'
+import { useRole } from '../custom_hooks/use_role'
 import '../styles/revenue.css'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
@@ -14,6 +16,8 @@ export default function Revenue_Modal({ setIsModalOpen }) {
     const [recordType, setRecordType] = useState('annual_budget')
     const [categories, setCategories] = useState([])
     const [allocations, setAllocations] = useState([])
+    const { showToast } = useToast()
+    const { isSK } = useRole()
 
     const handleFileChange = (e) => {
         setFiles(Array.from(e.target.files))
@@ -80,12 +84,15 @@ export default function Revenue_Modal({ setIsModalOpen }) {
             });
 
             if (response?.data?.status === 'revenue_recorded') {
+                showToast("Revenue recorded successfully!", "success")
                 setIsModalOpen(false);
             } else {
                 setErrorMessage("Failed to record revenue.");
+                showToast("Failed to record revenue.", "error");
             }
         } catch (err) {
             setErrorMessage(err.response?.data?.message || "Server error. Please check your backend connection.");
+            showToast(err.response?.data?.message || "Server error.", "error");
         } finally {
             setLoading(false);
         }
@@ -200,36 +207,70 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                     {recordType === 'monthly_receipt' && (
                         <div className="revenue-allocation-section">
                             <div className="revenue-allocation-header">
-                                <span>Distribute received funds to budget items (optional)</span>
-                                <button type="button" className="btn-save" onClick={addAllocation}>+ Add budget item</button>
+                                <h4>Distribute received funds to budget items (optional)</h4>
+                                <button type="button" className="btn-add-allocation" onClick={addAllocation}>
+                                    + Add budget item
+                                </button>
                             </div>
+                            
                             {allocations.map((allocation, index) => (
-                                <div className="revenue-allocation-row" key={index}>
-                                    <select
-                                        value={allocation.item_type}
-                                        onChange={(event) => updateAllocation(index, 'item_type', event.target.value)}
-                                    >
-                                        <option value="existing">Existing budget item</option>
-                                        <option value="new">Create new budget item</option>
-                                    </select>
-                                    {allocation.item_type === 'existing' ? (
-                                        <select value={allocation.subcategory_id} onChange={(event) => updateAllocation(index, 'subcategory_id', event.target.value)} required>
-                                            <option value="">Select budget item</option>
-                                            {budgetItems.map((item) => (
-                                                <option key={item.id} value={item.id}>{item.category_name} — {item.name}</option>
-                                            ))}
+                                <div className="allocation-item" key={index}>
+                                    <label>
+                                        <span>Item type</span>
+                                        <select
+                                            value={allocation.item_type}
+                                            onChange={(event) => updateAllocation(index, 'item_type', event.target.value)}
+                                        >
+                                            <option value="existing">Existing budget item</option>
+                                            <option value="new">Create new budget item</option>
                                         </select>
+                                    </label>
+                                    
+                                    {allocation.item_type === 'existing' ? (
+                                        <label>
+                                            <span>Select budget item</span>
+                                            <select value={allocation.subcategory_id} onChange={(event) => updateAllocation(index, 'subcategory_id', event.target.value)} required>
+                                                <option value="">Select budget item</option>
+                                                {budgetItems
+                                                    .filter(item => !isSK || item.category_name === "SK")
+                                                    .map((item) => (
+                                                    <option key={item.id} value={item.id}>{item.category_name} — {item.name}</option>
+                                                ))}
+                                            </select>
+                                        </label>
                                     ) : (
                                         <>
-                                            <select value={allocation.category_id} onChange={(event) => updateAllocation(index, 'category_id', event.target.value)} required>
-                                                <option value="">Select parent category</option>
-                                                {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-                                            </select>
-                                            <input type="text" value={allocation.name} onChange={(event) => updateAllocation(index, 'name', event.target.value)} placeholder="New budget item name" required />
+                                            {!isSK && (
+                                                <label>
+                                                    <span>Parent category</span>
+                                                    <select value={allocation.category_id} onChange={(event) => updateAllocation(index, 'category_id', event.target.value)} required>
+                                                        <option value="">Select parent category</option>
+                                                        {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                                                    </select>
+                                                </label>
+                                            )}
+                                            {isSK && (
+                                                <input 
+                                                    type="hidden" 
+                                                    value={categories.find(c => c.name === "SK")?.id || ""} 
+                                                    onChange={() => {}} 
+                                                />
+                                            )}
+                                            <label>
+                                                <span>New item name</span>
+                                                <input type="text" value={allocation.name} onChange={(event) => updateAllocation(index, 'name', event.target.value)} placeholder="New budget item name" required />
+                                            </label>
                                         </>
                                     )}
-                                    <input type="number" min="0.01" step="0.01" value={allocation.amount} onChange={(event) => updateAllocation(index, 'amount', event.target.value)} placeholder="Amount" required />
-                                    <button type="button" onClick={() => removeAllocation(index)}>Remove</button>
+                                    
+                                    <label>
+                                        <span>Amount</span>
+                                        <input type="number" min="0.01" step="0.01" value={allocation.amount} onChange={(event) => updateAllocation(index, 'amount', event.target.value)} placeholder="Amount" required />
+                                    </label>
+                                    
+                                    <button type="button" className="btn-remove-allocation" onClick={() => removeAllocation(index)}>
+                                        Remove
+                                    </button>
                                 </div>
                             ))}
                         </div>

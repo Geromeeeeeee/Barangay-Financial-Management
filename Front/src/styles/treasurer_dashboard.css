@@ -1,4 +1,3 @@
-
 .treasurer-view .dash-hero {
     background:
         radial-gradient(circle at 90% 20%, rgba(250, 204, 21, 0.15) 0%, transparent 50%),
@@ -16,10 +15,11 @@
 .visibility{
     color: #022c22;
 }
+
 .activity-toggle {
     display: flex;
     gap: 6px;
-    margin-top: 12px;
+    margin-top: auto;
     padding-top: 10px;
     border-top: 1px solid #f1f5f9;
 }
@@ -40,4 +40,34 @@
     border-color: #2563eb;
     background: #eff6ff;
     color: #2563eb;
+}
+
+.activity-wrapper.dash-card {
+    display: flex;
+    flex-direction: column;
+    height: 220px;
+}
+
+.recent-revenue-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 6px;
+    margin-bottom: 8px;
+}
+
+.recent-revenue-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.recent-revenue-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.recent-revenue-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.recent-revenue-list::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }

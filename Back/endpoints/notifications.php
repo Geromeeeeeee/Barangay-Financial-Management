@@ -13,8 +13,8 @@ $userId = (int)$_SESSION['uid'];
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt = $pdo->prepare("
-            SELECT id, username, action, details, is_read, created_at
-            FROM audit_logs
+            SELECT id, title AS action, message AS details, is_read, created_at
+            FROM notifications
             WHERE user_id = :user_id
             ORDER BY created_at DESC
             LIMIT 50
@@ -38,7 +38,7 @@ try {
     }
 
     $stmt = $pdo->prepare("
-        UPDATE audit_logs
+        UPDATE notifications
         SET is_read = 1
         WHERE user_id = :user_id AND is_read = 0
     ");

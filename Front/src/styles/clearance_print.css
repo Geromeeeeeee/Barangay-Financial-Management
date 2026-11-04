@@ -1,0 +1,144 @@
+.print-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    overflow-y: auto;
+}
+
+.print-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.btn-print {
+    padding: 12px 24px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.btn-close {
+    padding: 12px 24px;
+    background: #ffffff;
+    color: #475569;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.clearance-paper {
+    background: white;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm;
+    font-family: 'Times New Roman', Times, serif;
+    color: black;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.clearance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.clearance-header .seal {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+}
+
+.clearance-header p {
+    margin: 2px 0;
+    font-size: 14px;
+}
+
+.clearance-header h2 {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 8px 0;
+}
+
+.seal-spacer {
+    width: 90px;
+}
+
+.clearance-title {
+    text-align: center;
+    margin: 40px 0;
+}
+
+.clearance-title h1 {
+    font-size: 28px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-decoration: underline;
+}
+
+.clearance-body {
+    font-size: 16px;
+    line-height: 1.8;
+    text-align: justify;
+}
+
+.clearance-body .indent {
+    text-indent: 50px;
+    margin-bottom: 20px;
+}
+
+.clearance-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 80px;
+    padding: 0 40px;
+}
+
+.signature-block {
+    text-align: center;
+}
+
+.signature-name {
+    font-weight: bold;
+    text-decoration: underline;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.signature-title {
+    font-size: 14px;
+    margin: 0;
+}
+
+.clearance-note {
+    margin-top: 60px;
+    font-size: 12px;
+    font-style: italic;
+}
+
+@media print {
+    @page { size: A4; margin: 0; }
+    body * { visibility: hidden; }
+    .clearance-paper, .clearance-paper * { visibility: visible; }
+    .clearance-paper {
+        position: absolute;
+        left: 0; top: 0;
+        box-shadow: none;
+        padding: 20mm;
+    }
+    .print-actions, .print-modal-overlay { background: transparent; }
+}

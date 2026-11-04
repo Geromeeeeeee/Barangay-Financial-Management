@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useToast } from "../context/toast_context";
 import "../styles/auth.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
@@ -9,6 +10,7 @@ export default function ResetPassword() {
     const [params] = useSearchParams();
     const navigate = useNavigate();
     const token = params.get("token");
+    const { showToast } = useToast();
 
     const [password, setPassword] = useState("");
     const [msg, setMsg] = useState("");
@@ -20,18 +22,20 @@ export default function ResetPassword() {
             const res = await axios.post(`${API_URL}reset_password.php`, { token, password });
             if (res.data.success) {
                 setMsg("Password reset successfully! You can now log in.");
-                setTimeout(() => navigate("/"), 3000); // Wait 3 seconds, then go to login
+                showToast("Password reset successfully!", "success");
+                setTimeout(() => navigate("/"), 3000);
             } else {
                 setError(res.data.message);
+                showToast(res.data.message || "Failed to reset password.", "error");
             }
         } catch {
             setError("Server error. Please try again.");
+            showToast("Server error. Please try again.", "error");
         }
     };
 
     return (
         <main className="auth-page">
-            {/* 👇 Added the reset-layout class here */}
             <div className="auth-shell reset-layout">
                 <div className="auth-form-side">
                     <div className="form-header">

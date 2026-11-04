@@ -60,7 +60,7 @@ export default function NotificationBell() {
                                     <div className="notif-content">
                                         <p className="notif-title">{n.action}</p>
                                         <p className="notif-desc">{n.details}</p>
-                                        <p className="notif-time">{n.username} · {formatTime(n.created_at)}</p>
+                                        <p className="notif-time">{formatTime(n.created_at)}</p>
                                     </div>
                                 </div>
                             ))
