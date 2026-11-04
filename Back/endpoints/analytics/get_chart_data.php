@@ -8,7 +8,8 @@ try {
     $stmtRev = $pdo->prepare("
         SELECT MONTH(created_at) as month, SUM(amount) as total 
         FROM revenues 
-        WHERE YEAR(created_at) = :year 
+        WHERE record_type = 'annual_budget'
+          AND YEAR(created_at) = :year
         GROUP BY MONTH(created_at)
     ");
     $stmtRev->execute(['year' => $year]);

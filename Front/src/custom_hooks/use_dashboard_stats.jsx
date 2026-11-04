@@ -21,6 +21,18 @@
             recentActivity: [],
             recentExpenditures: [],
             recentRequests: [],
+            fiscalYear: new Date().getFullYear(),
+            annualApprovedBudget: 0,
+            totalMonthlyReceipts: 0,
+            unreleasedAnnualBudget: 0,
+            releasePercentage: 0,
+            totalAnnualExpenditures: 0,
+            annualUtilizationPercentage: 0,
+            receivedButUnspent: 0,
+            unallocatedReceiptBalance: 0,
+            allocatedButUnspentBalance: 0,
+            monthlyLinkedExpenditures: 0,
+            legacyExpenditures: 0,
         });
         const [loading, setLoading] = useState(true);
         const [error, setError] = useState("");

@@ -27,6 +27,7 @@ $fund_allocation = $data['fund_allocation'] ?? '';
 $created_by      = $_SESSION['uid']         ?? null;
 $category_id     = $data['category_id']     ?? null;
 $subcategory_id  = $data['subcategory_id']  ?? null;
+$monthly_allocation_id = $data['monthly_allocation_id'] ?? null;
 $uploadedPaths = [];
 
 $expenditure = new Expenditure($pdo);
@@ -35,6 +36,9 @@ $audit = new Audit($pdo);
 try {
     if ($amount === null || trim((string)$amount) === '' || $description === null || trim((string)$description) === '') {
         throw new InvalidArgumentException('Amount and description are required.');
+    }
+    if ($monthly_allocation_id === null || $monthly_allocation_id === '') {
+        throw new InvalidArgumentException('A monthly allocation is required for new expenditures.');
     }
 
     $files = $_FILES['supporting_documents'] ?? null;
@@ -105,7 +109,8 @@ try {
         null,
         null,
         null,
-        $uploadedFilesData
+        $uploadedFilesData,
+        $monthly_allocation_id
     );
 
     $audit->log('Record Expenditure', "Recorded expenditure of ₱" . number_format((float)$amount, 2) . " for {$description}");

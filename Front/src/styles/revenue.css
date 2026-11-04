@@ -232,6 +232,7 @@
 
 /* ================= MODAL FORM ================= */
 .revenue-form {
+    margin-top: 14px;
     display: flex;
     flex-direction: column;
     gap: 14px;

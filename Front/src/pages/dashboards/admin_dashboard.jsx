@@ -9,6 +9,7 @@ import {
 import { useDashboardStats } from "../../custom_hooks/use_dashboard_stats";
 import RecentActivity from "../../components/recent_activity";
 import BudgetBalances from "../../components/budget_balances";
+import AnnualBudgetReleaseSection from "../../components/annual_budget_release_section";
 
 export default function AdminDashboard({ user }) {
     const { stats, loading, error, refresh } = useDashboardStats();
@@ -56,6 +57,8 @@ export default function AdminDashboard({ user }) {
             </section>
 
             <BudgetBalances isVisible={showBalances} setIsVisible={setShowBalances} loading={loading} stats={stats} getCategoryStatus={getCategoryStatus} hiddenCategories={hiddenCategories} toggleCategory={toggleCategory} formatPeso={formatPeso}/>
+
+            <AnnualBudgetReleaseSection stats={stats} loading={loading} formatPeso={formatPeso} isVisible={showBalances} />
 
             <DashboardChart />
 

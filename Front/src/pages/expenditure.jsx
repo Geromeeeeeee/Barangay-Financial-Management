@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import BackButton from "../components/back_button";
 import ExpenditureModal from "../components/expenditure_modal";
 import FileListModal from "../components/file_list_modal";
@@ -14,28 +15,69 @@ import "../styles/category_card.css"
 import Pagination from "../components/pagination";
 import "../styles/treasurer_dashboard.css";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
+
 export default function Expenditure() {
-    const [selectedCategory, setSelectedCategory] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
     const [viewFile, setViewFile] = useState(null);
     const [subcategoryForm, setSubcategoryForm] = useState(null);
-    const [majorCategoryForm, setMajorCategoryForm] = useState(false);
+    const [monthlyAllocations, setMonthlyAllocations] = useState([]);
+    const [allocationError, setAllocationError] = useState("");
     const [currentPage, setCurrentPage] = useState(1)
     const {filters, months, years, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { expenditures, loading, error, refetch } = useExpenditure(filterParams);
     const {totalPages, displayedRecords} = usePagination({currentPage, filters, records: expenditures})
     const {peso, date} = useFormat();
-    const { categories, income, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory, saveMajorCategory } = useBudgetCategories();
+    const { categories, income, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory } = useBudgetCategories();
     const {isTreasurer, isSK} = useRole();
     const canModify = isTreasurer;
     const displayedCategories = isSK ? categories.filter((category)=>category.name === "SK") : categories
+    const allocationsBySubcategory = monthlyAllocations.reduce((groups, allocation) => {
+        const key = String(allocation.subcategory_id);
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(allocation);
+        return groups;
+    }, {});
+    const categoriesWithMonthlyAllocations = displayedCategories
+    .map((category) => ({
+        ...category,
+        subcategories: category.subcategories
+            .filter((subcategory) =>
+                (allocationsBySubcategory[String(subcategory.id)] || []).length > 0
+            )
+            .map((subcategory) => ({ ...subcategory, category_name: category.name }))
+    }))
+    .filter((category) => category.subcategories.length > 0);
+
+    const loadMonthlyAllocations = () => axios.get(`${API_URL}budget/allocations.php`, {
+        withCredentials: true
+    }).then((response) => {
+        setMonthlyAllocations(response.data.history || []);
+        setAllocationError("");
+    }).catch((requestError) => {
+        setAllocationError(requestError.response?.data?.message || "Failed to load monthly allocations.");
+    });
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (isTreasurer) loadMonthlyAllocations();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [isTreasurer]);
 
     const handleCloseModal = (open) => {
         setIsModalOpen(open);
         if (!open) {
-            setSelectedCategory(null);
+            setSelectedItem(null);
             refetch();
+            if (isTreasurer) loadMonthlyAllocations();
         }
+    };
+
+    const openExpenditureModal = (subcategory, allocations) => {
+        setSelectedItem({ ...subcategory, allocations });
+        setIsModalOpen(true);
     };
 
     return (
@@ -53,18 +95,14 @@ export default function Expenditure() {
 
             {error && <div className="expenditure-error">{error}</div>}
             {categoriesError && <div className="expenditure-error">{categoriesError}</div>}
+            {allocationError && <div className="expenditure-error">{allocationError}</div>}
             {!categoriesLoading && categories.length > 0 && (
                 <div className="expenditure-category-manager">
-                    {canModify && (
-                        <button type="button" className="expenditure-open-btn" onClick={() => setMajorCategoryForm(true)}>
-                            + Add Major Category
-                        </button>
-                    )}
                     <p className="expenditure-allocation-summary">
                         Total annual income: {peso(income.total_annual_income)} · Allocated: {peso(categories.reduce((total, category) => total + Number(category.allocated_amount || 0), 0))}
                     </p>
                     <div className="expenditure-categories">
-                    {displayedCategories.map((category) => (
+                    {categoriesWithMonthlyAllocations.map((category) => (
                         <section className="expenditure-category" key={category.id}>
                             <div className="expenditure-category-head">
 
@@ -84,28 +122,54 @@ export default function Expenditure() {
                                     </div>
 
                                 </div>
-                                {canModify && (
-                                    <button type="button" className="expenditure-open-btn" onClick={() => { setSelectedCategory(category); setIsModalOpen(true); }}>
-                                        Record Expenditure
-                                    </button>
-                                )}
                             </div>
                             <div className="subcategory-list">
-                                {category.subcategories.map((subcategory) => (
-                                    <div className="subcategory-row" key={subcategory.id}>
-                                        <span>{subcategory.name}</span>
-                                        <span>{peso(subcategory.balance)} remaining</span>
-                                        {canModify && (
-                                            <>
-                                                <button type="button" onClick={() => setSubcategoryForm(subcategory)}>Edit</button>
-                                                <button type="button" onClick={() => deleteSubcategory(subcategory.id).catch((e) => window.alert(e.response?.data?.message || e.message))}>Delete</button>
-                                            </>
-                                        )}
-                                    </div>
-                                ))}
+                                {category.subcategories.map((subcategory) => {
+                                        const allocations = allocationsBySubcategory[String(subcategory.id)] || [];
+                                        const hasAvailableAllocation = allocations.some((allocation) => Number(allocation.remaining_amount) > 0);
+                                        return (
+                                            <div className="subcategory-row" key={subcategory.id}>
+                                                <div className="subcategory-details">
+                                                    <div className="subcategory-title">
+                                                        <span>{subcategory.name} {!subcategory.is_active && <em>(Archived)</em>}</span>
+                                                        {canModify && subcategory.is_active && (
+                                                            <button type="button" onClick={() => openExpenditureModal(subcategory, allocations)} disabled={!hasAvailableAllocation}>
+                                                                Record Expenditure
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <details className="allocation-history">
+                                                        <summary>View individual monthly allocations ({allocations.length})</summary>
+                                                        <div className="allocation-history-list">
+                                                            {allocations.map((allocation) => (
+                                                                <div className="allocation-history-row" key={allocation.id}>
+                                                                    <span>
+                                                                        {allocation.receipt_source || "Monthly receipt"} ({allocation.receipt_date || "Date unavailable"})
+                                                                        <small>Allocated {allocation.allocation_date}</small>
+                                                                    </span>
+                                                                    <span>{peso(allocation.amount)} allocated</span>
+                                                                    <span>{peso(allocation.expenditure_amount)} spent</span>
+                                                                    <span>{peso(allocation.remaining_amount)} remaining</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </details>
+                                                </div>
+                                                {canModify && subcategory.is_active && (
+                                                    <div className="subcategory-actions">
+                                                        <button type="button" onClick={() => setSubcategoryForm(subcategory)}>Edit</button>
+                                                        <button type="button" onClick={() => deleteSubcategory(subcategory.id).catch((e) => window.alert(e.response?.data?.message || e.message))}>Archive</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                             </div>
-                            {canModify && (
-                                <button type="button" onClick={() => setSubcategoryForm({ category_id: category.id, name: "", allocated_amount: "" })}>+ Add subcategory</button>
+                            {canModify && category.name.toUpperCase() === "MOOE" && (
+                                <button type="button" onClick={() => setSubcategoryForm({ category_id: category.id, category_name: category.name, name: "", allocated_amount: "" })}>+ Add MOOE item</button>
+                            )}
+                            {canModify && category.name.toUpperCase() !== "MOOE" && (
+                                <button type="button" onClick={() => setSubcategoryForm({ category_id: category.id, category_name: category.name, name: "", allocated_amount: "" })}>+ Add subcategory</button>
                             )}
                         </section>
                     ))
@@ -163,47 +227,21 @@ export default function Expenditure() {
                     </>
                 )}
             </div>
-            {isModalOpen && canModify && <ExpenditureModal setIsModalOpen={handleCloseModal} categories={categories} selectedCategory={selectedCategory} />}
+            {isModalOpen && canModify && <ExpenditureModal
+                setIsModalOpen={handleCloseModal}
+                monthlyAllocations={selectedItem?.allocations || []}
+            />}
             {subcategoryForm && canModify && <SubcategoryForm subcategory={subcategoryForm} onClose={() => setSubcategoryForm(null)} onSave={saveSubcategory} />}
-            {majorCategoryForm && canModify && <MajorCategoryForm onClose={() => setMajorCategoryForm(false)} onSave={saveMajorCategory} />}
             {viewFile && <FileListModal expenditure={viewFile} onClose={() => setViewFile(null)} />}
         </div>
     );
-}
-
-function MajorCategoryForm({ onClose, onSave }) {
-    const [name, setName] = useState("");
-    const [amount, setAmount] = useState("");
-    const [error, setError] = useState("");
-
-    const submit = async (event) => {
-        event.preventDefault();
-        try {
-            await onSave({ name, allocated_amount: Number(amount) });
-            onClose();
-        } catch (requestError) {
-            setError(requestError.response?.data?.message || requestError.message);
-        }
-    };
-
-    return <div className="expenditure-modal-background" onClick={onClose}>
-        <form className="expenditure-modal expenditure-form" onSubmit={submit} onClick={(event) => event.stopPropagation()}>
-            <h2>Add Major Category</h2>
-            {error && <div className="expenditure-modal-error">{error}</div>}
-            <label><span>Category name</span><input value={name} onChange={(event) => setName(event.target.value)} required /></label>
-            <label><span>Allocation amount (PHP)</span><input type="number" min="0" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} required /></label>
-            <div className="expenditure-modal-actions">
-                <button type="button" className="btn-cancel" onClick={onClose}>Cancel</button>
-                <button type="submit" className="btn-save">Save</button>
-            </div>
-        </form>
-    </div>;
 }
 
 function SubcategoryForm({ subcategory, onClose, onSave }) {
     const [name, setName] = useState(subcategory.name || "");
     const [amount, setAmount] = useState(subcategory.allocated_amount || "");
     const [error, setError] = useState("");
+    const isMooe = (subcategory.category_name || "").toUpperCase() === "MOOE";
     const submit = async (event) => {
         event.preventDefault();
         try {
@@ -215,7 +253,9 @@ function SubcategoryForm({ subcategory, onClose, onSave }) {
         <h2>{subcategory.id ? "Edit subcategory" : "Add subcategory"}</h2>
         {error && <div className="expenditure-modal-error">{error}</div>}
         <label><span>Name</span><input value={name} onChange={(event) => setName(event.target.value)} required /></label>
-        <label><span>Allocated amount</span><input type="number" min="0.01" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} required /></label>
+        {isMooe
+            ? <p className="muted">Annual allocation is calculated equally across active MOOE items.</p>
+            : <label><span>Annual allocation (optional)</span><input type="number" min="0" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} /></label>}
         <div className="expenditure-modal-actions"><button type="button" className="btn-cancel" onClick={onClose}>Cancel</button><button type="submit" className="btn-save">Save</button></div>
     </form></div>;
 }

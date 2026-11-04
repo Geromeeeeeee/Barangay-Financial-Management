@@ -9,6 +9,7 @@ import {
 import { useTreasurerStats } from "../../custom_hooks/use_treasurer_stats";
 import RecentActivity from "../../components/recent_activity";
 import BudgetBalances from "../../components/budget_balances";
+import AnnualBudgetReleaseSection from "../../components/annual_budget_release_section";
 
 export default function TreasurerDashboard({ user }) {
     const { stats, loading, error, refresh, isVisible, setIsVisible } = useTreasurerStats();
@@ -80,6 +81,8 @@ export default function TreasurerDashboard({ user }) {
             </section>
 
             <BudgetBalances isVisible={isVisible} setIsVisible={setIsVisible} loading={loading} stats={stats} getCategoryStatus={getCategoryStatus} hiddenCategories={hiddenCategories} toggleCategory={toggleCategory} formatPeso={formatPeso}/>
+
+            <AnnualBudgetReleaseSection stats={stats} loading={loading} formatPeso={formatPeso} isVisible={isVisible} />
 
             <DashboardChart />
         </div>

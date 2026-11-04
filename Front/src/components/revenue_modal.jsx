@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import axios from 'axios'
 import '../styles/revenue.css'
 
@@ -11,6 +11,9 @@ export default function Revenue_Modal({ setIsModalOpen }) {
     const [amount, setAmount] = useState('')
     const [particular, setParticular] = useState('NTA')
     const [customSource, setCustomSource] = useState('')
+    const [recordType, setRecordType] = useState('annual_budget')
+    const [categories, setCategories] = useState([])
+    const [allocations, setAllocations] = useState([])
 
     const handleFileChange = (e) => {
         setFiles(Array.from(e.target.files))
@@ -20,12 +23,55 @@ export default function Revenue_Modal({ setIsModalOpen }) {
         setFiles(files.filter((_, index) => index !== indexToRemove))
     }
 
+    const handleRecordTypeChange = (event) => {
+        const nextRecordType = event.target.value
+        setRecordType(nextRecordType)
+        if (nextRecordType !== 'monthly_receipt') setAllocations([])
+    }
+
+    useEffect(() => {
+        if (recordType !== 'monthly_receipt') {
+            return
+        }
+        const timer = window.setTimeout(() => {
+            axios.get(`${API_URL}budget/categories.php`, { withCredentials: true })
+                .then((response) => setCategories(response.data.data || []))
+                .catch(() => setErrorMessage('Unable to load budget items for this receipt.'))
+        }, 0)
+        return () => window.clearTimeout(timer)
+    }, [recordType])
+
+    const budgetItems = categories.filter((category) => category.subcategories?.some((subcategory) => subcategory.is_active !== false)).flatMap((category) => (
+        (category.subcategories || []).map((subcategory) => ({
+            ...subcategory,
+            category_name: category.name,
+        })).filter((subcategory) => subcategory.is_active !== false)
+    ))
+
+    const addAllocation = () => {
+        setAllocations([...allocations, { item_type: 'existing', subcategory_id: '', category_id: '', name: '', amount: '' }])
+    }
+
+    const updateAllocation = (index, field, value) => {
+        setAllocations(allocations.map((allocation, allocationIndex) => (
+            allocationIndex === index ? { ...allocation, [field]: value } : allocation
+        )))
+    }
+
+    const removeAllocation = (index) => {
+        setAllocations(allocations.filter((_, allocationIndex) => allocationIndex !== index))
+    }
+
     const handleSubmit = async (event) => {
         event.preventDefault()
         setLoading(true)
         setErrorMessage('')
 
         const formData = new FormData(event.target)
+        formData.set('record_type', recordType)
+        if (recordType === 'monthly_receipt') {
+            formData.set('allocations', JSON.stringify(allocations))
+        }
 
         try {
             const response = await axios.post(`${API_URL}revenue/add_revenue.php`, formData, {
@@ -59,18 +105,38 @@ export default function Revenue_Modal({ setIsModalOpen }) {
 
                 <form onSubmit={handleSubmit} className="revenue-form">
                     <label>
-                        <span>Particular/Source</span>
-                        <select
-                            name="particular"
-                            value={particular}
-                            onChange={(event) => setParticular(event.target.value)}
-                        >
-                            <option value="NTA">NTA</option>
-                            <option value="Local Income">Local Income</option>
-                            <option value="Others">Others</option>
+                        <span>Record type</span>
+                        <select value={recordType} onChange={handleRecordTypeChange}>
+                            <option value="monthly_receipt">Monthly fund receipt</option>
+                            <option value="annual_budget">Annual approved budget</option>
                         </select>
                     </label>
-                    {particular === 'Others' && (
+                    {recordType === 'monthly_receipt' && (
+                        <label>
+                            <span>Actual receipt date</span>
+                            <input name="receipt_date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required />
+                        </label>
+                    )}
+                    {recordType === 'annual_budget' && (
+                        <label>
+                            <span>Particular/Source</span>
+                            <select
+                                name="particular"
+                                value={particular}
+                                onChange={(event) => setParticular(event.target.value)}
+                            >
+                                <option value="NTA">NTA</option>
+                                <option value="Local Income">Local Income</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </label>
+                    )}
+                    {recordType === 'monthly_receipt' ? (
+                        <label>
+                            <span>Description/source</span>
+                            <input name="source" type="text" placeholder="e.g., January fund release" required />
+                        </label>
+                    ) : particular === 'Others' && (
                         <label>
                             <span>Specific Revenue Particular/Source</span>
                             <input
@@ -98,7 +164,7 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                     </label>
 
                     <label>
-                        <span>Supporting Documents (Select multiple)</span>
+                        <span>{recordType === 'monthly_receipt' ? 'Receipt / Proof of Fund Release (required)' : 'Supporting Documents (Select multiple)'}</span>
                         <input 
                             type="file" 
                             name="attachments[]" 
@@ -130,6 +196,44 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                             </div>
                         )}
                     </label>
+
+                    {recordType === 'monthly_receipt' && (
+                        <div className="revenue-allocation-section">
+                            <div className="revenue-allocation-header">
+                                <span>Distribute received funds to budget items (optional)</span>
+                                <button type="button" className="btn-save" onClick={addAllocation}>+ Add budget item</button>
+                            </div>
+                            {allocations.map((allocation, index) => (
+                                <div className="revenue-allocation-row" key={index}>
+                                    <select
+                                        value={allocation.item_type}
+                                        onChange={(event) => updateAllocation(index, 'item_type', event.target.value)}
+                                    >
+                                        <option value="existing">Existing budget item</option>
+                                        <option value="new">Create new budget item</option>
+                                    </select>
+                                    {allocation.item_type === 'existing' ? (
+                                        <select value={allocation.subcategory_id} onChange={(event) => updateAllocation(index, 'subcategory_id', event.target.value)} required>
+                                            <option value="">Select budget item</option>
+                                            {budgetItems.map((item) => (
+                                                <option key={item.id} value={item.id}>{item.category_name} — {item.name}</option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <>
+                                            <select value={allocation.category_id} onChange={(event) => updateAllocation(index, 'category_id', event.target.value)} required>
+                                                <option value="">Select parent category</option>
+                                                {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                                            </select>
+                                            <input type="text" value={allocation.name} onChange={(event) => updateAllocation(index, 'name', event.target.value)} placeholder="New budget item name" required />
+                                        </>
+                                    )}
+                                    <input type="number" min="0.01" step="0.01" value={allocation.amount} onChange={(event) => updateAllocation(index, 'amount', event.target.value)} placeholder="Amount" required />
+                                    <button type="button" onClick={() => removeAllocation(index)}>Remove</button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     <div className="revenue-modal-actions">
                         <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>

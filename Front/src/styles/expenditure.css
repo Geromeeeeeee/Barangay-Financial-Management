@@ -170,11 +170,10 @@
     cursor: not-allowed;
     opacity: .5;
 }
-.expenditure-categories { 
+.expenditure-categories {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 8px; 
+    gap: 8px;
 }
 .expenditure-category-manager { display: grid; gap: 12px; margin-bottom: 20px; }
 .expenditure-allocation-summary { margin: 0; color: #64748b; font-size: .82rem; }
@@ -192,7 +191,37 @@
 .expenditure-category h2 { margin: 0; color: #0f172a; font-size: 1.05rem; }
 .expenditure-category p { margin: 5px 0 0; color: #64748b; font-size: .82rem; }
 .subcategory-list { display: grid; gap: 8px; margin: 16px 0 12px; }
-.subcategory-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; align-items: center; padding: 9px 10px; background: #f8fafc; border-radius: 8px; color: #334155; font-size: .84rem; }
+.subcategory-row { 
+    display: flex; 
+    flex-direction: column;
+    gap: 14px; 
+    align-items: flex-start; 
+    padding: 12px 10px; 
+    background: #fff; 
+    border-radius: 8px; 
+    color: #334155; 
+    font-size: .84rem; 
+}
+.subcategory-title { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    gap: 10px; 
+    font-weight: 600; 
+    width: full;
+}
+.subcategory-title button, .subcategory-actions button { border: 0; background: transparent; color: #1d4ed8; cursor: pointer; font-size: .78rem; }
+.subcategory-title button:disabled { color: #94a3b8; cursor: not-allowed; }
+.subcategory-annual-figures, .subcategory-monthly-figures { margin-top: 4px; color: #64748b; font-size: .76rem; font-weight: 400; }
+.subcategory-monthly-figures { 
+    color: #1e40af; 
+}
+.subcategory-actions { display: flex; gap: 8px; }
+.allocation-history { margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+.allocation-history summary { color: #1d4ed8; cursor: pointer; font-size: .78rem; font-weight: 600; }
+.allocation-history-list { display: grid; gap: 6px; margin-top: 8px; }
+.allocation-history-row { display: grid; grid-template-columns: minmax(180px, 1fr) repeat(3, auto); gap: 10px; align-items: center; padding: 8px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; font-size: .76rem; }
+.allocation-history-row small { display: block; color: #64748b; margin-top: 3px; }
 .subcategory-row button, .expenditure-category > button { border: 0; background: transparent; color: #1d4ed8; cursor: pointer; font-size: .78rem; }
 .expenditure-modal-background { 
     position: fixed; 
@@ -264,6 +293,12 @@
     justify-content: flex-end; 
     gap: 10px; 
     margin-top: 22px; 
+}
+@media (max-width: 720px) {
+    .subcategory-row { flex-direction: column; }
+    .subcategory-title { align-items: flex-start; flex-direction: column; }
+    .subcategory-actions { align-self: flex-end; }
+    .allocation-history-row { grid-template-columns: 1fr 1fr; }
 }
 .expenditure-form input[type="number"]::-webkit-inner-spin-button,
 .expenditure-form input[type="number"]::-webkit-outer-spin-button {

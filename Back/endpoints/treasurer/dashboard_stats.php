@@ -9,12 +9,14 @@ Budget::refreshAllocations($pdo);
 // ============ TOTAL REVENUE ============
 $totalRevenue = $pdo->query("
     SELECT COALESCE(SUM(amount), 0) FROM revenues
+    WHERE record_type = 'annual_budget'
 ")->fetchColumn();
 
 // ============ REVENUE THIS MONTH ============
 $revenueThisMonth = $pdo->query("
     SELECT COALESCE(SUM(amount), 0) FROM revenues
-    WHERE MONTH(created_at) = MONTH(NOW())
+    WHERE record_type = 'annual_budget'
+      AND MONTH(created_at) = MONTH(NOW())
       AND YEAR(created_at)  = YEAR(NOW())
 ")->fetchColumn();
 
@@ -32,10 +34,7 @@ $recordsThisMonth = $pdo->query("
 
 $categoryBalances = $pdo->query("
     SELECT id, name, allocated_amount, spent_amount,
-           allocated_amount - spent_amount - COALESCE((
-               SELECT SUM(s.allocated_amount) FROM budget_subcategories s
-               WHERE s.category_id = budget_categories.id
-           ), 0) AS balance, percentage, is_custom
+           allocated_amount - spent_amount AS balance, percentage, is_custom
     FROM budget_categories ORDER BY id
 ")->fetchAll(PDO::FETCH_ASSOC);
 $subcategories = $pdo->query("
@@ -67,6 +66,49 @@ unset($category);
 $income = Budget::income($pdo);
 $totalAllocated = $pdo->query("SELECT COALESCE(SUM(allocated_amount), 0) FROM budget_categories")->fetchColumn();
 $totalExpenditures = $pdo->query("SELECT COALESCE(SUM(amount), 0) FROM expenditures")->fetchColumn();
+$fiscalYear = (int)($_GET['year'] ?? date('Y'));
+$annualApprovedBudget = (float)$income['total_annual_income'];
+$monthlyReceipts = $pdo->prepare("
+    SELECT COALESCE(SUM(amount), 0) FROM revenues
+    WHERE record_type = 'monthly_receipt' AND YEAR(receipt_date) = :year
+");
+$monthlyReceipts->execute(['year' => $fiscalYear]);
+$totalMonthlyReceipts = (float)$monthlyReceipts->fetchColumn();
+$annualExpenditures = $pdo->prepare("
+    SELECT COALESCE(SUM(amount), 0) FROM expenditures
+    WHERE YEAR(created_at) = :year
+");
+$annualExpenditures->execute(['year' => $fiscalYear]);
+$totalAnnualExpenditures = (float)$annualExpenditures->fetchColumn();
+$linkedExpenditures = $pdo->prepare("
+    SELECT COALESCE(SUM(amount), 0) FROM expenditures
+    WHERE monthly_allocation_id IS NOT NULL AND YEAR(created_at) = :year
+");
+$linkedExpenditures->execute(['year' => $fiscalYear]);
+$monthlyLinkedExpenditures = (float)$linkedExpenditures->fetchColumn();
+$legacyExpenditures = $totalAnnualExpenditures - $monthlyLinkedExpenditures;
+$unallocated = $pdo->prepare("
+    SELECT COALESCE(SUM(r.amount - COALESCE((
+        SELECT SUM(a.amount) FROM monthly_subcategory_allocations a WHERE a.revenue_id = r.id
+    ), 0)), 0)
+    FROM revenues r
+    WHERE r.record_type = 'monthly_receipt' AND YEAR(r.receipt_date) = :year
+");
+$unallocated->execute(['year' => $fiscalYear]);
+$unallocatedReceiptBalance = (float)$unallocated->fetchColumn();
+$allocatedUnspent = $pdo->prepare("
+    SELECT COALESCE(SUM(a.amount - COALESCE((
+        SELECT SUM(e.amount) FROM expenditures e WHERE e.monthly_allocation_id = a.id
+    ), 0)), 0)
+    FROM monthly_subcategory_allocations a
+    JOIN revenues r ON r.id = a.revenue_id
+    WHERE r.record_type = 'monthly_receipt' AND YEAR(r.receipt_date) = :year
+");
+$allocatedUnspent->execute(['year' => $fiscalYear]);
+$allocatedButUnspentBalance = (float)$allocatedUnspent->fetchColumn();
+$unreleasedAnnualBudgetRaw = $annualApprovedBudget - $totalMonthlyReceipts;
+$releasePercentage = $annualApprovedBudget > 0 ? ($totalMonthlyReceipts / $annualApprovedBudget) * 100 : 0;
+$annualUtilizationPercentage = $annualApprovedBudget > 0 ? ($totalAnnualExpenditures / $annualApprovedBudget) * 100 : 0;
 $totalRemaining = array_reduce($categoryBalances, static function ($total, $category) {
     return $total + (float)$category['balance'];
 }, 0.0);
@@ -98,6 +140,19 @@ echo json_encode([
     'revenueThisMonth'=> (float)$revenueThisMonth,
     'totalRecords'    => (int)$totalRecords,
     'recordsThisMonth'=> (int)$recordsThisMonth,
+    'fiscalYear' => $fiscalYear,
+    'annualApprovedBudget' => $annualApprovedBudget,
+    'totalMonthlyReceipts' => $totalMonthlyReceipts,
+    'unreleasedAnnualBudget' => max(0, $unreleasedAnnualBudgetRaw),
+    'unreleasedAnnualBudgetRaw' => $unreleasedAnnualBudgetRaw,
+    'releasePercentage' => round($releasePercentage, 2),
+    'totalAnnualExpenditures' => $totalAnnualExpenditures,
+    'annualUtilizationPercentage' => round($annualUtilizationPercentage, 2),
+    'receivedButUnspent' => $unallocatedReceiptBalance + $allocatedButUnspentBalance,
+    'unallocatedReceiptBalance' => $unallocatedReceiptBalance,
+    'allocatedButUnspentBalance' => $allocatedButUnspentBalance,
+    'monthlyLinkedExpenditures' => $monthlyLinkedExpenditures,
+    'legacyExpenditures' => $legacyExpenditures,
     'categoryBalances' => $categoryBalances,
     'recentActivity'  => $recentActivity,
     'recentExpenditures' => $recentExpenditures,

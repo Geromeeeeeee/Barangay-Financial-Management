@@ -9,10 +9,12 @@ class Revenue {
         $this->database = $pdo;
     }
 
-    public function record_revenue($nta, $local_income, $source, $created_by = null, $request_key = null, $attachment_path = null, $attachment_name = null, $attachment_mime = null, $attachment_size = null, $amount = null, $particular = 'Others')
+    public function record_revenue($nta, $local_income, $source, $created_by = null, $request_key = null, $attachment_path = null, $attachment_name = null, $attachment_mime = null, $attachment_size = null, $amount = null, $particular = 'Others', $record_type = 'annual_budget', $receipt_date = null, $manageTransaction = true)
     {
         try {
-            $this->database->beginTransaction();
+            if ($manageTransaction) {
+                $this->database->beginTransaction();
+            }
             $amount = $amount === null
                 ? round((float)$nta + (float)$local_income, 2)
                 : round((float)$amount, 2);
@@ -22,14 +24,16 @@ class Revenue {
                 $existing->execute(['request_key' => $request_key]);
                 $existing_id = $existing->fetchColumn();
                 if ($existing_id) {
-                    $this->database->commit();
+                    if ($manageTransaction) {
+                        $this->database->commit();
+                    }
                     return $existing_id; 
                 }
             }
 
             $stmtInsertRevenue = $this->database->prepare('
-                INSERT INTO revenues (amount, nta, local_income, source, particular, created_by, request_key, attachment_path, attachment_name, attachment_mime, attachment_size)
-                VALUES (:amount, :nta, :local_income, :source, :particular, :created_by, :request_key, :attachment_path, :attachment_name, :attachment_mime, :attachment_size)
+                INSERT INTO revenues (amount, nta, local_income, source, particular, created_by, request_key, attachment_path, attachment_name, attachment_mime, attachment_size, record_type, receipt_date)
+                VALUES (:amount, :nta, :local_income, :source, :particular, :created_by, :request_key, :attachment_path, :attachment_name, :attachment_mime, :attachment_size, :record_type, :receipt_date)
             ');
             $stmtInsertRevenue->execute([
                 'amount'          => $amount,
@@ -43,17 +47,23 @@ class Revenue {
                 'attachment_name' => $attachment_name,
                 'attachment_mime' => $attachment_mime,
                 'attachment_size' => $attachment_size,
+                'record_type'     => $record_type,
+                'receipt_date'    => $receipt_date,
             ]);
 
             $newRevenueId = $this->database->lastInsertId();
 
-            Budget::refreshAllocations($this->database);
-            $this->database->commit();
+            if ($record_type === 'annual_budget') {
+                Budget::refreshAllocations($this->database);
+            }
+            if ($manageTransaction) {
+                $this->database->commit();
+            }
             
             return $newRevenueId; 
 
         } catch (Exception $e) {
-            if ($this->database->inTransaction()) {
+            if ($manageTransaction && $this->database->inTransaction()) {
                 $this->database->rollBack();
             }
             throw $e;
@@ -65,11 +75,11 @@ class Revenue {
         $parameters = [];
 
         if (isset($filters['month']) && $filters['month'] !== null && $filters['month'] !== '') {
-            $conditions[] = 'MONTH(r.created_at) = :month';
+            $conditions[] = "MONTH(CASE WHEN r.record_type = 'monthly_receipt' THEN r.receipt_date ELSE r.created_at END) = :month";
             $parameters['month'] = $filters['month'];
         }
         if (isset($filters['year']) && $filters['year'] !== null && $filters['year'] !== '') {
-            $conditions[] = 'YEAR(r.created_at) = :year';
+            $conditions[] = "YEAR(CASE WHEN r.record_type = 'monthly_receipt' THEN r.receipt_date ELSE r.created_at END) = :year";
             $parameters['year'] = $filters['year'];
         }
         
