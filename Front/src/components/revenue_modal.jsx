@@ -203,6 +203,7 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                             </div>
                         )}
                     </label>
+                    
 
                     {recordType === 'monthly_receipt' && (
                         <div className="revenue-allocation-section">

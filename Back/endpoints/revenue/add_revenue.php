@@ -151,6 +151,7 @@ try {
     }
     
     $isTreasurer = strtolower((string)($_SESSION['role'] ?? '')) === 'treasurer';
+    $isSK = strtolower((string)($_SESSION['role'] ?? '')) === 'sk_chairman';
     
     $files = $_FILES['attachments'] ?? null;
     if (($isTreasurer || $record_type === 'monthly_receipt') && (!$files || $files['error'][0] === UPLOAD_ERR_NO_FILE)) {
@@ -161,7 +162,7 @@ try {
     $uploadedPaths = [];
 
     if ($files && $files['error'][0] !== UPLOAD_ERR_NO_FILE) {
-        if (!$isTreasurer) {
+        if (!($isTreasurer || $isSK)) {
             throw new InvalidArgumentException('Only treasurers can upload supporting documents.');
         }
 

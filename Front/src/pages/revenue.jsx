@@ -21,7 +21,7 @@ export default function Revenue () {
     const [currentPage, setCurrentPage] = useState(1)
     const {filters, months, years, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { revenues, loading, error, refetch } = useRevenue(filterParams)
-    const {totalPages, displayedRecords} = usePagination({currentPage, filters, records: revenues})
+    usePagination({currentPage, filters, records: revenues})
     const { isTreasurer, isStaff, isSK } = useRole()
     const {peso, date} = useFormat()
     const { showToast } = useToast()

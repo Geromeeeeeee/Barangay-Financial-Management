@@ -31,7 +31,10 @@ export default function Expenditure() {
     const {filters, months, years, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { expenditures, loading, error, refetch } = useExpenditure(filterParams);
     const {peso, date} = useFormat();
+    {/**
     const { categories, income, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory } = useBudgetCategories();
+    */}
+    const { categories, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory } = useBudgetCategories();
     const {isTreasurer, isSK} = useRole();
     const canModify = isTreasurer || isSK;
     const displayedCategories = isSK ? categories.filter((category)=>category.name === "SK") : categories
@@ -114,6 +117,7 @@ export default function Expenditure() {
             {allocationError && <div className="expenditure-error">{allocationError}</div>}
             {!categoriesLoading && categories.length > 0 && (
                 <div className="expenditure-category-manager">
+                    {/**
                     <p className="expenditure-allocation-summary">
                         {isSK ? (
                             <>Allocated SK Budget: {peso(displayedCategories.reduce((total, category) => total + Number(category.allocated_amount || 0), 0))}</>
@@ -121,6 +125,7 @@ export default function Expenditure() {
                             <>Total annual income: {peso(income.total_annual_income)} · Allocated: {peso(categories.reduce((total, category) => total + Number(category.allocated_amount || 0), 0))}</>
                         )}
                     </p>
+                    */}
                     <div className="expenditure-categories">
                     {categoriesWithMonthlyAllocations.map((category) => (
                         <section className="expenditure-category" key={category.id}>
@@ -183,12 +188,15 @@ export default function Expenditure() {
                                         );
                                     })}
                             </div>
+                            {/** Comment out. Ibabalik if may problems. */}
+                            {/** 
                             {canModify && category.name.toUpperCase() === "MOOE" && (
                                 <button type="button" onClick={() => setSubcategoryForm({ category_id: category.id, category_name: category.name, name: "", allocated_amount: "" })}>+ Add MOOE item</button>
                             )}
                             {canModify && category.name.toUpperCase() !== "MOOE" && (
                                 <button type="button" onClick={() => setSubcategoryForm({ category_id: category.id, category_name: category.name, name: "", allocated_amount: "" })}>+ Add subcategory</button>
                             )}
+                            */}
                         </section>
                     ))}
                     </div>

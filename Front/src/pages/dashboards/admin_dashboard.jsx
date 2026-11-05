@@ -2,9 +2,14 @@ import { useState } from "react";
 import "../../styles/dashboard.css";
 import "../../styles/admin_dashboard.css";
 import DashboardChart from "../../components/dashboard_chart";
+{/** 
 import {
     IconUsers, IconTicket,
     StatCard, QuickAction, DashboardHero,
+} from "../../components/dashboard_widgets";
+*/}
+import {
+    StatCard, DashboardHero,
 } from "../../components/dashboard_widgets";
 import { useDashboardStats } from "../../custom_hooks/use_dashboard_stats";
 import RecentActivity from "../../components/recent_activity";
@@ -62,6 +67,7 @@ export default function AdminDashboard({ user }) {
 
             <DashboardChart />
 
+            {/**
             <section className="dash-card" style={{ marginTop: '20px' }}>
                 <div className="dash-card-head">
                     <h2>Quick Actions</h2>
@@ -75,6 +81,7 @@ export default function AdminDashboard({ user }) {
                     so numbers stay current as the treasurer adds records.
                 </div>
             </section>
+            */}
         </div>
     );
 }

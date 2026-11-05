@@ -5,7 +5,7 @@ export default function BackButton({ fallbackPath = "/Dashboard" }) {
 
     const handleBack = () => {
         if (window.history.state && window.history.state.idx > 0) {
-            navigate(-1); 
+            navigate("/Dashboard"); 
         } else {
             navigate(fallbackPath); 
         }
