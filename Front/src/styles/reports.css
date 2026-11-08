@@ -12,6 +12,10 @@
 .btn-download:disabled { opacity: 0.6; cursor: not-allowed; }
 .report-error { color: #b91c1c; margin: 12px 0; }
 .report-feedback { color: #166534; margin: 12px 0; }
+.category-report-selector { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.category-report-selector button { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; cursor: pointer; font-family: inherit; }
+.category-report-selector button.selected { background: #1e293b; color: white; border-color: #1e293b; }
+.category-report-selector span { color: #64748b; }
 
 .report-document {
     background: white;

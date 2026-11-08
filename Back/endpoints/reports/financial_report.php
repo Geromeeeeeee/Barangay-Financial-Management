@@ -18,10 +18,55 @@ if (!in_array(strtolower((string)($_SESSION['role'] ?? '')), $allowedRoles, true
 
 $month = (int)($_GET['month'] ?? date('m'));
 $year = (int)($_GET['year'] ?? date('Y'));
+$report = (string)($_GET['report'] ?? 'financial');
 
 try {
     if ($month < 1 || $month > 12 || $year < 1) {
         throw new InvalidArgumentException('Invalid reporting period.');
+    }
+    if ($report === 'category') {
+        $stmt = $pdo->prepare("
+            SELECT e.id, e.created_at, e.description, e.amount,
+                   c.id AS category_id, c.name AS category_name,
+                   COALESCE(s.name, 'No budget item') AS subcategory_name
+            FROM expenditures e
+            JOIN budget_categories c ON c.id = e.category_id
+            LEFT JOIN budget_subcategories s
+                ON s.id = e.subcategory_id AND s.category_id = c.id
+            WHERE MONTH(e.created_at) = :month AND YEAR(e.created_at) = :year
+            ORDER BY c.name, e.created_at, e.id
+        ");
+        $stmt->execute(['month' => $month, 'year' => $year]);
+
+        $categoryReports = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $categoryId = (int)$row['category_id'];
+            if (!isset($categoryReports[$categoryId])) {
+                $categoryReports[$categoryId] = [
+                    'category_id' => $categoryId,
+                    'category_name' => $row['category_name'],
+                    'expenditures' => [],
+                    'total_expenditure' => 0
+                ];
+            }
+            $categoryReports[$categoryId]['expenditures'][] = [
+                'id' => (int)$row['id'],
+                'expenditure_date' => $row['created_at'],
+                'subcategory_name' => $row['subcategory_name'],
+                'description' => $row['description'],
+                'amount' => (float)$row['amount']
+            ];
+            $categoryReports[$categoryId]['total_expenditure'] += (float)$row['amount'];
+        }
+
+        echo json_encode([
+            'success' => true,
+            'report' => 'category',
+            'month' => $month,
+            'year' => $year,
+            'categoryReports' => array_values($categoryReports)
+        ]);
+        exit();
     }
 
     $annualIncome = Budget::income($pdo);

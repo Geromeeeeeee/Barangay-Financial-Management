@@ -11,6 +11,8 @@ const months = ["January", "February", "March", "April", "May", "June", "July", 
 export default function Reports() {
     const [month, setMonth] = useState(new Date().getMonth() + 1);
     const [year, setYear] = useState(new Date().getFullYear());
+    const [reportType, setReportType] = useState("financial");
+    const [selectedCategoryId, setSelectedCategoryId] = useState(null);
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -23,15 +25,18 @@ export default function Reports() {
         setLoading(true);
         setError("");
         try {
-            const response = await axios.get(`${API_URL}reports/financial_report.php?month=${month}&year=${year}`, { withCredentials: true });
+            const response = await axios.get(`${API_URL}reports/financial_report.php?month=${month}&year=${year}&report=${reportType}`, { withCredentials: true });
             if (!response.data.success) throw new Error(response.data.message || "Unable to load report.");
             setData(response.data);
+            if (reportType === "category") {
+                setSelectedCategoryId(response.data.categoryReports[0]?.category_id ?? null);
+            }
         } catch (requestError) {
             setError(requestError.response?.data?.message || requestError.message || "Unable to load report.");
         } finally {
             setLoading(false);
         }
-    }, [month, year]);
+    }, [month, year, reportType]);
 
     useEffect(() => {
         const timer = setTimeout(fetchReport, 0);
@@ -60,6 +65,7 @@ export default function Reports() {
     };
 
     const rows = (items, empty, render) => items.length ? items.map(render) : <tr><td colSpan="5" className="center empty-row">{empty}</td></tr>;
+    const selectedCategory = data?.categoryReports?.find((category) => category.category_id === selectedCategoryId);
 
     return (
         <div className="reports-page">
@@ -67,16 +73,47 @@ export default function Reports() {
             <header className="reports-header">
                 <div><h1>Financial Reports</h1><p>Monthly cash activity and annual budget reference</p></div>
                 <div className="report-actions">
+                    <select value={reportType} onChange={(event) => { setReportType(event.target.value); setData(null); }}>
+                        <option value="financial">Monthly Financial Report</option>
+                        <option value="category">Category-wise Expenditure Report</option>
+                    </select>
                     <select value={month} onChange={(event) => setMonth(Number(event.target.value))}>{months.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select>
                     <select value={year} onChange={(event) => setYear(Number(event.target.value))}>{years.map((value) => <option key={value} value={value}>{value}</option>)}</select>
                     <button className="btn-print" onClick={() => window.print()}>Print Report</button>
-                    <button className="btn-download" onClick={downloadReport} disabled={!data}>Download Report</button>
+                    <button className="btn-download" onClick={downloadReport} disabled={!data || (reportType === "category" && !selectedCategory)}>Download Report</button>
                 </div>
             </header>
             {loading && <p>Loading report...</p>}
             {error && <p className="report-error">{error}</p>}
             {downloadFeedback && <p className="report-feedback">{downloadFeedback}</p>}
-            {!loading && data && <div className="report-document" ref={reportRef}>
+            {!loading && data && reportType === "category" && <div className="category-report-selector">
+                <strong>Categories with expenditures:</strong>
+                {data.categoryReports.length ? data.categoryReports.map((category) => (
+                    <button
+                        key={category.category_id}
+                        className={category.category_id === selectedCategoryId ? "selected" : ""}
+                        onClick={() => setSelectedCategoryId(category.category_id)}
+                    >
+                        {category.category_name}
+                    </button>
+                )) : <span>No expenditures recorded for this period.</span>}
+            </div>}
+            {!loading && data && reportType === "category" && selectedCategory && <div className="report-document" ref={reportRef}>
+                <div className="print-header">
+                    <div className="print-header-left"><p>Republic of the Philippines</p><p>Province of Cavite</p><p>City of Imus</p><h2>BARANGAY MALAGASANG II-A</h2><p>Office of the Barangay Treasurer</p></div>
+                    <img src={sealLogo} alt="Barangay Seal" className="print-logo" />
+                    <div className="print-header-right"><p>Category-wise Expenditure Report</p><p>For {months[month - 1]} {year}</p></div>
+                </div>
+                <div className="print-divider" />
+                <h4>{selectedCategory.category_name}</h4>
+                <table className="report-table"><thead><tr><th>Expenditure Date</th><th>Budget Item / Subcategory</th><th>Description / Particulars</th><th className="right">Amount</th></tr></thead><tbody>
+                    {selectedCategory.expenditures.map((row) => <tr key={row.id}><td>{row.expenditure_date}</td><td>{row.subcategory_name}</td><td>{row.description}</td><td className="right">{formatPeso(row.amount)}</td></tr>)}
+                    <tr className="total-row"><td colSpan="3">TOTAL EXPENDITURES</td><td className="right">{formatPeso(selectedCategory.total_expenditure)}</td></tr>
+                </tbody></table>
+                <div className="print-footer"><div className="signature-block"><p>Prepared by:</p><div className="signature-line" /><p className="signature-name">Barangay Treasurer</p></div><div className="signature-block"><p>Approved by:</p><div className="signature-line" /><p className="signature-name">Barangay Captain</p></div></div>
+                <div className="print-timestamp">Generated on: {new Date().toLocaleString()}</div>
+            </div>}
+            {!loading && data && reportType === "financial" && <div className="report-document" ref={reportRef}>
                 <div className="print-header">
                     <div className="print-header-left"><p>Republic of the Philippines</p><p>Province of Cavite</p><p>City of Imus</p><h2>BARANGAY MALAGASANG II-A</h2><p>Office of the Barangay Treasurer</p></div>
                     <img src={sealLogo} alt="Barangay Seal" className="print-logo" />
