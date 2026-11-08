@@ -10,7 +10,7 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
     const [files, setFiles] = useState([]);
-    const [amount, setAmount] = useState(""); /
+    const [amount, setAmount] = useState("");
 
     const [isScanning, setIsScanning] = useState(false);
     const [ocrStatus, setOcrStatus] = useState('idle'); 
