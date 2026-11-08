@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import "../styles/expenditure.css";
 import { useRole } from "../custom_hooks/use_role";
 import useSubmitExpenditure from "../custom_hooks/use_submitExpenditure";
+import { scanReceiptImage } from '../custom_hooks/use_Scanner';
 import { useToast } from "../context/toast_context";
 
 export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = [] }) {
@@ -9,10 +10,26 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
     const [errorMessage, setErrorMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
     const [files, setFiles] = useState([]);
+    const [amount, setAmount] = useState(""); /
+
+    const [isScanning, setIsScanning] = useState(false);
+    const [ocrStatus, setOcrStatus] = useState('idle'); 
+
+    const [detectedAmount, setDetectedAmount] = useState(null);
+    const [isOverridden, setIsOverridden] = useState(false);
+
     const { isTreasurer } = useRole();
     const { showToast } = useToast();
-    const { handleSubmit } = useSubmitExpenditure({ setLoading, setErrorMessage, selectedFiles: files, setSuccessMessage });
-    
+
+    const { handleSubmit } = useSubmitExpenditure({
+        setLoading,
+        setErrorMessage,
+        selectedFiles: files,
+        setSuccessMessage,
+        ocrStatus,
+        isOverridden,
+    });
+
     const availableAllocations = monthlyAllocations.filter((allocation) => (
         allocation.is_active !== false && Number(allocation.remaining_amount) > 0
     ));
@@ -24,12 +41,51 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
         }
     }, [successMessage, setIsModalOpen, showToast]);
 
-    const handleFileChange = (event) => {
-        setFiles(Array.from(event.target.files || []));
+    const handleFileChange = async (event) => {
+        const selectedList = Array.from(event.target.files || []);
+        setFiles(selectedList);
+        setOcrStatus('idle');
+        setIsOverridden(false);
+
+        if (selectedList.length === 0) return;
+
+        const enteredAmount = parseFloat(amount);
+        const firstFile = selectedList[0];
+
+        if (enteredAmount && firstFile && firstFile.type.startsWith('image/')) {
+            try {
+                setIsScanning(true);
+                const { extractedNumbers } = await scanReceiptImage(firstFile);
+
+                if (extractedNumbers.length === 0) {
+                    setOcrStatus('unreadable');
+                    setDetectedAmount(null);
+                } else {
+                    const matchFound = extractedNumbers.includes(enteredAmount);
+                    if (matchFound) {
+                        setOcrStatus('matched');
+                        setDetectedAmount(enteredAmount);
+                    } else {
+                        setOcrStatus('mismatch');
+                        const maxDetected = Math.max(...extractedNumbers);
+                        setDetectedAmount(maxDetected);
+                    }
+                }
+            } catch (error) {
+                console.error("OCR Error:", error);
+                setOcrStatus('unreadable');
+            } finally {
+                setIsScanning(false);
+            }
+        }
     };
 
     const removeFile = (indexToRemove) => {
-        setFiles((currentFiles) => currentFiles.filter((_, index) => index !== indexToRemove));
+        setFiles((currentFiles) => {
+            const updated = currentFiles.filter((_, index) => index !== indexToRemove);
+            if (updated.length === 0) setOcrStatus('idle');
+            return updated;
+        });
     };
 
     return (
@@ -66,7 +122,16 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
                     )}
                     <label>
                         <span>Amount</span>
-                        <input name="amount" type="number" min="0" step="0.01" placeholder="0.00" required />
+                        <input 
+                            name="amount" 
+                            type="number" 
+                            min="0" 
+                            step="0.01" 
+                            placeholder="0.00" 
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            required 
+                        />
                     </label>
                     <label>
                         <span>Description</span>
@@ -74,7 +139,7 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
                     </label>
                     {isTreasurer && (
                         <label>
-                            <span>Supporting documents <small>(optional, up to 5 files, PDF/JPG/PNG up to 5 MB each)</small></span>
+                            <span>Supporting documents <small>(PDF/JPG/PNG up to 5 MB each)</small></span>
                             <input
                                 name="supporting_documents[]"
                                 type="file"
@@ -82,6 +147,47 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
                                 accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                 onChange={handleFileChange}
                             />
+                            
+                            {isScanning && (
+                                <div style={{ color: '#2563eb', fontSize: '0.85rem', marginTop: '6px' }}>
+                                    🌀 Scanning receipt using Tesseract OCR...
+                                </div>
+                            )}
+
+                            {!isScanning && ocrStatus === 'matched' && (
+                                <div style={{ color: '#16a34a', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '8px', borderRadius: '4px', fontSize: '0.85rem', marginTop: '6px' }}>
+                                    ✓ Amount Verified
+                                </div>
+                            )}
+
+                            {!isScanning && ocrStatus === 'mismatch' && (
+                                <div style={{ color: '#854d0e', background: '#fefce8', border: '1px solid #fef08a', padding: '10px', borderRadius: '4px', fontSize: '0.85rem', marginTop: '6px' }}>
+                                    <strong>⚠️ Warning: Receipt doesn't match the input number.</strong>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', cursor: 'pointer', fontWeight: '600' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={isOverridden}
+                                            onChange={(e) => setIsOverridden(e.target.checked)}
+                                        />
+                                        Proceed with manual override
+                                    </label>
+                                </div>
+                            )}
+
+                            {!isScanning && ocrStatus === 'unreadable' && (
+                                <div style={{ color: '#374151', background: '#f9fafb', border: '1px solid #e5e7eb', padding: '8px', borderRadius: '4px', fontSize: '0.85rem', marginTop: '6px' }}>
+                                    ℹ️ <strong>Could not automatically read print on document.</strong>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', cursor: 'pointer', fontWeight: '600' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={isOverridden}
+                                            onChange={(e) => setIsOverridden(e.target.checked)}
+                                        />
+                                        Proceed with manual verification
+                                    </label>
+                                </div>
+                            )}
+
                             {files.length > 0 && (
                                 <ul className="expenditure-selected-files">
                                     {files.map((file, index) => (
@@ -96,7 +202,7 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
                     )}
                     <div className="expenditure-modal-actions">
                         <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                        <button type="submit" className="btn-save" disabled={loading || availableAllocations.length === 0}>
+                        <button type="submit" className="btn-save" disabled={loading || availableAllocations.length === 0 || isScanning}>
                             {loading ? "Saving..." : "Confirm"}
                         </button>
                     </div>

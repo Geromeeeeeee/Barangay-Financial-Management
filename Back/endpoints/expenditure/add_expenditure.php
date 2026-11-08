@@ -21,13 +21,16 @@ $data = stripos($contentType, 'multipart/form-data') !== false
     ? $_POST
     : (json_decode(file_get_contents("php://input"), true) ?: []);
 
-$amount          = $data['amount']          ?? null;
-$description     = $data['description']     ?? null;
-$fund_allocation = $data['fund_allocation'] ?? '';
-$created_by      = $_SESSION['uid']         ?? null;
-$category_id     = $data['category_id']     ?? null;
-$subcategory_id  = $data['subcategory_id']  ?? null;
+$amount                = $data['amount']                ?? null;
+$description           = $data['description']           ?? null;
+$fund_allocation       = $data['fund_allocation']       ?? '';
+$created_by            = $_SESSION['uid']               ?? null;
+$category_id           = $data['category_id']           ?? null;
+$subcategory_id        = $data['subcategory_id']        ?? null;
 $monthly_allocation_id = $data['monthly_allocation_id'] ?? null;
+
+$ocrOverridden         = isset($data['ocr_overridden']) && (string)$data['ocr_overridden'] === '1';
+
 $uploadedPaths = [];
 
 $expenditure = new Expenditure($pdo);
@@ -113,7 +116,12 @@ try {
         $monthly_allocation_id
     );
 
-    $audit->log('Record Expenditure', "Recorded expenditure of ₱" . number_format((float)$amount, 2) . " for {$description}");
+    $auditDescription = "Recorded expenditure of ₱" . number_format((float)$amount, 2) . " for {$description}";
+    if ($ocrOverridden) {
+        $auditDescription .= " [WARNING: Receipt doesn't match the input number - Manually Overridden]";
+    }
+
+    $audit->log('Record Expenditure', $auditDescription);
 
     echo json_encode(['status' => 'expenditure_recorded']);
 } catch (Exception $e) {
