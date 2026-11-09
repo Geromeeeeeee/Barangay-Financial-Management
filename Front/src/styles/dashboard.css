@@ -941,3 +941,29 @@
 .recent-revenue-list::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
+
+.settings-select {
+    padding: 10px 14px;
+    border: 1px solid rgba(203, 213, 225, 0.6);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.92rem;
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.5);
+    transition: all 0.2s;
+    cursor: pointer;
+    width: 100%;
+    outline: none;
+}
+
+.settings-select:focus {
+    border-color: #2563eb;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.settings-help-text {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 4px;
+}

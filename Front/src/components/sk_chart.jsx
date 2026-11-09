@@ -8,28 +8,32 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/
 export default function SKChart() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [year, setYear] = useState(new Date().getFullYear());
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const fetchChartData = async () => {
-            try {
-                const res = await axios.get(`${API_URL}analytics/get_sk_chart_data.php`, { withCredentials: true });
-                if (res.data.success) {
-                    setData(res.data.data);
-                }
-            } catch (err) {
-                setError("Failed to load SK chart data.");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchChartData();
-    }, []);
+        setLoading(true);
+        axios.get(`${API_URL}analytics/get_sk_chart_data.php?year=${year}`, { withCredentials: true })
+            .then(res => {
+                if (res.data.success) setData(res.data.data);
+            })
+            .catch(err => setError("Failed to load SK chart data."))
+            .finally(() => setLoading(false));
+    }, [year]);
 
     return (
-        <div className="dash-card" style={{ height: '350px', display: 'flex', flexDirection: 'column' }}>
+        <div className="dash-card" style={{ height: '400px', display: 'flex', flexDirection: 'column' }}>
             <div className="dash-card-head">
                 <h2>SK Budget Utilization</h2>
+                <select 
+                    value={year} 
+                    onChange={(e) => setYear(Number(e.target.value))}
+                    style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f8fafc', cursor: 'pointer', fontWeight: 600 }}
+                >
+                    <option value={2026}>2026</option>
+                    <option value={2025}>2025</option>
+                    <option value={2024}>2024</option>
+                </select>
             </div>
             
             <div style={{ flex: 1, width: '100%', minHeight: 0 }}>
@@ -55,7 +59,7 @@ export default function SKChart() {
                             />
                             <Legend wrapperStyle={{ paddingTop: '10px' }} />
                             <Bar dataKey="spent" name="Spent" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={25} />
-                            <Line type="monotone" dataKey="allocated" name="Total Allocated" stroke="#2563eb" strokeWidth={3} dot={false} />
+                            <Line type="monotone" dataKey="allocated" name="Monthly Allocation" stroke="#2563eb" strokeWidth={3} dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 )}

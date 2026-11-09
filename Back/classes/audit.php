@@ -33,19 +33,36 @@ class Audit {
         ]);
 
         try {
-            $adminStmt = $this->database->query("SELECT id FROM users WHERE role = 'admin'");
-            $admins = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
+            $targetRoles = ['admin'];
 
-            if (!empty($admins)) {
+            $moneyKeywords = ['Revenue', 'Expenditure', 'Allocate', 'Budget', 'Fund'];
+            $isMoneyAction = false;
+            foreach ($moneyKeywords as $keyword) {
+                if (stripos($action, $keyword) !== false) {
+                    $isMoneyAction = true;
+                    break;
+                }
+            }
+
+            if ($isMoneyAction) {
+                $targetRoles[] = 'treasurer';
+            }
+
+            $placeholders = implode(',', array_fill(0, count($targetRoles), '?'));
+            $recipientStmt = $this->database->prepare("SELECT id FROM users WHERE role IN ($placeholders)");
+            $recipientStmt->execute($targetRoles);
+            $recipients = $recipientStmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($recipients)) {
                 $notifStmt = $this->database->prepare("
                     INSERT INTO notifications (user_id, title, message, created_at) 
                     VALUES (:user_id, :title, :message, NOW())
                 ");
 
-                foreach ($admins as $adminId) {
-                    if ($adminId != $userId) {
+                foreach ($recipients as $recipientId) {
+                    if ($recipientId != $userId) {
                         $notifStmt->execute([
-                            ':user_id' => $adminId,
+                            ':user_id' => $recipientId,
                             ':title' => $action,
                             ':message' => $details
                         ]);

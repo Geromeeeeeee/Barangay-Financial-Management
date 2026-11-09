@@ -2,9 +2,6 @@ import { useState } from "react"
 import { Outlet, NavLink, useNavigate } from "react-router-dom"
 import { useRole } from "../custom_hooks/use_role"
 import axios from "axios"
-{/**
-import { Home, Inbox, Folder, BarChart, Users, Shield, Settings, LogOut, FileText } from "lucide-react"
-*/}
 import { Home, Inbox, Folder, BarChart, Users, Shield, Settings, LogOut } from "lucide-react"
 import sealLogo from "../assets/barangay-malagasang-logo.jpg"
 import NotificationBell from "../components/notification_bell"
@@ -14,9 +11,6 @@ import '../styles/layout.css'
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
 export default function DashboardLayout() {
-    {/** 
-    const { isAdmin, isTreasurer, isStaff, isSK } = useRole(); 
-    */}
     const { isAdmin, isTreasurer, isSK } = useRole();
     const navigate = useNavigate();
 
@@ -39,7 +33,6 @@ export default function DashboardLayout() {
 
     return (
         <div className="topnav-layout">
-            
             <aside className="sidebar">
                 <div className="sidebar-brand">
                     <img src={sealLogo} alt="Malagasang II-A Seal" className="sidebar-logo" />
@@ -71,15 +64,6 @@ export default function DashboardLayout() {
                             <span className="nav-text">Financial Reports</span>
                         </NavLink>
                     )}
-
-                    {/**
-                    {(isStaff || isAdmin) && (
-                        <NavLink to="/ClearanceReport" className={linkClass}>
-                            <div className="nav-icon"><FileText size={22} /></div>
-                            <span className="nav-text">Clearance Reports</span>
-                        </NavLink>
-                    )}
-                    */}
 
                     {isAdmin && (
                         <>

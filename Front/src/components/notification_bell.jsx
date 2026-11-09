@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useNotifications } from "../custom_hooks/use_notifications";
 import "../styles/layout.css";
 
@@ -6,6 +7,7 @@ export default function NotificationBell() {
     const { notifications, unreadCount, markAllAsRead, feedback } = useNotifications();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -24,6 +26,20 @@ export default function NotificationBell() {
     const formatTime = (dateString) => {
         const d = new Date(dateString);
         return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const handleNotificationClick = (notification) => {
+        const action = notification.action || "";
+        let targetPath = "/Dashboard";
+
+        if (action.includes("Revenue")) targetPath = "/Revenue";
+        else if (action.includes("Expenditure")) targetPath = "/Expenditure";
+        else if (action.includes("Clearance")) targetPath = "/ClearanceReport";
+        else if (action.includes("Sign Up") || action.includes("Invite")) targetPath = "/admin/invite-codes";
+        else if (action.includes("Password")) targetPath = "/Settings";
+
+        setIsOpen(false);
+        navigate(targetPath);
     };
 
     return (
@@ -55,7 +71,12 @@ export default function NotificationBell() {
                             <p className="muted" style={{ padding: '15px', textAlign: 'center' }}>No recent activity</p>
                         ) : (
                             notifications.map((n) => (
-                                <div key={n.id} className={`notification-item ${Number(n.is_read) ? "read" : "unread"}`}>
+                                <div 
+                                    key={n.id} 
+                                    className={`notification-item ${Number(n.is_read) ? "read" : "unread"}`}
+                                    onClick={() => handleNotificationClick(n)}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     {!Number(n.is_read) && <div className="notif-dot"></div>}
                                     <div className="notif-content">
                                         <p className="notif-title">{n.action}</p>

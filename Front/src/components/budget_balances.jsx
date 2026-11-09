@@ -1,16 +1,28 @@
 import eyeCloseIcon from "../assets/eye_close.svg";
 import eyeOpenIcon from "../assets/eye_open.svg";
 
-export default function BudgetBalances({isVisible, setIsVisible, loading, stats, getCategoryStatus, hiddenCategories, toggleCategory, formatPeso}){
+export default function BudgetBalances({
+    loading, 
+    stats, 
+    getCategoryStatus, 
+    hiddenCategories, 
+    toggleCategory, 
+    toggleAll,
+    formatPeso
+}) {
+    // Check if all categories are hidden to determine master icon
+    const allHidden = stats.categoryBalances.length > 0 && 
+                      stats.categoryBalances.every(c => hiddenCategories[c.id]);
+
     return(
         <section className="dash-card">
             <div className="dash-card-head">
                 <h2>Budget Balances</h2>
                 <img 
-                    src={isVisible ? eyeCloseIcon : eyeOpenIcon} 
+                    src={allHidden ? eyeCloseIcon : eyeOpenIcon} 
                     alt="Toggle All" 
                     style={{ cursor: 'pointer', width: '20px', height: '20px' }} 
-                    onClick={() => setIsVisible(!isVisible)}
+                    onClick={toggleAll}
                 />
             </div>
 
@@ -25,11 +37,11 @@ export default function BudgetBalances({isVisible, setIsVisible, loading, stats,
                         const balance = Number(category.balance || 0);
                         const percentage = allocated > 0 ? Math.min((spent / allocated) * 100, 100) : 0;
                         const status = getCategoryStatus(percentage);
-                        const isCardHidden = !isVisible || hiddenCategories[category.id];
+                        const isCardHidden = hiddenCategories[category.id] === true;
 
                         return (
                             <div key={category.id} className="fund-card">
-                                <div style={{ display: 'flex', justifyContent: 'space-between',alignItems: 'center', marginBottom: '12px', borderBottom: '1px dashed #cbd5e1', paddingBottom: '8px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px dashed #cbd5e1', paddingBottom: '8px' }}>
                                     <div className="fund-card-title" style={{ margin: 0, padding: 0, border: 'none' }}>
                                         {category.name}
                                     </div>

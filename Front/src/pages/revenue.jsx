@@ -21,7 +21,6 @@ export default function Revenue () {
     const [currentPage, setCurrentPage] = useState(1)
     const {filters, months, years, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { revenues, loading, error, refetch } = useRevenue(filterParams)
-    usePagination({currentPage, filters, records: revenues})
     const { isTreasurer, isStaff, isSK } = useRole()
     const {peso, date} = useFormat()
     const { showToast } = useToast()
@@ -29,11 +28,14 @@ export default function Revenue () {
 
     const canRecord = isTreasurer || isStaff || isSK
 
-    const skFilteredRevenues = isSK 
-        ? revenues.filter(r => r.source?.toUpperCase().includes("SK") || r.particular?.toUpperCase().includes("SK"))
+    const skFilteredRevenues = isSK
+        ? revenues.filter(r => 
+            (r.source && r.source.toUpperCase().includes("SK")) || 
+            (r.particular && r.particular.toUpperCase().includes("SK"))
+          )
         : revenues;
 
-    const {totalPages: skTotalPages, displayedRecords: skDisplayedRecords} = usePagination({
+    const {totalPages, displayedRecords} = usePagination({
         currentPage, 
         filters, 
         records: skFilteredRevenues
@@ -92,7 +94,7 @@ export default function Revenue () {
                             </tr>
                         </thead>
                         <tbody>
-                            {skDisplayedRecords.map((r) => (
+                            {displayedRecords.map((r) => (
                                 <tr key={r.id}>
                                     <td className="muted">{date(r.receipt_date || r.created_at)}</td>
                                     <td>{r.record_type === 'monthly_receipt' ? `${r.source} (Monthly receipt)` : r.source}</td>
@@ -129,7 +131,7 @@ export default function Revenue () {
                             ))}
                         </tbody>
                     </table>
-                    <Pagination setCurrentPage={setCurrentPage} currentPage={currentPage} totalPages={skTotalPages}/>
+                    <Pagination setCurrentPage={setCurrentPage} currentPage={currentPage} totalPages={totalPages}/>
                     </>
                 )}
             </div>

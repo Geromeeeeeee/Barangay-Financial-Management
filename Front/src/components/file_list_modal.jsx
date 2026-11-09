@@ -3,10 +3,12 @@ import axios from "axios";
 import "../styles/revenue.css"; 
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
+const BASE_URL = "http://localhost/Capstone/Back/endpoints/";
 
 export default function FileListModal({ revenueId, expenditure, onClose }) {
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [viewingFile, setViewingFile] = useState(null);
 
     useEffect(() => {
         if (expenditure) {
@@ -16,11 +18,11 @@ export default function FileListModal({ revenueId, expenditure, onClose }) {
                         setFiles(res.data.data.map((file) => ({
                             ...file,
                             view_url: file.legacy
-                                ? `${API_URL}expenditure/view_attachment.php?id=${expenditure.id}`
-                                : `${API_URL}expenditure/view_attachment.php?attachment_id=${file.id}`,
+                                ? `${BASE_URL}expenditure/view_attachment.php?id=${expenditure.id}`
+                                : `${BASE_URL}expenditure/view_attachment.php?attachment_id=${file.id}`,
                             download_url: file.legacy
-                                ? `${API_URL}expenditure/download_attachment.php?id=${expenditure.id}`
-                                : `${API_URL}expenditure/download_attachment.php?attachment_id=${file.id}`,
+                                ? `${BASE_URL}expenditure/download_attachment.php?id=${expenditure.id}`
+                                : `${BASE_URL}expenditure/download_attachment.php?attachment_id=${file.id}`,
                         })));
                     }
                 })
@@ -34,8 +36,8 @@ export default function FileListModal({ revenueId, expenditure, onClose }) {
                 if (res.data.status === 'success') {
                     setFiles(res.data.data.map((file) => ({
                         ...file,
-                        view_url: `${API_URL}revenue/view_file.php?id=${file.id}`,
-                        download_url: `${API_URL}revenue/download_file.php?id=${file.id}`,
+                        view_url: `${BASE_URL}revenue/view_file.php?id=${file.id}`,
+                        download_url: `${BASE_URL}revenue/download_file.php?id=${file.id}`,
                     })));
                 }
             })
@@ -59,14 +61,13 @@ export default function FileListModal({ revenueId, expenditure, onClose }) {
                                     <span className="file-name">{file.file_name}</span>
                                     <span className="file-meta">{(file.file_size / 1024).toFixed(1)} KB</span>
                                 </div>
-                                <a
-                                    href={file.view_url}
-                                    target="_blank" 
-                                    rel="noreferrer"
+                                <button
                                     className="btn-view"
+                                    onClick={() => setViewingFile(file)}
+                                    style={{ cursor: 'pointer', border: 'none' }}
                                 >
                                     View
-                                </a>
+                                </button>
                                 <a
                                     href={file.download_url}
                                     className="btn-view"
@@ -85,6 +86,24 @@ export default function FileListModal({ revenueId, expenditure, onClose }) {
                     </button>
                 </div>
             </div>
+
+            {viewingFile && (
+                <div className="logout-modal-backdrop" onClick={(e) => { e.stopPropagation(); setViewingFile(null); }}>
+                    <div className="audit-file-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="audit-file-modal-header">
+                            <h3>{viewingFile.file_name}</h3>
+                            <button className="btn-outline" onClick={() => setViewingFile(null)}>✕ Close</button>
+                        </div>
+                        <div className="audit-file-modal-body">
+                            {viewingFile.file_name.toLowerCase().endsWith('.pdf') ? (
+                                <iframe src={viewingFile.view_url} title="Document PDF" />
+                            ) : (
+                                <img src={viewingFile.view_url} alt={viewingFile.file_name} />
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

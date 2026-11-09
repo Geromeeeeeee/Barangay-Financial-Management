@@ -16,7 +16,7 @@ if (!$expenditureId) {
 }
 
 $stmt = $pdo->prepare('
-    SELECT id, file_name, file_type, file_size
+    SELECT id, file_path, file_name, file_type, file_size
     FROM expenditure_attachments
     WHERE expenditure_id = :expenditure_id
     ORDER BY id
@@ -25,7 +25,7 @@ $stmt->execute(['expenditure_id' => $expenditureId]);
 $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $legacy = $pdo->prepare('
-    SELECT id, attachment_name AS file_name, attachment_mime AS file_type, attachment_size AS file_size
+    SELECT id, attachment_path AS file_path, attachment_name AS file_name, attachment_mime AS file_type, attachment_size AS file_size
     FROM expenditures
     WHERE id = :id AND attachment_path IS NOT NULL
 ');
@@ -34,6 +34,7 @@ $legacyFile = $legacy->fetch(PDO::FETCH_ASSOC);
 if ($legacyFile) {
     array_unshift($files, [
         'id' => $legacyFile['id'],
+        'file_path' => $legacyFile['file_path'],
         'file_name' => $legacyFile['file_name'],
         'file_type' => $legacyFile['file_type'],
         'file_size' => $legacyFile['file_size'],
@@ -41,4 +42,4 @@ if ($legacyFile) {
     ]);
 }
 
-echo json_encode(['status' => 'success', 'data' => $files]);
+echo json_encode(['status' => 'success', 'data' => $files]);    

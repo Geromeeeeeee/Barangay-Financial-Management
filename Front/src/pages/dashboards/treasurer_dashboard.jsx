@@ -12,7 +12,7 @@ import BudgetBalances from "../../components/budget_balances";
 import AnnualBudgetReleaseSection from "../../components/annual_budget_release_section";
 
 export default function TreasurerDashboard({ user }) {
-    const { stats, loading, error, refresh, isVisible, setIsVisible } = useTreasurerStats();
+    const { stats, loading, error, refresh } = useTreasurerStats();
     const [activityType, setActivityType] = useState("revenue");
     const [hiddenCategories, setHiddenCategories] = useState({});
 
@@ -21,6 +21,20 @@ export default function TreasurerDashboard({ user }) {
             ...prev,
             [id]: !prev[id]
         }));
+    };
+
+    const toggleAll = () => {
+        // Check if all categories are currently hidden
+        const allHidden = stats.categoryBalances.length > 0 && 
+                          stats.categoryBalances.every(c => hiddenCategories[c.id]);
+
+        if (allHidden) {
+            setHiddenCategories({}); // Show all
+        } else {
+            const allHiddenState = {};
+            stats.categoryBalances.forEach(c => allHiddenState[c.id] = true);
+            setHiddenCategories(allHiddenState); // Hide all
+        }
     };
     
     const selectedActivity = activityType === "revenue"
@@ -53,14 +67,14 @@ export default function TreasurerDashboard({ user }) {
                 <StatCard
                     Icon="₱"
                     label="Total Revenue"
-                    value={loading ? "…" : (isVisible ? formatPeso(stats.totalRevenue) : "***")}
+                    value={loading ? "…" : formatPeso(stats.totalRevenue)}
                     trend="All time collection"
                     accent="green"
                 />
                 <StatCard
                     Icon="₱"
                     label="This Month"
-                    value={loading ? "…" : (isVisible ? formatPeso(stats.revenueThisMonth) : "***")}
+                    value={loading ? "…" : formatPeso(stats.revenueThisMonth)}
                     trend="Current month"
                     accent="blue"
                 />
@@ -80,9 +94,17 @@ export default function TreasurerDashboard({ user }) {
                 />
             </section>
 
-            <BudgetBalances isVisible={isVisible} setIsVisible={setIsVisible} loading={loading} stats={stats} getCategoryStatus={getCategoryStatus} hiddenCategories={hiddenCategories} toggleCategory={toggleCategory} formatPeso={formatPeso}/>
+            <BudgetBalances 
+                loading={loading} 
+                stats={stats} 
+                getCategoryStatus={getCategoryStatus} 
+                hiddenCategories={hiddenCategories} 
+                toggleCategory={toggleCategory} 
+                toggleAll={toggleAll}
+                formatPeso={formatPeso} 
+            />
 
-            <AnnualBudgetReleaseSection stats={stats} loading={loading} formatPeso={formatPeso} isVisible={isVisible} />
+            <AnnualBudgetReleaseSection stats={stats} loading={loading} formatPeso={formatPeso} isVisible={true} />
 
             <DashboardChart />
         </div>
