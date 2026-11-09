@@ -9,7 +9,6 @@ if (!$file_id) {
     die("Invalid file ID.");
 }
 
-// Fetch the file details from the database
 $stmt = $pdo->prepare("SELECT * FROM revenue_attachments WHERE id = :id LIMIT 1");
 $stmt->execute(['id' => $file_id]);
 $file = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -19,7 +18,6 @@ if (!$file) {
     die("File not found in database.");
 }
 
-// Build the full path on the server
 $file_path = __DIR__ . '/../../' . $file['file_path'];
 
 if (!file_exists($file_path)) {
@@ -27,7 +25,6 @@ if (!file_exists($file_path)) {
     die("File does not exist on the server.");
 }
 
-// Clear any headers set by header.php
 header_remove('Content-Type'); 
 header_remove('Access-Control-Allow-Origin');
 header_remove('Access-Control-Allow-Credentials');

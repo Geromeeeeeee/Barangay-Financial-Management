@@ -8,6 +8,13 @@ import sealLogo from "../assets/barangay-malagasang-logo.jpg";
 import Splash_Screen from "../components/splash_screen";
 import ForgotPasswordModal from "../components/forgot_password_modal";
 
+import photo1 from "../assets/Malagasang-2A-1.jpg";
+import photo2 from "../assets/Malagasang-2A-2.jpg";
+import photo3 from "../assets/Malagasang-2A-3.jpg";
+import photo4 from "../assets/Malagasang-2A-4.jpg";
+import photo5 from "../assets/Malagasang-2A-5.jpg";
+import photo6 from "../assets/Malagasang-2A-6.jpg";
+
 function EyeIcon({ open }) {
     return open ? (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -48,12 +55,10 @@ function InviteCodeField({ code, setCode, status, message }) {
         const cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
         let formatted = cleaned;
         
-        // Insert dash after the 5th character (e.g., MAL2A-)
         if (cleaned.length > 5) {
             formatted = `${cleaned.slice(0, 5)}-${cleaned.slice(5)}`;
         }
         
-        // Insert second dash after the 9th character (e.g., MAL2A-B961-)
         if (cleaned.length > 9) {
             formatted = `${cleaned.slice(0, 5)}-${cleaned.slice(5, 9)}-${cleaned.slice(9, 13)}`;
         }
@@ -72,7 +77,7 @@ function InviteCodeField({ code, setCode, status, message }) {
                     value={code}
                     onChange={(e) => setCode(formatInviteCode(e.target.value))}
                     className="invite-input"
-                    maxLength={15} // 5 + 1 + 4 + 1 + 4 = 15 chars
+                    maxLength={15}
                 />
                 {status === "checking" && <span className="invite-badge">Checking…</span>}
                 {status === "valid" && <span className="invite-badge invite-valid">✓</span>}
@@ -100,6 +105,8 @@ export default function Auth_Page() {
     const { handleSubmit, handleFormChange, accountDetails } = useAuth({
         isLogin, setErr, setStat, setIsLogin, inviteCode
     });
+
+    const loginPhotos = [photo1, photo2, photo3, photo4, photo5, photo6];
 
     useEffect(() => {
         const timer = setTimeout(() => setShowSplash(false), 2200);
@@ -255,15 +262,29 @@ export default function Auth_Page() {
 
                     {isLogin && (
                         <aside className="auth-brand-side">
+                            <div className="auth-brand-slideshow">
+                                {loginPhotos.map((photo, index) => (
+                                    <div 
+                                        key={index}
+                                        className="auth-brand-slide"
+                                        style={{ 
+                                            backgroundImage: `url(${photo})`,
+                                            animationDelay: `${index * 5}s` 
+                                        }}
+                                    ></div>
+                                ))}
+                            </div>
+                            
+                            <div className="auth-brand-overlay"></div>
+
                             <div className="brand-side-content">
                                 <div className="seal-wrap">
                                     <img src={sealLogo} alt="Seal" className="seal-img" />
                                 </div>
-                                <h2 className="welcome-title">Maligayang pagdating, Kabarangay!</h2>
-                                <p className="welcome-sub">Welcome to Barangay Malagasang II-A</p>
+                                <h2 className="welcome-title">Welcome to Barangay Malagasang II-A</h2>
                                 <div className="welcome-divider" />
                                 <p className="welcome-text">
-                                    "Mag-sign in upang ma-access ang mga talaan ng pondo at serbisyo ng barangay."
+                                    "Sign in to access official barangay records, fund management, and community services."
                                 </p>
                             </div>
                             <div className="brand-footer">City of Imus · Cavite</div>

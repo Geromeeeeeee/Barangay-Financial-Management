@@ -6,7 +6,6 @@ export default function useSubmitExpenditure({
     setErrorMessage, 
     selectedFiles = [], 
     setSuccessMessage,
-    // --- ADDED OCR PARAMETERS HERE ---
     ocrStatus = 'idle',
     isOverridden = false
 }){
@@ -16,26 +15,23 @@ export default function useSubmitExpenditure({
         setErrorMessage("");
 
         const formData = new FormData(event.target);
-        
+        formData.delete("supporting_documents[]");
+
         try {
-            // 🛑 RULE 1: HARD BLOCK - No File Uploaded
             if (!selectedFiles || selectedFiles.length === 0) {
                 throw new Error("A receipt attachment is required to log an expenditure.");
             }
 
-            // ⚠️ RULE 2: WARNING GUARD - Mismatch / Unreadable without manual override
             if ((ocrStatus === 'mismatch' || ocrStatus === 'unreadable') && !isOverridden) {
                 throw new Error("Please resolve the receipt OCR mismatch warning or check 'Override OCR' to submit.");
             }
 
-            formData.delete("supporting_documents[]");
             selectedFiles.forEach((file) => formData.append("supporting_documents[]", file));
             
             if (!formData.get("monthly_allocation_id")) {
                 throw new Error("Select a monthly allocation before recording the expenditure.");
             }
 
-            // Pass override flag to backend for Audit Logging
             formData.append("ocr_overridden", isOverridden ? 1 : 0);
 
             const response = await axios.post(
@@ -50,7 +46,6 @@ export default function useSubmitExpenditure({
                 setErrorMessage("Failed to record expenditure.");
             }
         } catch (requestError) {
-            // Handles both our custom thrown errors and Axios response errors
             const message = requestError.response?.data?.message || requestError.message || "Server error. Please check your backend connection.";
             setErrorMessage(message);
         } finally {

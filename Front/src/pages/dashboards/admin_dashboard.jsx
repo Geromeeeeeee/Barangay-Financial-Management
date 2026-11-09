@@ -2,12 +2,6 @@ import { useState } from "react";
 import "../../styles/dashboard.css";
 import "../../styles/admin_dashboard.css";
 import DashboardChart from "../../components/dashboard_chart";
-{/** 
-import {
-    IconUsers, IconTicket,
-    StatCard, QuickAction, DashboardHero,
-} from "../../components/dashboard_widgets";
-*/}
 import {
     StatCard, DashboardHero,
 } from "../../components/dashboard_widgets";
@@ -19,8 +13,6 @@ import AnnualBudgetReleaseSection from "../../components/annual_budget_release_s
 export default function AdminDashboard({ user }) {
     const { stats, loading, error, refresh } = useDashboardStats();
     const [activityType, setActivityType] = useState("revenue");
-    
-    const [showBalances, setShowBalances] = useState(true);
     const [hiddenCategories, setHiddenCategories] = useState({});
 
     const toggleCategory = (id) => {
@@ -30,6 +22,25 @@ export default function AdminDashboard({ user }) {
         }));
     };
 
+    const toggleAll = () => {
+        const allHidden = stats.categoryBalances.length > 0 && 
+                          stats.categoryBalances.every(c => hiddenCategories[c.id]);
+        if (allHidden) {
+            setHiddenCategories({});
+        } else {
+            const allHiddenState = {};
+            stats.categoryBalances.forEach(c => allHiddenState[c.id] = true);
+            setHiddenCategories(allHiddenState);
+        }
+    };
+
+    const isFullyHidden = stats.categoryBalances.length > 0 && 
+                          stats.categoryBalances.every(c => hiddenCategories[c.id]);
+
+    const formatPeso = (value) => {
+        return "₱" + Number(value || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 });
+    };
+    
     const selectedActivity = activityType === "revenue"
         ? stats.recentActivity.slice(0, 2)
         : stats.recentExpenditures?.slice(0, 2) || [];
@@ -54,38 +65,26 @@ export default function AdminDashboard({ user }) {
             </div>
 
             <section className="stat-grid">
-                <StatCard Icon="₱" label="Total Revenue" value={loading ? "…" : (showBalances ? formatPeso(stats.totalRevenue) : "***")} trend="All time collection" accent="green" />
-                <StatCard Icon="₱" label="Annual Income" value={loading ? "…" : (showBalances ? formatPeso(stats.totalAnnualIncome) : "***")} trend="NTA + Local Income" accent="blue" />
-                <StatCard Icon="₱" label="Total Allocated" value={loading ? "…" : (showBalances ? formatPeso(stats.totalAllocated) : "***")} trend="All major categories" accent="purple" />
-                <StatCard Icon="₱" label="Total Expenditures" value={loading ? "…" : (showBalances ? formatPeso(stats.totalExpenditures) : "***")} trend="Recorded spending" accent="red" />
-                <StatCard Icon="₱" label="Total Remaining" value={loading ? "…" : (showBalances ? formatPeso(stats.totalRemaining) : "***")} trend="Category balances" accent="amber" />
+                <StatCard Icon="₱" label="Total Revenue" value={loading ? "…" : (isFullyHidden ? "***" : formatPeso(stats.totalRevenue))} trend="All time collection" accent="green" />
+                <StatCard Icon="₱" label="Annual Income" value={loading ? "…" : (isFullyHidden ? "***" : formatPeso(stats.totalAnnualIncome))} trend="NTA + Local Income" accent="blue" />
+                <StatCard Icon="₱" label="Total Allocated" value={loading ? "…" : (isFullyHidden ? "***" : formatPeso(stats.totalAllocated))} trend="All major categories" accent="purple" />
+                <StatCard Icon="₱" label="Total Expenditures" value={loading ? "…" : (isFullyHidden ? "***" : formatPeso(stats.totalExpenditures))} trend="Recorded spending" accent="red" />
+                <StatCard Icon="₱" label="Total Remaining" value={loading ? "…" : (isFullyHidden ? "***" : formatPeso(stats.totalRemaining))} trend="Category balances" accent="amber" />
             </section>
 
-            <BudgetBalances isVisible={showBalances} setIsVisible={setShowBalances} loading={loading} stats={stats} getCategoryStatus={getCategoryStatus} hiddenCategories={hiddenCategories} toggleCategory={toggleCategory} formatPeso={formatPeso}/>
+            <BudgetBalances 
+                loading={loading} 
+                stats={stats} 
+                getCategoryStatus={getCategoryStatus} 
+                hiddenCategories={hiddenCategories} 
+                toggleCategory={toggleCategory} 
+                toggleAll={toggleAll} 
+                formatPeso={formatPeso} 
+            />
 
-            <AnnualBudgetReleaseSection stats={stats} loading={loading} formatPeso={formatPeso} isVisible={showBalances} />
+            <AnnualBudgetReleaseSection stats={stats} loading={loading} formatPeso={formatPeso} isVisible={!isFullyHidden} />
 
             <DashboardChart />
-
-            {/**
-            <section className="dash-card" style={{ marginTop: '20px' }}>
-                <div className="dash-card-head">
-                    <h2>Quick Actions</h2>
-                </div>
-                <div className="quick-actions">
-                    <QuickAction to="/admin/invite-codes"  Icon={IconTicket} label="Generate Invite Code" />
-                    <QuickAction to="/Revenue"             Icon={IconUsers}  label="Monitor Revenue Records" />
-                </div>
-                <div className="dash-note">
-                    <strong>Note:</strong> Your dashboard auto-refreshes every 5 minutes,
-                    so numbers stay current as the treasurer adds records.
-                </div>
-            </section>
-            */}
         </div>
     );
-}
-
-function formatPeso(value) {
-    return "₱" + Number(value || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 });
 }
