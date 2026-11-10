@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { UploadCloud, FileText, X, ScanLine } from "lucide-react";
 import "../styles/expenditure.css";
-import { useRole } from "../custom_hooks/use_role";
 import useSubmitExpenditure from "../custom_hooks/use_submitExpenditure";
 import { scanReceiptImage } from '../custom_hooks/use_Scanner';
 import { useToast } from "../context/toast_context";
@@ -21,7 +20,6 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
     const [isDraggingReceipt, setIsDraggingReceipt] = useState(false);
     const [isDraggingDocs, setIsDraggingDocs] = useState(false);
 
-    const { isTreasurer } = useRole();
     const { showToast } = useToast();
 
     const { handleSubmit } = useSubmitExpenditure({
@@ -46,45 +44,46 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
     }, [successMessage, setIsModalOpen, showToast]);
 
     const handleReceiptChange = async (file) => {
-        setReceiptFile(file);
-        setOcrStatus('idle');
-        setIsOverridden(false);
+    setReceiptFile(file);
+    setOcrStatus('idle');
+    setIsOverridden(false);
 
-        if (!file) return;
-        const enteredAmount = parseFloat(amount);
+    if (!file) return;
+    const enteredAmount = parseFloat(amount);
 
-        if (enteredAmount && file.type.startsWith('image/')) {
-            try {
-                setIsScanning(true);
-                const { extractedNumbers } = await scanReceiptImage(file);
+    if (enteredAmount && file.type.startsWith('image/')) {
+        try {
+            setIsScanning(true);
+            const { extractedNumbers, likelyTotal } = await scanReceiptImage(file);
 
-                if (extractedNumbers.length === 0) {
-                    setOcrStatus('unreadable');
-                    setDetectedAmount(null);
-                } else {
-                    const matchFound = extractedNumbers.includes(enteredAmount);
-                    if (matchFound) {
-                        setOcrStatus('matched');
-                        setDetectedAmount(enteredAmount);
-                    } else {
-                        setOcrStatus('mismatch');
-                        const reasonableNumbers = extractedNumbers.filter(n => n < 1000000);
-                        const closestNumber = reasonableNumbers.length > 0 
-                            ? reasonableNumbers.reduce((prev, curr) => 
-                                Math.abs(curr - enteredAmount) < Math.abs(prev - enteredAmount) ? curr : prev
-                              )
-                            : Math.max(...extractedNumbers);
-                        setDetectedAmount(closestNumber);
-                    }
-                }
-            } catch (error) {
-                console.error("OCR Error:", error);
+            if ((!extractedNumbers || extractedNumbers.length === 0) && likelyTotal === null) {
                 setOcrStatus('unreadable');
-            } finally {
-                setIsScanning(false);
+                setDetectedAmount(null);
+            } else {
+                // Check if likely total matches or if the entered amount appears anywhere in the raw text numbers
+                const matchFound = (likelyTotal === enteredAmount) || extractedNumbers.includes(enteredAmount);
+
+                if (matchFound) {
+                    setOcrStatus('matched');
+                    setDetectedAmount(enteredAmount);
+                } else {
+                    setOcrStatus('mismatch');
+                    // Display the keyword total if detected, otherwise fall back to the highest realistic number scanned
+                    const fallbackAmount = likelyTotal !== null 
+                        ? likelyTotal 
+                        : (extractedNumbers.length > 0 ? Math.max(...extractedNumbers.filter(n => n < 1000000)) : null);
+                    
+                    setDetectedAmount(fallbackAmount);
+                }
             }
+        } catch (error) {
+            console.error("OCR Error:", error);
+            setOcrStatus('unreadable');
+        } finally {
+            setIsScanning(false);
         }
-    };
+    }
+};
 
     return (
         <div

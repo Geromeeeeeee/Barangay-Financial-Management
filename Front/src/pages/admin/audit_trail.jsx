@@ -115,14 +115,22 @@ export default function AuditTrail() {
                                         </span>
                                     </td>
                                     <td className="audit-details">
-                                        {log.details}
-                                        {log.attachment_path && log.details.includes("Manually Overridden") && (
-                                            <button 
-                                                onClick={() => setViewFile(`${BASE_URL}endpoints/view_file.php?file=${log.attachment_path}`)}
-                                                className="audit-file-link"
-                                            >
-                                                🔍 View 
-                                            </button>
+                                        <div>{log.details}</div>
+                                        {log.attachment_count > 0 && (
+                                            <div className="audit-attachments">
+                                                <span>
+                                                    {log.attachment_count} attachment{log.attachment_count === 1 ? "" : "s"}
+                                                </span>
+                                                {log.attachment_paths.map((path, index) => (
+                                                    <button
+                                                        key={`${log.id}-${path}`}
+                                                        onClick={() => setViewFile(`${BASE_URL}endpoints/view_file.php?file=${encodeURIComponent(path)}`)}
+                                                        className="audit-file-link"
+                                                    >
+                                                        🔍 View {log.attachment_count > 1 ? index + 1 : ""}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         )}
                                     </td>
                                 </tr>

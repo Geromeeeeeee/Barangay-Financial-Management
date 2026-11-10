@@ -159,13 +159,14 @@ class Expenditure {
                 'attachment_size' => $attachment_size,
             ]);
 
+            $expenditureId = (int)$this->database->lastInsertId();
+
             if ($attachments) {
                 $stmtInsertAttachment = $this->database->prepare('
                     INSERT INTO expenditure_attachments
                         (expenditure_id, file_path, file_name, file_type, file_size)
                     VALUES (:expenditure_id, :file_path, :file_name, :file_type, :file_size)
                 ');
-                $expenditureId = (int)$this->database->lastInsertId();
                 foreach ($attachments as $attachment) {
                     $stmtInsertAttachment->execute([
                         'expenditure_id' => $expenditureId,
@@ -178,7 +179,7 @@ class Expenditure {
             }
 
             $this->database->commit();
-            return (int)$this->database->lastInsertId();
+            return $expenditureId;
         } catch (Exception $e) {
             if ($this->database->inTransaction()) $this->database->rollBack();
             throw $e;
@@ -189,35 +190,63 @@ class Expenditure {
         $conditions = [];
         $parameters = [];
 
-        if ($filters['month'] !== null && $filters['month'] !== '') {
+        if (isset($filters['month']) && $filters['month'] !== null && $filters['month'] !== '') {
             $conditions[] = 'MONTH(e.created_at) = :month';
             $parameters['month'] = $filters['month'];
         }
-        if ($filters['year'] !== null && $filters['year'] !== '') {
+        if (isset($filters['year']) && $filters['year'] !== null && $filters['year'] !== '') {
             $conditions[] = 'YEAR(e.created_at) = :year';
             $parameters['year'] = $filters['year'];
         }
         $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
+
         $stmt = $this->database->prepare("
-            SELECT e.*, c.name AS category_name, s.name AS subcategory_name,
-                   ma.amount AS monthly_allocation_amount,
-                   ma.allocation_date,
-                   COALESCE((
-                       SELECT SUM(me.amount)
-                       FROM expenditures me
-                       WHERE me.monthly_allocation_id = e.monthly_allocation_id
-                   ), 0) AS monthly_allocation_spent,
-                   (SELECT COUNT(*) FROM expenditure_attachments ea WHERE ea.expenditure_id = e.id)
-                   + CASE WHEN e.attachment_path IS NULL THEN 0 ELSE 1 END AS attachment_count
+            SELECT 
+                e.*, 
+                c.name AS category_name, 
+                s.name AS subcategory_name,
+                ma.amount AS monthly_allocation_amount,
+                ma.allocation_date,
+                COALESCE((
+                    SELECT SUM(me.amount)
+                    FROM expenditures me
+                    WHERE me.monthly_allocation_id = e.monthly_allocation_id
+                ), 0) AS monthly_allocation_spent,
+                
+                /* Combine multiple attachment records into a single JSON array per expenditure */
+                CASE 
+                    WHEN COUNT(ea.id) > 0 THEN 
+                        CONCAT('[', GROUP_CONCAT(
+                            JSON_OBJECT(
+                                'id', ea.id,
+                                'path', ea.file_path,
+                                'name', ea.file_name,
+                                'type', ea.file_type,
+                                'size', ea.file_size
+                            )
+                        ), ']')
+                    ELSE '[]'
+                END AS attachments,
+
+                (COUNT(DISTINCT ea.id) + CASE WHEN e.attachment_path IS NULL THEN 0 ELSE 1 END) AS attachment_count
             FROM expenditures e
             LEFT JOIN budget_categories c ON c.id = e.category_id
             LEFT JOIN budget_subcategories s ON s.id = e.subcategory_id
             LEFT JOIN monthly_subcategory_allocations ma ON ma.id = e.monthly_allocation_id
+            LEFT JOIN expenditure_attachments ea ON ea.expenditure_id = e.id
             {$where}
+            GROUP BY e.id
             ORDER BY e.created_at DESC
         ");
         $stmt->execute($parameters);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Decode JSON array of attachments for each expenditure record
+        foreach ($results as &$row) {
+            $row['attachments'] = json_decode($row['attachments'] ?? '[]', true);
+        }
+
+        return $results;
     }
 }
 ?>

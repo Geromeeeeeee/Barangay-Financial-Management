@@ -4,12 +4,13 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/
 export default function useSubmitExpenditure({
     setLoading, 
     setErrorMessage, 
-    selectedFiles = [], 
+    receiptFile = null,
+    supportingFiles = [], 
     setSuccessMessage,
     ocrStatus = 'idle',
     isOverridden = false
 }){
-    const handleSubmit = async (event) =>{
+    const handleSubmit = async (event) => {
         event.preventDefault();
         setLoading(true);
         setErrorMessage("");
@@ -18,15 +19,19 @@ export default function useSubmitExpenditure({
         formData.delete("supporting_documents[]");
 
         try {
-            if (!selectedFiles || selectedFiles.length === 0) {
+            // 1. Verify receipt file presence
+            if (!receiptFile) {
                 throw new Error("A receipt attachment is required to log an expenditure.");
             }
 
+            // 2. Check OCR override conditions
             if ((ocrStatus === 'mismatch' || ocrStatus === 'unreadable') && !isOverridden) {
                 throw new Error("Please resolve the receipt OCR mismatch warning or check 'Override OCR' to submit.");
             }
 
-            selectedFiles.forEach((file) => formData.append("supporting_documents[]", file));
+            // 3. Append receipt and supporting documents under supporting_documents[]
+            const allFiles = [receiptFile, ...supportingFiles];
+            allFiles.forEach((file) => formData.append("supporting_documents[]", file));
             
             if (!formData.get("monthly_allocation_id")) {
                 throw new Error("Select a monthly allocation before recording the expenditure.");
@@ -43,7 +48,7 @@ export default function useSubmitExpenditure({
             if (response?.data?.status === "expenditure_recorded") {
                 setSuccessMessage("Expenditure Recorded!");
             } else {
-                setErrorMessage("Failed to record expenditure.");
+                setErrorMessage(response?.data?.message || "Failed to record expenditure.");
             }
         } catch (requestError) {
             const message = requestError.response?.data?.message || requestError.message || "Server error. Please check your backend connection.";
