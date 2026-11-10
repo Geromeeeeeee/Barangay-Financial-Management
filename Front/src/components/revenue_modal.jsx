@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import { UploadCloud, FileText, X, ScanLine } from 'lucide-react'
 import { useToast } from '../context/toast_context'
 import { useRole } from '../custom_hooks/use_role'
+import { scanReceiptImage } from '../custom_hooks/use_Scanner'
 import '../styles/revenue.css'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
@@ -9,22 +11,69 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/
 export default function Revenue_Modal({ setIsModalOpen }) {
     const [loading, setLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
-    const [files, setFiles] = useState([])
+    
+    // Receipt File & Supporting Files
+    const [receiptFile, setReceiptFile] = useState(null)
+    const [supportingFiles, setSupportingFiles] = useState([])
+    
+    // Form Inputs
     const [amount, setAmount] = useState('')
     const [particular, setParticular] = useState('NTA')
     const [customSource, setCustomSource] = useState('')
     const [recordType, setRecordType] = useState('annual_budget')
     const [categories, setCategories] = useState([])
     const [allocations, setAllocations] = useState([])
+
+    // OCR State
+    const [isScanning, setIsScanning] = useState(false)
+    const [ocrStatus, setOcrStatus] = useState('idle') 
+    const [detectedAmount, setDetectedAmount] = useState(null)
+    const [isOverridden, setIsOverridden] = useState(false)
+
+    // Drag-and-Drop States
+    const [isDraggingReceipt, setIsDraggingReceipt] = useState(false)
+    const [isDraggingDocs, setIsDraggingDocs] = useState(false)
+
     const { showToast } = useToast()
     const { isSK } = useRole()
 
-    const handleFileChange = (e) => {
-        setFiles(Array.from(e.target.files))
-    }
+    const handleReceiptChange = async (file) => {
+        setReceiptFile(file)
+        setOcrStatus('idle')
+        setIsOverridden(false)
 
-    const removeFile = (indexToRemove) => {
-        setFiles(files.filter((_, index) => index !== indexToRemove))
+        if (!file) return
+        const enteredAmount = parseFloat(amount)
+
+        if (enteredAmount && file.type.startsWith('image/')) {
+            try {
+                setIsScanning(true)
+                const { extractedNumbers, likelyTotal } = await scanReceiptImage(file)
+
+                if ((!extractedNumbers || extractedNumbers.length === 0) && likelyTotal === null) {
+                    setOcrStatus('unreadable')
+                    setDetectedAmount(null)
+                } else {
+                    const matchFound = (likelyTotal === enteredAmount) || extractedNumbers.includes(enteredAmount)
+
+                    if (matchFound) {
+                        setOcrStatus('matched')
+                        setDetectedAmount(enteredAmount)
+                    } else {
+                        setOcrStatus('mismatch')
+                        const fallbackAmount = likelyTotal !== null 
+                            ? likelyTotal 
+                            : (extractedNumbers.length > 0 ? Math.max(...extractedNumbers.filter(n => n < 1000000)) : null)
+                        setDetectedAmount(fallbackAmount)
+                    }
+                }
+            } catch (error) {
+                console.error("OCR Error:", error)
+                setOcrStatus('unreadable')
+            } finally {
+                setIsScanning(false)
+            }
+        }
     }
 
     const handleRecordTypeChange = (event) => {
@@ -77,24 +126,38 @@ export default function Revenue_Modal({ setIsModalOpen }) {
             formData.set('allocations', JSON.stringify(allocations))
         }
 
+        // Clean out default attachments[] input and manually append files
+        formData.delete('attachments[]')
+        if (receiptFile) {
+            formData.append('attachments[]', receiptFile)
+        }
+        supportingFiles.forEach((file) => formData.append('attachments[]', file))
+
+        formData.append('ocr_overridden', isOverridden ? 1 : 0)
+
         try {
+            if ((ocrStatus === 'mismatch' || ocrStatus === 'unreadable') && !isOverridden) {
+                throw new Error("Please resolve the receipt OCR mismatch warning or check 'Override OCR' to submit.")
+            }
+
             const response = await axios.post(`${API_URL}revenue/add_revenue.php`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
                 withCredentials: true
-            });
+            })
 
             if (response?.data?.status === 'revenue_recorded') {
                 showToast("Revenue recorded successfully!", "success")
-                setIsModalOpen(false);
+                setIsModalOpen(false)
             } else {
-                setErrorMessage("Failed to record revenue.");
-                showToast("Failed to record revenue.", "error");
+                setErrorMessage("Failed to record revenue.")
+                showToast("Failed to record revenue.", "error")
             }
         } catch (err) {
-            setErrorMessage(err.response?.data?.message || "Server error. Please check your backend connection.");
-            showToast(err.response?.data?.message || "Server error.", "error");
+            const msg = err.response?.data?.message || err.message || "Server error. Please check your backend connection."
+            setErrorMessage(msg)
+            showToast(msg, "error")
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
     }
 
@@ -118,12 +181,14 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                             <option value="annual_budget">Annual approved budget</option>
                         </select>
                     </label>
+
                     {recordType === 'monthly_receipt' && (
                         <label>
                             <span>Actual receipt date</span>
                             <input name="receipt_date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required />
                         </label>
                     )}
+
                     {recordType === 'annual_budget' && (
                         <label>
                             <span>Particular/Source</span>
@@ -138,6 +203,7 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                             </select>
                         </label>
                     )}
+
                     {recordType === 'monthly_receipt' ? (
                         <label>
                             <span>Description/source</span>
@@ -156,8 +222,9 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                             />
                         </label>
                     )}
+
                     <label>
-                        <span>Amount</span>
+                        <span>Amount (₱)</span>
                         <input
                             name="amount"
                             type="number"
@@ -170,41 +237,138 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                         />
                     </label>
 
-                    <label>
-                        <span>{recordType === 'monthly_receipt' ? 'Receipt / Proof of Fund Release (required)' : 'Supporting Documents (Select multiple)'}</span>
-                        <input 
-                            type="file" 
-                            name="attachments[]" 
-                            multiple 
-                            onChange={handleFileChange}
-                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                            style={{ padding: '8px', background: '#f8fafc', border: '1.5px dashed #cbd5e1', cursor: 'pointer' }}
-                        />
-                        
-                        {files.length > 0 && (
-                            <div style={{ marginTop: '8px', background: '#f0fdf4', padding: '8px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-                                <small style={{ color: '#15803d', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
-                                    {files.length} file(s) ready to upload:
-                                </small>
-                                <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                                    {files.map((file, index) => (
-                                        <li key={index} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#166534', padding: '2px 0' }}>
-                                            <span>{file.name}</span>
+                    {/* Official Receipt Dropzone + OCR Scanning */}
+                    <div className="form-group">
+                        <span>{recordType === 'monthly_receipt' ? 'Receipt / Proof of Fund Release' : 'Primary Receipt / Voucher'} <small>(Required for OCR)</small></span>
+                        <div 
+                            className={`drop-zone ${isDraggingReceipt ? 'dragging' : ''}`}
+                            onDragOver={(e) => { e.preventDefault(); setIsDraggingReceipt(true); }}
+                            onDragLeave={() => setIsDraggingReceipt(false)}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                setIsDraggingReceipt(false);
+                                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                                    handleReceiptChange(e.dataTransfer.files[0]);
+                                }
+                            }}
+                        >
+                            {!receiptFile && (
+                                <label htmlFor="revenue-receipt-upload" className="drop-zone-label">
+                                    <div className="drop-prompt">
+                                        <UploadCloud className="drop-icon" size={24} />
+                                        <p>Drag & drop receipt here or <strong>browse</strong></p>
+                                    </div>
+                                </label>
+                            )}
+                            
+                            {receiptFile && (
+                                <div className="file-preview">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <FileText size={16} color="#64748b" />
+                                        <span>{receiptFile.name}</span>
+                                    </div>
+                                    <button type="button" onClick={(e) => { e.preventDefault(); setReceiptFile(null); }}>
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            )}
+
+                            <input 
+                                type="file" 
+                                accept=".jpg,.jpeg,.png,.pdf"
+                                onChange={(e) => handleReceiptChange(e.target.files[0] || null)}
+                                className="file-input-hidden"
+                                id="revenue-receipt-upload"
+                            />
+                        </div>
+
+                        {isScanning && (
+                            <div className="ocr-scanning-text">
+                                <ScanLine size={16} /> Scanning receipt using Tesseract OCR...
+                            </div>
+                        )}
+
+                        {!isScanning && ocrStatus === 'matched' && (
+                            <div className="ocr-warning-box matched">Amount Verified</div>
+                        )}
+
+                        {!isScanning && ocrStatus === 'mismatch' && (
+                            <div className="ocr-warning-box mismatch">
+                                <strong>Warning: Receipt shows ₱{detectedAmount?.toLocaleString()}, but input is ₱{Number(amount).toLocaleString()}.</strong>
+                                <label className="ocr-override-label">
+                                    <input type="checkbox" checked={isOverridden} onChange={(e) => setIsOverridden(e.target.checked)} />
+                                    Proceed with manual override
+                                </label>
+                            </div>
+                        )}
+
+                        {!isScanning && ocrStatus === 'unreadable' && (
+                            <div className="ocr-warning-box unreadable">
+                                <strong>Could not automatically read print on document.</strong>
+                                <label className="ocr-override-label">
+                                    <input type="checkbox" checked={isOverridden} onChange={(e) => setIsOverridden(e.target.checked)} />
+                                    Proceed with manual verification
+                                </label>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Optional Supporting Documents Upload */}
+                    <div className="form-group">
+                        <span>Supporting Documents <small>(Optional)</small></span>
+                        <div 
+                            className={`drop-zone ${isDraggingDocs ? 'dragging' : ''}`}
+                            onDragOver={(e) => { e.preventDefault(); setIsDraggingDocs(true); }}
+                            onDragLeave={() => setIsDraggingDocs(false)}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                setIsDraggingDocs(false);
+                                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                                    setSupportingFiles((prev) => [...prev, ...Array.from(e.dataTransfer.files)]);
+                                }
+                            }}
+                        >
+                            <label htmlFor="revenue-docs-upload" className="drop-zone-label">
+                                <div className="drop-prompt">
+                                    <UploadCloud className="drop-icon" size={24} />
+                                    <p>Drag & drop additional documents here or <strong>browse</strong></p>
+                                </div>
+                            </label>
+
+                            <input 
+                                type="file" 
+                                multiple
+                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                onChange={(e) => setSupportingFiles(Array.from(e.target.files))}
+                                className="file-input-hidden"
+                                id="revenue-docs-upload"
+                            />
+
+                            {supportingFiles.length > 0 && (
+                                <ul className="selected-files-list">
+                                    {supportingFiles.map((file, index) => (
+                                        <li key={`${file.name}-${index}`}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <FileText size={14} color="#64748b" />
+                                                <span>{file.name}</span>
+                                            </div>
                                             <button 
                                                 type="button" 
-                                                onClick={() => removeFile(index)}
-                                                style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: 0 }}
+                                                onClick={(e) => { 
+                                                    e.preventDefault(); 
+                                                    setSupportingFiles((prev) => prev.filter((_, i) => i !== index)); 
+                                                }}
                                             >
-                                                Remove
+                                                <X size={12} />
                                             </button>
                                         </li>
                                     ))}
                                 </ul>
-                            </div>
-                        )}
-                    </label>
-                    
+                            )}
+                        </div>
+                    </div>
 
+                    {/* Budget Item Allocation Section for Monthly Receipts */}
                     {recordType === 'monthly_receipt' && (
                         <div className="revenue-allocation-section">
                             <div className="revenue-allocation-header">
@@ -281,7 +445,16 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                         <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>
                             Cancel
                         </button>
-                        <button type="submit" className="btn-save" disabled={loading}>
+                        <button 
+                            type="submit" 
+                            className="btn-save" 
+                            disabled={
+                                loading || 
+                                isScanning || 
+                                (ocrStatus === 'mismatch' && !isOverridden) || 
+                                (ocrStatus === 'unreadable' && !isOverridden)
+                            }
+                        >
                             {loading ? "Saving..." : "Save Revenue"}
                         </button>
                     </div>

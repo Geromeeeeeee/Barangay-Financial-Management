@@ -26,6 +26,7 @@ $request_key     = $data['request_key']     ?? null;
 $record_type     = $data['record_type']     ?? 'annual_budget';
 $receipt_date    = $data['receipt_date']    ?? null;
 $allocationsJson = $data['allocations']    ?? '[]';
+$ocrOverridden   = isset($data['ocr_overridden']) && (string)$data['ocr_overridden'] === '1';
 
 $revenue = new Revenue($pdo);
 $audit = new Audit($pdo);
@@ -241,53 +242,57 @@ try {
                 'size'   => $fileData['size']
             ]);
         }
-
     }
 
     if ($record_type === 'monthly_receipt' && !empty($allocations)) {
         $insertAllocation = $pdo->prepare('
-                INSERT INTO monthly_subcategory_allocations
-                    (revenue_id, subcategory_id, amount, allocation_date, created_by)
-                VALUES (:revenue_id, :subcategory_id, :amount, :allocation_date, :created_by)
-            ');
-            foreach ($allocations as $allocation) {
-                $subcategoryId = (int)($allocation['subcategory_id'] ?? 0);
-                if (($allocation['item_type'] ?? 'existing') === 'new') {
-                    $categoryId = (int)$allocation['category_id'];
-                    $duplicate = $pdo->prepare('
-                        SELECT id FROM budget_subcategories
-                        WHERE category_id = :category_id AND LOWER(name) = LOWER(:name)
-                    ');
-                    $duplicate->execute(['category_id' => $categoryId, 'name' => trim($allocation['name'])]);
-                    if ($duplicate->fetchColumn()) {
-                        throw new InvalidArgumentException('A budget item with that name already exists in the selected category.');
-                    }
-
-                    $createItem = $pdo->prepare('
-                        INSERT INTO budget_subcategories (category_id, name, allocated_amount)
-                        VALUES (:category_id, :name, 0)
-                    ');
-                    $createItem->execute([
-                        'category_id' => $categoryId,
-                        'name' => trim($allocation['name']),
-                    ]);
-                    $subcategoryId = (int)$pdo->lastInsertId();
+            INSERT INTO monthly_subcategory_allocations
+                (revenue_id, subcategory_id, amount, allocation_date, created_by)
+            VALUES (:revenue_id, :subcategory_id, :amount, :allocation_date, :created_by)
+        ');
+        foreach ($allocations as $allocation) {
+            $subcategoryId = (int)($allocation['subcategory_id'] ?? 0);
+            if (($allocation['item_type'] ?? 'existing') === 'new') {
+                $categoryId = (int)$allocation['category_id'];
+                $duplicate = $pdo->prepare('
+                    SELECT id FROM budget_subcategories
+                    WHERE category_id = :category_id AND LOWER(name) = LOWER(:name)
+                ');
+                $duplicate->execute(['category_id' => $categoryId, 'name' => trim($allocation['name'])]);
+                if ($duplicate->fetchColumn()) {
+                    throw new InvalidArgumentException('A budget item with that name already exists in the selected category.');
                 }
-                $insertAllocation->execute([
-                    'revenue_id' => $revenue_id,
-                    'subcategory_id' => $subcategoryId,
-                    'amount' => round((float)$allocation['amount'], 2),
-                    'allocation_date' => $receipt_date,
-                    'created_by' => $created_by,
+
+                $createItem = $pdo->prepare('
+                    INSERT INTO budget_subcategories (category_id, name, allocated_amount)
+                    VALUES (:category_id, :name, 0)
+                ');
+                $createItem->execute([
+                    'category_id' => $categoryId,
+                    'name' => trim($allocation['name']),
                 ]);
+                $subcategoryId = (int)$pdo->lastInsertId();
             }
+            $insertAllocation->execute([
+                'revenue_id' => $revenue_id,
+                'subcategory_id' => $subcategoryId,
+                'amount' => round((float)$allocation['amount'], 2),
+                'allocation_date' => $receipt_date,
+                'created_by' => $created_by,
+            ]);
         }
+    }
 
     if ($record_type === 'monthly_receipt') {
         $pdo->commit();
     }
 
-    $audit->log('Record Revenue', "Recorded revenue of ₱" . number_format($amount, 2) . " for {$source}");
+    $auditDescription = "Recorded revenue of ₱" . number_format($amount, 2) . " for {$source}";
+    if ($ocrOverridden) {
+        $auditDescription .= " [WARNING: Receipt doesn't match the input number - Manually Overridden]";
+    }
+
+    $audit->log('Record Revenue', $auditDescription);
 
     echo json_encode([
         'status' => 'revenue_recorded',
@@ -313,3 +318,4 @@ try {
     http_response_code($e instanceof InvalidArgumentException ? 400 : 500);
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }
+?>
