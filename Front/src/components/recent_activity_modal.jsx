@@ -20,6 +20,8 @@ function timeAgo(dateString) {
 
 export default function RecentActivityModal({ isOpen, onClose, activityType, selectedActivity, refresh, loading }) {
     if (!isOpen) return null;
+    const isAllocation = activityType === "allocation";
+    const isRevenue = activityType === "revenue";
 
     return (
         <div className="logout-modal-backdrop" onClick={onClose}>
@@ -27,7 +29,7 @@ export default function RecentActivityModal({ isOpen, onClose, activityType, sel
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', margin: 0 }}>
-                        All {activityType === "revenue" ? "Recent Revenue" : "Recent Expenditures"}
+                        All {isAllocation ? "Recent SK Funding" : isRevenue ? "Recent Revenue" : "Recent Expenditures"}
                     </h2>
                     
                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -65,8 +67,8 @@ export default function RecentActivityModal({ isOpen, onClose, activityType, sel
                             {selectedActivity.map((row) => (
                                 <ActivityRow
                                     key={`modal-${activityType}-${row.id}`}
-                                    dot={activityType === "revenue" ? "green" : "red"}
-                                    title={activityType === "revenue" ? row.source : `Expenditure: ${row.description}`}
+                                    dot={isRevenue || isAllocation ? "green" : "red"}
+                                    title={isRevenue || isAllocation ? row.source : `Expenditure: ${row.description}`}
                                     meta={`₱${Number(row.amount).toLocaleString()}`}
                                     time={timeAgo(row.created_at)}
                                 />

@@ -21,12 +21,14 @@ function timeAgo(dateString) {
 
 export default function RecentActivity({activityType, refresh, loading, selectedActivity, setActivityType}){
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const isAllocation = activityType === "allocation";
+    const isRevenue = activityType === "revenue";
 
     return(
     <>
         <div className="activity-wrapper dash-card">
             <div className="dash-card-head" style={{ marginBottom: '10px' }}>
-                <h2>{activityType === "revenue" ? "Recent Revenue" : "Recent Expenditures"}</h2>
+                <h2>{isAllocation ? "Recent SK Funding" : isRevenue ? "Recent Revenue" : "Recent Expenditures"}</h2>
                 <button className="dash-link" onClick={() => setIsModalOpen(true)}>
                     View All
                 </button>
@@ -43,8 +45,8 @@ export default function RecentActivity({activityType, refresh, loading, selected
                         {selectedActivity.map((row) => (
                             <ActivityRow
                                 key={`${activityType}-${row.id}`}
-                                dot={activityType === "revenue" ? "green" : "red"}
-                                title={activityType === "revenue" ? row.source : `Expenditure: ${row.description}`}
+                                dot={isRevenue || isAllocation ? "green" : "red"}
+                                title={isRevenue || isAllocation ? row.source : `Expenditure: ${row.description}`}
                                 meta={`₱${Number(row.amount).toLocaleString()}`}
                                 time={timeAgo(row.created_at)}
                             />
@@ -56,10 +58,10 @@ export default function RecentActivity({activityType, refresh, loading, selected
             <div className="activity-toggle">
                 <button
                     type="button"
-                    className={activityType === "revenue" ? "active" : ""}
-                    onClick={() => setActivityType("revenue")}
+                    className={isAllocation || isRevenue ? "active" : ""}
+                    onClick={() => setActivityType(isAllocation ? "allocation" : "revenue")}
                 >
-                    Revenue
+                    {isAllocation ? "SK Funding" : "Revenue"}
                 </button>
                 <button
                     type="button"
