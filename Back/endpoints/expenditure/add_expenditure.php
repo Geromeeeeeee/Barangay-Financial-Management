@@ -43,6 +43,19 @@ try {
     if ($monthly_allocation_id === null || $monthly_allocation_id === '') {
         throw new InvalidArgumentException('A monthly allocation is required for new expenditures.');
     }
+    if ($role === 'sk_chairman') {
+        $allocationCategory = $pdo->prepare('
+            SELECT c.name
+            FROM monthly_subcategory_allocations a
+            JOIN budget_subcategories s ON s.id = a.subcategory_id
+            JOIN budget_categories c ON c.id = s.category_id
+            WHERE a.id = :id
+        ');
+        $allocationCategory->execute(['id' => (int)$monthly_allocation_id]);
+        if (strcasecmp((string)$allocationCategory->fetchColumn(), 'SK') !== 0) {
+            throw new InvalidArgumentException('SK chairmen can only record expenditures against SK monthly allocations.');
+        }
+    }
 
     $files = $_FILES['supporting_documents'] ?? null;
     $uploadedFilesData = [];

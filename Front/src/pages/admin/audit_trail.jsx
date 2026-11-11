@@ -32,7 +32,6 @@ export default function AuditTrail() {
     const getPillColor = (action) => {
         if (action.includes("Revenue")) return "pill-green";
         if (action.includes("Expenditure")) return "pill-red";
-        if (action.includes("Clearance")) return "pill-blue";
         if (action.includes("Sign Up")) return "pill-purple";
         return "pill-grey";
     };

@@ -8,7 +8,6 @@ import DashboardLayout from './components/layout';
 import Revenue from './pages/revenue';
 import Expenditure from './pages/expenditure';
 import Reports from './pages/reports';
-import ClearanceReport from './pages/clearance_report';
 import InviteCodesPage from './pages/admin/invite_codes';
 import AuditTrail from './pages/admin/audit_trail';
 import Settings from './pages/settings';
@@ -40,12 +39,6 @@ function App() {
           <Route element={<Protected_Route allowedRoles={['treasurer', 'admin']}/>}>
             <Route element={<DashboardLayout />}>
               <Route path="/Reports" element={<Reports />} />
-            </Route>
-          </Route>
-
-          <Route element={<Protected_Route allowedRoles={['staff', 'admin']}/>}>
-            <Route element={<DashboardLayout />}>
-              <Route path="/ClearanceReport" element={<ClearanceReport />} />
             </Route>
           </Route>
 

@@ -9,6 +9,7 @@ export function useStaffStats() {
         entriesThisMonth: 0,
         totalAmount: 0,
         recentActivity: [],
+        recentExpenditures: [],
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");

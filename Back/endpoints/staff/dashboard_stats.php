@@ -46,10 +46,22 @@ $recent = $pdo->prepare("
 $recent->execute(['uid' => $uid]);
 $recent = $recent->fetchAll(PDO::FETCH_ASSOC);
 
+// ============ RECENT EXPENDITURES ============
+$recentExpenditures = $pdo->prepare("
+    SELECT id, description, amount, created_at
+    FROM expenditures
+    WHERE created_by = :uid
+    ORDER BY created_at DESC
+    LIMIT 5
+");
+$recentExpenditures->execute(['uid' => $uid]);
+$recentExpenditures = $recentExpenditures->fetchAll(PDO::FETCH_ASSOC);
+
 // ============ RETURN ============
 echo json_encode([
     'totalEntries'    => (int)$totalEntries,
     'entriesThisMonth'=> (int)$entriesThisMonth,
     'totalAmount'     => (float)$totalAmount,
     'recentActivity'  => $recent,
+    'recentExpenditures' => $recentExpenditures,
 ]);

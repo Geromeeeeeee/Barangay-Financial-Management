@@ -32,8 +32,8 @@ export default function Expenditure() {
     const { expenditures, loading, error, refetch } = useExpenditure(filterParams);
     const {peso, date} = useFormat();
     const { categories, income, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory } = useBudgetCategories();
-    const {isTreasurer, isSK, user} = useRole();
-    const isSKChairman = user?.role === 'sk_chairman';
+    const {isTreasurer, isSK, role} = useRole();
+    const isSKChairman = role === 'sk_chairman';
     const canModify = isTreasurer || isSKChairman;
     const displayedCategories = isSK ? categories.filter((category)=>category.name === "SK") : categories
 

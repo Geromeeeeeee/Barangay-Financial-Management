@@ -34,7 +34,6 @@ export default function NotificationBell() {
 
         if (action.includes("Revenue")) targetPath = "/Revenue";
         else if (action.includes("Expenditure")) targetPath = "/Expenditure";
-        else if (action.includes("Clearance")) targetPath = "/ClearanceReport";
         else if (action.includes("Sign Up") || action.includes("Invite")) targetPath = "/admin/invite-codes";
         else if (action.includes("Password")) targetPath = "/Settings";
 

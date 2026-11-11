@@ -13,13 +13,23 @@ try {
     // Monthly Allocation = Total / 12
     $monthlyAllocation = $skTotalAllocated / 12;
 
-    // Get the monthly expenditures filtering by fund_allocation = 'SK'
+    // Include both legacy SK fund records and monthly allocations under the SK category.
     $stmtExp = $pdo->prepare("
-        SELECT MONTH(created_at) as month, SUM(amount) as total 
-        FROM expenditures 
-        WHERE fund_allocation = 'SK'
-          AND YEAR(created_at) = :year 
-        GROUP BY MONTH(created_at)
+        SELECT MONTH(e.created_at) as month, SUM(e.amount) as total
+        FROM expenditures e
+        WHERE YEAR(e.created_at) = :year
+          AND (
+              e.fund_allocation = 'SK'
+              OR EXISTS (
+                  SELECT 1
+                  FROM monthly_subcategory_allocations msa
+                  JOIN budget_subcategories bs ON bs.id = msa.subcategory_id
+                  JOIN budget_categories bc ON bc.id = bs.category_id
+                  WHERE msa.id = e.monthly_allocation_id
+                    AND bc.name = 'SK'
+              )
+          )
+        GROUP BY MONTH(e.created_at)
     ");
     $stmtExp->execute(['year' => $year]);
     $expenditures = $stmtExp->fetchAll(PDO::FETCH_KEY_PAIR);

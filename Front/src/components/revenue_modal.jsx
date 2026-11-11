@@ -217,7 +217,7 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                                 type="text"
                                 value={customSource}
                                 onChange={(event) => setCustomSource(event.target.value)}
-                                placeholder="e.g., Clearance Fee"
+                                placeholder="e.g., Service Fee"
                                 required
                             />
                         </label>

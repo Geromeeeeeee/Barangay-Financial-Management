@@ -17,7 +17,6 @@ class Expenditure {
             if (!is_numeric($amount) || (float)$amount <= 0 || trim((string)$description) === '') {
                 throw new Exception('A positive amount and description are required.');
             }
-            $allocation_val = null;
             $monthlyAllocationId = $monthly_allocation_id !== null && $monthly_allocation_id !== ''
                 ? (int)$monthly_allocation_id
                 : null;
@@ -122,20 +121,6 @@ class Expenditure {
                 $updateCategory->execute(['amount' => $amount, 'id' => $category_id]);
             }
 
-            if (!empty($fund_allocation)) {
-                $stmtCheck = $this->database->prepare('SELECT balance FROM fund_balances WHERE fund_name = :fund_name');
-                $stmtCheck->execute(['fund_name' => $fund_allocation]);
-                $existingFund = $stmtCheck->fetch(PDO::FETCH_ASSOC);
-
-                if (!$existingFund || $existingFund['balance'] < $amount) {
-                    throw new Exception('The selected fund does not exist or has insufficient balance.');
-                }
-
-                $stmtUpdate = $this->database->prepare('UPDATE fund_balances SET balance = balance - :amount WHERE fund_name = :fund_name');
-                $stmtUpdate->execute(['amount' => $amount, 'fund_name' => $fund_allocation]);
-
-                $allocation_val = $fund_allocation;
-            }
 
             $stmtInsertExpenditure = $this->database->prepare('
                 INSERT INTO expenditures
@@ -148,7 +133,7 @@ class Expenditure {
             $stmtInsertExpenditure->execute([
                 'amount'          => $amount,
                 'description'     => $description,
-                'fund_allocation' => $allocation_val,
+                'fund_allocation' => null,
                 'created_by'      => $created_by,
                 'category_id'     => $category_id ?: null,
                 'subcategory_id'  => $subcategory_id ?: null,
