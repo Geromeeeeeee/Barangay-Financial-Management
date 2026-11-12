@@ -7,7 +7,7 @@ class Budget
             SELECT COALESCE(SUM(nta), 0) AS nta,
                    COALESCE(SUM(local_income), 0) AS local_income
             FROM revenues
-            WHERE record_type = 'annual_budget'
+            WHERE record_type = 'annual_budget' AND status = 'verified'
         ")->fetch(PDO::FETCH_ASSOC);
 
         $nta = round((float)$row['nta'], 2);

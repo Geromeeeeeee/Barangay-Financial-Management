@@ -1,6 +1,7 @@
 <?php
 require_once '../../header.php';
 require_once '../../classes/revenue.php';
+require_once '../../classes/budget.php';
 
 try {
     $filters = [
@@ -18,6 +19,18 @@ try {
 
     $revenue = new Revenue($pdo);
     $revenues = $revenue->get_revenue($filters);
+    $income = Budget::income($pdo);
+    $monthlyReceipts = $pdo->query("
+        SELECT COALESCE(SUM(amount), 0)
+        FROM revenues
+        WHERE record_type = 'monthly_receipt'
+          AND status = 'verified'
+          AND YEAR(receipt_date) = YEAR(CURDATE())
+    ")->fetchColumn();
+    $unreleasedAnnualBudget = max(0, round(
+        (float)$income['total_annual_income'] - (float)$monthlyReceipts,
+        2
+    ));
     foreach ($revenues as &$record) {
         $record['nta'] = (float)$record['nta'];
         $record['local_income'] = (float)$record['local_income'];
@@ -30,7 +43,8 @@ try {
 
     echo json_encode([
         'status' => 'success',
-        'data' => $revenues
+        'data' => $revenues,
+        'unreleased_annual_budget' => $unreleasedAnnualBudget,
     ]);
 } catch (InvalidArgumentException $e) {
     http_response_code(400);

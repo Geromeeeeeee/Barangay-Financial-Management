@@ -5,6 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/
 
 export default function useRevenue (filters = {}) {
     const [revenues, setRevenues] = useState([]);
+    const [unreleasedAnnualBudget, setUnreleasedAnnualBudget] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -23,6 +24,7 @@ export default function useRevenue (filters = {}) {
             .then((response) => {
                 if (response?.data?.status === 'success') {
                     setRevenues(response.data.data || []);
+                    setUnreleasedAnnualBudget(response.data.unreleased_annual_budget ?? null);
                 } else {
                     setError('Failed to load revenues.');
                 }
@@ -49,6 +51,7 @@ export default function useRevenue (filters = {}) {
             .then((response) => {
                 if (response?.data?.status === 'success') {
                     setRevenues(response.data.data || []);
+                    setUnreleasedAnnualBudget(response.data.unreleased_annual_budget ?? null);
                 } else {
                     setError('Failed to load revenues.');
                 }
@@ -59,5 +62,5 @@ export default function useRevenue (filters = {}) {
             .finally(() => setLoading(false));
     }, [fetchRevenue]);
 
-    return { revenues, loading, error, refetch };
+    return { revenues, unreleasedAnnualBudget, loading, error, refetch };
 }

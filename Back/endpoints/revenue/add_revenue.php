@@ -27,6 +27,7 @@ $record_type     = $data['record_type']     ?? 'annual_budget';
 $receipt_date    = $data['receipt_date']    ?? null;
 $allocationsJson = $data['allocations']    ?? '[]';
 $ocrOverridden   = isset($data['ocr_overridden']) && (string)$data['ocr_overridden'] === '1';
+$status          = $ocrOverridden ? 'pending' : 'verified';
 
 $revenue = new Revenue($pdo);
 $audit = new Audit($pdo);
@@ -96,6 +97,7 @@ try {
             throw new InvalidArgumentException('Budget item allocations cannot exceed the received amount.');
         }
 
+        $existingRevenueId = null;
         if ($request_key) {
             $existingRevenue = $pdo->prepare('SELECT id FROM revenues WHERE request_key = :request_key');
             $existingRevenue->execute(['request_key' => $request_key]);
@@ -115,6 +117,29 @@ try {
                 exit();
             }
         }
+
+        $pdo->beginTransaction();
+        $annualBudgetRows = $pdo->query("
+            SELECT nta, local_income
+            FROM revenues
+            WHERE record_type = 'annual_budget' AND status = 'verified'
+            FOR UPDATE
+        ")->fetchAll(PDO::FETCH_ASSOC);
+        $annualBudget = 0.0;
+        foreach ($annualBudgetRows as $annualBudgetRow) {
+            $annualBudget += (float)$annualBudgetRow['nta'] + (float)$annualBudgetRow['local_income'];
+        }
+        $verifiedMonthlyReceipts = (float)$pdo->query("
+            SELECT COALESCE(SUM(amount), 0)
+            FROM revenues
+            WHERE record_type = 'monthly_receipt'
+              AND status = 'verified'
+              AND YEAR(receipt_date) = YEAR(CURDATE())
+        ")->fetchColumn();
+        if ($verifiedMonthlyReceipts + $amount > $annualBudget + 0.005) {
+            throw new InvalidArgumentException('The monthly receipt exceeds the unreleased annual budget.');
+        }
+
     } elseif ($particular !== null) {
         if (!is_numeric($amount) || (float)$amount <= 0) {
             throw new InvalidArgumentException('A positive amount is required.');
@@ -207,7 +232,9 @@ try {
     }
 
     if ($record_type === 'monthly_receipt') {
-        $pdo->beginTransaction();
+        if (!$pdo->inTransaction()) {
+            $pdo->beginTransaction();
+        }
     }
 
     $revenue_id = $revenue->record_revenue(
@@ -224,7 +251,8 @@ try {
         $particular ?? 'Others',
         $record_type,
         $record_type === 'monthly_receipt' ? $receipt_date : null,
-        $record_type !== 'monthly_receipt'
+        $record_type !== 'monthly_receipt',
+        $status
     );
 
     if (!empty($uploadedFilesData) && $revenue_id) {

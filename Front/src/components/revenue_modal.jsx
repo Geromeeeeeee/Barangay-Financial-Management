@@ -8,7 +8,7 @@ import '../styles/revenue.css'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
-export default function Revenue_Modal({ setIsModalOpen }) {
+export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget = null }) {
     const [loading, setLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
     
@@ -36,6 +36,9 @@ export default function Revenue_Modal({ setIsModalOpen }) {
 
     const { showToast } = useToast()
     const { isSK } = useRole()
+    const monthlyReceiptExceedsBudget = recordType === 'monthly_receipt'
+        && unreleasedAnnualBudget !== null
+        && Number(amount) > Number(unreleasedAnnualBudget) + 0.005
 
     const handleReceiptChange = async (file) => {
         setReceiptFile(file)
@@ -136,6 +139,9 @@ export default function Revenue_Modal({ setIsModalOpen }) {
         formData.append('ocr_overridden', isOverridden ? 1 : 0)
 
         try {
+            if (monthlyReceiptExceedsBudget) {
+                throw new Error('The monthly receipt exceeds the unreleased annual budget.')
+            }
             if ((ocrStatus === 'mismatch' || ocrStatus === 'unreadable') && !isOverridden) {
                 throw new Error("Please resolve the receipt OCR mismatch warning or check 'Override OCR' to submit.")
             }
@@ -235,6 +241,16 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                             placeholder="0.00"
                             required
                         />
+                        {recordType === 'monthly_receipt' && unreleasedAnnualBudget !== null && (
+                            <small className={monthlyReceiptExceedsBudget ? 'revenue-modal-error' : 'muted'}>
+                                Unreleased annual budget: ₱{Number(unreleasedAnnualBudget).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            </small>
+                        )}
+                        {monthlyReceiptExceedsBudget && (
+                            <small className="revenue-modal-error">
+                                The receipt amount cannot exceed the unreleased annual budget.
+                            </small>
+                        )}
                     </label>
 
                     {/* Official Receipt Dropzone + OCR Scanning */}
@@ -451,6 +467,7 @@ export default function Revenue_Modal({ setIsModalOpen }) {
                             disabled={
                                 loading || 
                                 isScanning || 
+                                monthlyReceiptExceedsBudget ||
                                 (ocrStatus === 'mismatch' && !isOverridden) || 
                                 (ocrStatus === 'unreadable' && !isOverridden)
                             }

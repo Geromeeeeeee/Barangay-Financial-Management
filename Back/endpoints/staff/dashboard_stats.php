@@ -31,6 +31,7 @@ $entriesThisMonth = $entriesThisMonth->fetchColumn();
 $totalAmount = $pdo->prepare("
     SELECT COALESCE(SUM(amount), 0) FROM revenues
     WHERE created_by = :uid AND record_type = 'annual_budget'
+      AND status = 'verified'
 ");
 $totalAmount->execute(['uid' => $uid]);
 $totalAmount = $totalAmount->fetchColumn();

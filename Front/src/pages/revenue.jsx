@@ -9,6 +9,7 @@ import usePagination from '../custom_hooks/use_pagination'
 import useFormat from '../custom_hooks/use_format'
 import Filter from '../components/filter'
 import Pagination from '../components/pagination'
+import ReviewRecord from '../components/review_record_modal'
 import { useToast } from '../context/toast_context'
 import '../styles/revenue.css'
 import "../styles/expenditure.css";
@@ -18,10 +19,11 @@ export default function Revenue () {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [viewFilesId, setViewFilesId] = useState(null)
     const [allocationReceipt, setAllocationReceipt] = useState(null)
+    const [reviewItem, setReviewItem] = useState(null)
     const [currentPage, setCurrentPage] = useState(1)
     const {filters, months, years, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
-    const { revenues, loading, error, refetch } = useRevenue(filterParams)
-    const { isTreasurer, isStaff, isSK } = useRole()
+    const { revenues, unreleasedAnnualBudget, loading, error, refetch } = useRevenue(filterParams)
+    const { isTreasurer, isStaff, isSK, isAdmin } = useRole()
     const {peso, date} = useFormat()
     const { showToast } = useToast()
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
@@ -90,6 +92,7 @@ export default function Revenue () {
                                 <th>Particulars</th>
                                 <th>Supporting Document</th>
                                 <th className="right">Amount</th>
+                                {isAdmin && <th className="right">Status</th>}
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -120,6 +123,26 @@ export default function Revenue () {
                                         )}
                                     </td>
                                     <td className="right amount">{peso(r.amount)}</td>
+                                    {isAdmin && (
+                                        <td className="right">
+                                            {r.status === 'pending' ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setReviewItem(r)}
+                                                    style={{ background: '#f59e0b', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}
+                                                >
+                                                    Review
+                                                </button>
+                                            ) : (
+                                                <span style={{
+                                                    color: r.status === 'verified' ? '#10b981' : '#dc2626',
+                                                    fontWeight: '500'
+                                                }}>
+                                                    {(r.status || 'unknown').charAt(0).toUpperCase() + (r.status || 'unknown').slice(1)}
+                                                </span>
+                                            )}
+                                        </td>
+                                    )}
                                     <td>
                                         {isTreasurer && r.record_type === 'monthly_receipt' && (
                                             <button type="button" className="filter-clear" onClick={() => setAllocationReceipt(r)}>
@@ -137,7 +160,10 @@ export default function Revenue () {
             </div>
 
             {isModalOpen && canRecord && (
-                <Revenue_Modal setIsModalOpen={handleCloseModal} />
+                <Revenue_Modal
+                    setIsModalOpen={handleCloseModal}
+                    unreleasedAnnualBudget={unreleasedAnnualBudget}
+                />
             )}
             
             {viewFilesId && (
@@ -150,6 +176,13 @@ export default function Revenue () {
                     showToast={showToast}
                     onClose={() => setAllocationReceipt(null)}
                     onSaved={refetch}
+                />
+            )}
+            {reviewItem && (
+                <ReviewRecord
+                    revenue={reviewItem}
+                    onClose={() => setReviewItem(null)}
+                    onRefresh={refetch}
                 />
             )}
         </div>

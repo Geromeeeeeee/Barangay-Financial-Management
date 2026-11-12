@@ -140,6 +140,7 @@ try {
         JOIN revenues r ON r.id = a.revenue_id
         WHERE c.id = :category_id
           AND r.record_type = 'monthly_receipt'
+          AND r.status = 'verified'
           AND YEAR(a.allocation_date) = :year
         ORDER BY a.allocation_date DESC, a.id DESC
         LIMIT 5
@@ -158,6 +159,7 @@ try {
         JOIN revenues r ON r.id = a.revenue_id
         WHERE c.id = :category_id
           AND r.record_type = 'monthly_receipt'
+          AND r.status = 'verified'
           AND YEAR(a.allocation_date) = :year
     ");
     $monthlyFunding->execute([

@@ -74,7 +74,7 @@ try {
     $stmt = $pdo->prepare("
         SELECT source, SUM(amount) AS total_amount, COUNT(*) AS entry_count
         FROM revenues
-        WHERE record_type = 'annual_budget' AND YEAR(created_at) = :year
+        WHERE record_type = 'annual_budget' AND status = 'verified' AND YEAR(created_at) = :year
         GROUP BY source
         ORDER BY total_amount DESC
     ");
@@ -84,7 +84,7 @@ try {
     $stmt = $pdo->prepare("
         SELECT id, receipt_date, source, amount
         FROM revenues
-        WHERE record_type = 'monthly_receipt'
+        WHERE record_type = 'monthly_receipt' AND status = 'verified'
           AND MONTH(receipt_date) = :month AND YEAR(receipt_date) = :year
         ORDER BY receipt_date, id
     ");
@@ -99,7 +99,7 @@ try {
         JOIN revenues r ON r.id = a.revenue_id
         JOIN budget_subcategories s ON s.id = a.subcategory_id
         JOIN budget_categories c ON c.id = s.category_id
-        WHERE r.record_type = 'monthly_receipt'
+        WHERE r.record_type = 'monthly_receipt' AND r.status = 'verified'
           AND MONTH(a.allocation_date) = :month AND YEAR(a.allocation_date) = :year
         ORDER BY a.allocation_date, a.id
     ");
@@ -112,7 +112,7 @@ try {
                r.amount - COALESCE(SUM(a.amount), 0) AS unallocated_amount
         FROM revenues r
         LEFT JOIN monthly_subcategory_allocations a ON a.revenue_id = r.id
-        WHERE r.record_type = 'monthly_receipt' AND YEAR(r.receipt_date) = :year
+        WHERE r.record_type = 'monthly_receipt' AND r.status = 'verified' AND YEAR(r.receipt_date) = :year
         GROUP BY r.id, r.receipt_date, r.source, r.amount
         ORDER BY r.receipt_date, r.id
     ");
@@ -167,7 +167,7 @@ try {
         LEFT JOIN expenditures e
             ON e.monthly_allocation_id = a.id
             AND e.status = 'verified'
-        WHERE r.record_type = 'monthly_receipt' AND YEAR(a.allocation_date) = :year
+        WHERE r.record_type = 'monthly_receipt' AND r.status = 'verified' AND YEAR(a.allocation_date) = :year
         GROUP BY a.id, a.amount, a.allocation_date, r.receipt_date,
                  r.source, c.name, s.name
         ORDER BY a.allocation_date, a.id

@@ -35,7 +35,7 @@ class Expenditure {
                     JOIN revenues r ON r.id = a.revenue_id
                     JOIN budget_subcategories s ON s.id = a.subcategory_id AND s.is_active = 1
                     JOIN budget_categories c ON c.id = s.category_id
-                    WHERE a.id = :id AND r.record_type = :record_type
+                    WHERE a.id = :id AND r.record_type = :record_type AND r.status = \'verified\'
                     FOR UPDATE
                 ');
                 $monthlyAllocation->execute([
@@ -70,7 +70,7 @@ class Expenditure {
             $annualBudgetRows = $this->database->query("
                 SELECT nta, local_income
                 FROM revenues
-                WHERE record_type = 'annual_budget'
+                WHERE record_type = 'annual_budget' AND status = 'verified'
                 FOR UPDATE
             ")->fetchAll(PDO::FETCH_ASSOC);
             $annualBudget = 0.0;

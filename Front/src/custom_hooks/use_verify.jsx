@@ -4,14 +4,14 @@ import { useToast } from "../context/toast_context";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
-export default function useVerify(onSuccess) {
+export default function useVerify(onSuccess, resource = 'expenditure') {
     const [loading, setLoading] = useState(false);
     const { showToast } = useToast();
 
     const updateStatus = async (id, status) => {
         setLoading(true);
         try {
-            const response = await axios.post(`${API_URL}expenditure/verify_expenditure.php`, { id, status }, {
+            const response = await axios.post(`${API_URL}${resource}/verify_${resource}.php`, { id, status }, {
                 withCredentials: true
             });
             showToast(response.data.message || `Record ${status} successfully.`, "success");

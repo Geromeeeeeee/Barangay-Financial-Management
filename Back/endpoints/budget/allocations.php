@@ -17,7 +17,7 @@ try {
                    r.amount - COALESCE(SUM(a.amount), 0) AS remaining_amount
             FROM revenues r
             LEFT JOIN monthly_subcategory_allocations a ON a.revenue_id = r.id
-            WHERE r.record_type = 'monthly_receipt'
+            WHERE r.record_type = 'monthly_receipt' AND r.status = 'verified'
             GROUP BY r.id, r.receipt_date, r.amount, r.source
             ORDER BY r.receipt_date DESC, r.id DESC
         ")->fetchAll(PDO::FETCH_ASSOC);
@@ -43,7 +43,7 @@ try {
                    COALESCE(SUM(e.amount), 0) AS expenditure_amount,
                    a.amount - COALESCE(SUM(e.amount), 0) AS remaining_amount
             FROM monthly_subcategory_allocations a
-            JOIN revenues r ON r.id = a.revenue_id
+            JOIN revenues r ON r.id = a.revenue_id AND r.status = 'verified'
             JOIN budget_subcategories s ON s.id = a.subcategory_id
             JOIN budget_categories c ON c.id = s.category_id
             LEFT JOIN users u ON u.id = a.created_by
@@ -93,7 +93,7 @@ try {
 
     $receipt = $pdo->prepare("
         SELECT id, amount FROM revenues
-        WHERE id = :id AND record_type = 'monthly_receipt'
+        WHERE id = :id AND record_type = 'monthly_receipt' AND status = 'verified'
         FOR UPDATE
     ");
     $receipt->execute(['id' => $revenueId]);

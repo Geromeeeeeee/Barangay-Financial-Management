@@ -9,6 +9,7 @@ try {
         SELECT MONTH(created_at) as month, SUM(amount) as total 
         FROM revenues 
         WHERE record_type = 'annual_budget'
+          AND status = 'verified'
           AND YEAR(created_at) = :year
         GROUP BY MONTH(created_at)
     ");

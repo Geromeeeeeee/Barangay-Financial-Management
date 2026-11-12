@@ -9,13 +9,13 @@ Budget::refreshAllocations($pdo);
 // ============ TOTAL REVENUE ============
 $totalRevenue = $pdo->query("
     SELECT COALESCE(SUM(amount), 0) FROM revenues
-    WHERE record_type = 'annual_budget'
+    WHERE record_type = 'annual_budget' AND status = 'verified'
 ")->fetchColumn();
 
 // ============ REVENUE THIS MONTH ============
 $revenueThisMonth = $pdo->query("
     SELECT COALESCE(SUM(amount), 0) FROM revenues
-    WHERE record_type = 'annual_budget'
+    WHERE record_type = 'annual_budget' AND status = 'verified'
       AND MONTH(created_at) = MONTH(NOW())
       AND YEAR(created_at)  = YEAR(NOW())
 ")->fetchColumn();
@@ -70,7 +70,7 @@ $fiscalYear = (int)($_GET['year'] ?? date('Y'));
 $annualApprovedBudget = (float)$income['total_annual_income'];
 $monthlyReceipts = $pdo->prepare("
     SELECT COALESCE(SUM(amount), 0) FROM revenues
-    WHERE record_type = 'monthly_receipt' AND YEAR(receipt_date) = :year
+    WHERE record_type = 'monthly_receipt' AND status = 'verified' AND YEAR(receipt_date) = :year
 ");
 $monthlyReceipts->execute(['year' => $fiscalYear]);
 $totalMonthlyReceipts = (float)$monthlyReceipts->fetchColumn();
@@ -95,7 +95,7 @@ $unallocated = $pdo->prepare("
         SELECT SUM(a.amount) FROM monthly_subcategory_allocations a WHERE a.revenue_id = r.id
     ), 0)), 0)
     FROM revenues r
-    WHERE r.record_type = 'monthly_receipt' AND YEAR(r.receipt_date) = :year
+    WHERE r.record_type = 'monthly_receipt' AND r.status = 'verified' AND YEAR(r.receipt_date) = :year
 ");
 $unallocated->execute(['year' => $fiscalYear]);
 $unallocatedReceiptBalance = (float)$unallocated->fetchColumn();
@@ -108,7 +108,7 @@ $allocatedUnspent = $pdo->prepare("
     ), 0)), 0)
     FROM monthly_subcategory_allocations a
     JOIN revenues r ON r.id = a.revenue_id
-    WHERE r.record_type = 'monthly_receipt' AND YEAR(r.receipt_date) = :year
+    WHERE r.record_type = 'monthly_receipt' AND r.status = 'verified' AND YEAR(r.receipt_date) = :year
 ");
 $allocatedUnspent->execute(['year' => $fiscalYear]);
 $allocatedButUnspentBalance = (float)$allocatedUnspent->fetchColumn();
