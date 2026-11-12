@@ -128,7 +128,9 @@ try {
         FROM expenditures e
         LEFT JOIN budget_categories c ON c.id = e.category_id
         LEFT JOIN budget_subcategories s ON s.id = e.subcategory_id
-        WHERE MONTH(e.created_at) = :month AND YEAR(e.created_at) = :year
+        WHERE MONTH(e.created_at) = :month
+          AND YEAR(e.created_at) = :year
+          AND e.status = 'verified'
         GROUP BY c.name, s.name
         ORDER BY total_amount DESC
     ");
@@ -162,7 +164,9 @@ try {
         JOIN revenues r ON r.id = a.revenue_id
         JOIN budget_subcategories s ON s.id = a.subcategory_id
         JOIN budget_categories c ON c.id = s.category_id
-        LEFT JOIN expenditures e ON e.monthly_allocation_id = a.id
+        LEFT JOIN expenditures e
+            ON e.monthly_allocation_id = a.id
+            AND e.status = 'verified'
         WHERE r.record_type = 'monthly_receipt' AND YEAR(a.allocation_date) = :year
         GROUP BY a.id, a.amount, a.allocation_date, r.receipt_date,
                  r.source, c.name, s.name

@@ -106,6 +106,8 @@ try {
         }
     }
 
+    $status = $ocrOverridden ? 'pending' : 'verified';
+
     $expenditure->record_expenditure(
         $amount,
         $description,
@@ -118,7 +120,8 @@ try {
         null,
         null,
         $uploadedFilesData,
-        $monthly_allocation_id
+        $monthly_allocation_id,
+        $status
     );
 
     $auditDescription = "Recorded expenditure of ₱" . number_format((float)$amount, 2) . " for {$description}";

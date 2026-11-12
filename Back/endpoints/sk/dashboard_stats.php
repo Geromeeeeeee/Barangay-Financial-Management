@@ -55,6 +55,7 @@ try {
         SELECT COALESCE(SUM(e.amount), 0)
         FROM expenditures e
         WHERE YEAR(e.created_at) = :year
+          AND e.status = 'verified'
           AND {$skExpenditureWhere}
     ");
     $totalExpenditures->execute([
@@ -69,6 +70,7 @@ try {
                    SELECT SUM(e.amount)
                    FROM expenditures e
                    WHERE YEAR(e.created_at) = :year
+                     AND e.status = 'verified'
                      AND (
                          (
                              e.monthly_allocation_id IS NOT NULL

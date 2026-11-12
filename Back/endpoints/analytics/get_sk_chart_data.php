@@ -18,6 +18,7 @@ try {
         SELECT MONTH(e.created_at) as month, SUM(e.amount) as total
         FROM expenditures e
         WHERE YEAR(e.created_at) = :year
+          AND e.status = 'verified'
           AND (
               e.fund_allocation = 'SK'
               OR EXISTS (

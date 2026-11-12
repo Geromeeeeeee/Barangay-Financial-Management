@@ -15,6 +15,7 @@ import "../styles/expenditure.css";
 import "../styles/category_card.css"
 import Pagination from "../components/pagination";
 import "../styles/treasurer_dashboard.css";
+import ReviewRecord from "../components/review_record_modal";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
@@ -32,10 +33,11 @@ export default function Expenditure() {
     const { expenditures, loading, error, refetch } = useExpenditure(filterParams);
     const {peso, date} = useFormat();
     const { categories, income, loading: categoriesLoading, error: categoriesError, saveSubcategory, deleteSubcategory } = useBudgetCategories();
-    const {isTreasurer, isSK, role} = useRole();
+    const {isTreasurer, isSK, role, isAdmin} = useRole();
     const isSKChairman = role === 'sk_chairman';
     const canModify = isTreasurer || isSKChairman;
     const displayedCategories = isSK ? categories.filter((category)=>category.name === "SK") : categories
+    const [reviewItem, setReviewItem] = useState(null);
 
     const skFilteredExpenditures = isSK
         ? expenditures.filter(e => 
@@ -211,7 +213,16 @@ export default function Expenditure() {
                     <>
                     <table className="expenditure-table">
                         <thead>
-                            <tr><th>Date</th><th>Description</th><th>Fund Allocation</th><th>Supporting Document</th><th className="right">Amount</th></tr>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Fund Allocation</th>
+                                <th>Supporting Document</th>
+                                <th className="right">Amount</th>
+                                {isAdmin && (
+                                    <th className="right">Status</th>
+                                )}
+                            </tr>
                         </thead>
                         <tbody>
                             {displayedRecords.map((expenditure) => (
@@ -241,6 +252,26 @@ export default function Expenditure() {
                                         ) : <span className="muted">—</span>}
                                     </td>
                                     <td className="right amount">{peso(expenditure.amount)}</td>
+                                    {isAdmin && (
+                                        <td className="right">
+                                            {expenditure.status === 'pending' ? (
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => setReviewItem(expenditure)}
+                                                    style={{ background: '#f59e0b', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}
+                                                >
+                                                    Review
+                                                </button>
+                                            ):(
+                                                <span style={{ 
+                                                    color: expenditure.status === 'verified' ? '#10b981' : '#dc2626', 
+                                                    fontWeight: '500' 
+                                                }}>
+                                                    {expenditure.status.charAt(0).toUpperCase() + expenditure.status.slice(1)}
+                                                </span>
+                                            )}
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
@@ -255,6 +286,14 @@ export default function Expenditure() {
             />}
             {subcategoryForm && canModify && <SubcategoryForm subcategory={subcategoryForm} onClose={() => setSubcategoryForm(null)} onSave={saveSubcategory} />}
             {viewFile && <FileListModal expenditure={viewFile} onClose={() => setViewFile(null)} />}
+            
+            {reviewItem && (
+            <ReviewRecord 
+                expenditure={reviewItem} 
+                onClose={() => setReviewItem(null)} 
+                onRefresh={refetch} 
+            />
+        )}
         </div>
     );
 }

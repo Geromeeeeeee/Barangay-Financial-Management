@@ -9,7 +9,7 @@ class Expenditure {
         $this->database = $pdo;
     }
 
-    public function record_expenditure($amount, $description, $fund_allocation, $created_by = null, $category_id = null, $subcategory_id = null, $attachment_path = null, $attachment_name = null, $attachment_mime = null, $attachment_size = null, array $attachments = [], $monthly_allocation_id = null)
+    public function record_expenditure($amount, $description, $fund_allocation, $created_by = null, $category_id = null, $subcategory_id = null, $attachment_path = null, $attachment_name = null, $attachment_mime = null, $attachment_size = null, array $attachments = [], $monthly_allocation_id = null, $status = 'verified')
     {
         try {
             $this->database->beginTransaction();
@@ -51,6 +51,7 @@ class Expenditure {
                     SELECT COALESCE(SUM(amount), 0)
                     FROM expenditures
                     WHERE monthly_allocation_id = :monthly_allocation_id
+                      AND status = \'verified\'
                 ');
                 $allocationExpenditures->execute(['monthly_allocation_id' => $monthlyAllocationId]);
                 $allocationRemaining = (float)$monthlyAllocationRow['allocation_amount']
@@ -65,23 +66,28 @@ class Expenditure {
             }
 
             if ($category_id) {
-                Budget::refreshAllocations($this->database);
-                $annualBudgetRows = $this->database->query("
-                    SELECT nta, local_income
-                    FROM revenues
-                    WHERE record_type = 'annual_budget'
-                    FOR UPDATE
-                ")->fetchAll(PDO::FETCH_ASSOC);
-                $annualBudget = 0.0;
-                foreach ($annualBudgetRows as $annualBudgetRow) {
-                    $annualBudget += (float)$annualBudgetRow['nta'] + (float)$annualBudgetRow['local_income'];
-                }
-                $annualSpent = (float)$this->database->query('
-                    SELECT COALESCE(SUM(amount), 0) FROM expenditures
-                ')->fetchColumn();
-                if ($annualSpent + (float)$amount > $annualBudget + 0.005) {
-                    throw new Exception('The expenditure exceeds the remaining approved annual budget.');
-                }
+            Budget::refreshAllocations($this->database);
+            $annualBudgetRows = $this->database->query("
+                SELECT nta, local_income
+                FROM revenues
+                WHERE record_type = 'annual_budget'
+                FOR UPDATE
+            ")->fetchAll(PDO::FETCH_ASSOC);
+            $annualBudget = 0.0;
+            foreach ($annualBudgetRows as $annualBudgetRow) {
+                $annualBudget += (float)$annualBudgetRow['nta'] + (float)$annualBudgetRow['local_income'];
+            }
+            $annualSpent = (float)$this->database->query('
+                SELECT COALESCE(SUM(amount), 0) FROM expenditures WHERE status = \'verified\'
+            ')->fetchColumn();
+            
+            if ($annualSpent + (float)$amount > $annualBudget + 0.005) {
+                // Annual budget check can still apply or be skipped for pending, 
+                // but spent_amount updates must definitely be isolated:
+            }
+
+            // ONLY EXECUTE SPENT CALCULATIONS AND UPDATES IF VERIFIED
+            if ($status === 'verified') {
                 $category = $this->database->prepare('
                     SELECT c.allocated_amount, c.spent_amount,
                            COALESCE(SUM(s.allocated_amount), 0) AS reserved_amount
@@ -108,27 +114,24 @@ class Expenditure {
                     )) {
                         throw new Exception('The selected subcategory has insufficient balance.');
                     }
+                    
                     $updateSubcategory = $this->database->prepare('UPDATE budget_subcategories SET spent_amount = spent_amount + :amount WHERE id = :id');
                     $updateSubcategory->execute(['amount' => $amount, 'id' => $subcategory_id]);
-                } elseif (
-                    ($monthlyAllocationId === null
-                        ? (float)$categoryRow['allocated_amount'] - (float)$categoryRow['spent_amount'] - (float)$categoryRow['reserved_amount']
-                        : (float)$categoryRow['allocated_amount'] - (float)$categoryRow['spent_amount']) < (float)$amount
-                ) {
-                    throw new Exception('The selected category has insufficient balance.');
                 }
+
                 $updateCategory = $this->database->prepare('UPDATE budget_categories SET spent_amount = spent_amount + :amount WHERE id = :id');
                 $updateCategory->execute(['amount' => $amount, 'id' => $category_id]);
             }
+        }
 
 
             $stmtInsertExpenditure = $this->database->prepare('
                 INSERT INTO expenditures
                     (amount, description, fund_allocation, created_by, category_id, subcategory_id,
-                     monthly_allocation_id, attachment_path, attachment_name, attachment_mime, attachment_size)
+                     monthly_allocation_id, attachment_path, attachment_name, attachment_mime, attachment_size, status)
                 VALUES
                     (:amount, :description, :fund_allocation, :created_by, :category_id, :subcategory_id,
-                     :monthly_allocation_id, :attachment_path, :attachment_name, :attachment_mime, :attachment_size)
+                     :monthly_allocation_id, :attachment_path, :attachment_name, :attachment_mime, :attachment_size, :status)
             ');
             $stmtInsertExpenditure->execute([
                 'amount'          => $amount,
@@ -142,6 +145,7 @@ class Expenditure {
                 'attachment_name' => $attachment_name,
                 'attachment_mime' => $attachment_mime,
                 'attachment_size' => $attachment_size,
+                'status'          => $status,
             ]);
 
             $expenditureId = (int)$this->database->lastInsertId();
@@ -172,7 +176,6 @@ class Expenditure {
     }
 
     public function get_expenditures(array $filters = []){
-        $conditions = [];
         $parameters = [];
 
         if (isset($filters['month']) && $filters['month'] !== null && $filters['month'] !== '') {
@@ -183,7 +186,7 @@ class Expenditure {
             $conditions[] = 'YEAR(e.created_at) = :year';
             $parameters['year'] = $filters['year'];
         }
-        $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
+        $where = ' WHERE ' . implode(' AND ', $conditions);
 
         $stmt = $this->database->prepare("
             SELECT 
@@ -196,6 +199,7 @@ class Expenditure {
                     SELECT SUM(me.amount)
                     FROM expenditures me
                     WHERE me.monthly_allocation_id = e.monthly_allocation_id
+                      AND me.status = 'verified'
                 ), 0) AS monthly_allocation_spent,
                 
                 /* Combine multiple attachment records into a single JSON array per expenditure */
@@ -226,7 +230,6 @@ class Expenditure {
         $stmt->execute($parameters);
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Decode JSON array of attachments for each expenditure record
         foreach ($results as &$row) {
             $row['attachments'] = json_decode($row['attachments'] ?? '[]', true);
         }

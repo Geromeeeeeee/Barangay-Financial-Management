@@ -68,7 +68,7 @@ unset($category);
 
 $income = Budget::income($pdo);
 $totalAllocated = $pdo->query("SELECT COALESCE(SUM(allocated_amount), 0) FROM budget_categories")->fetchColumn();
-$totalExpenditures = $pdo->query("SELECT COALESCE(SUM(amount), 0) FROM expenditures")->fetchColumn();
+$totalExpenditures = $pdo->query("SELECT COALESCE(SUM(amount), 0) FROM expenditures WHERE status = 'verified'")->fetchColumn();
 $fiscalYear = (int)($_GET['year'] ?? date('Y'));
 $annualApprovedBudget = (float)$income['total_annual_income'];
 $monthlyReceipts = $pdo->prepare("
@@ -83,6 +83,7 @@ $annualExpenditures = $pdo->prepare("
     SELECT COALESCE(SUM(amount), 0)
     FROM expenditures
     WHERE YEAR(created_at) = :year
+      AND status = 'verified'
 ");
 $annualExpenditures->execute(['year' => $fiscalYear]);
 $totalAnnualExpenditures = (float)$annualExpenditures->fetchColumn();
@@ -90,7 +91,9 @@ $totalAnnualExpenditures = (float)$annualExpenditures->fetchColumn();
 $linkedExpenditures = $pdo->prepare("
     SELECT COALESCE(SUM(amount), 0)
     FROM expenditures
-    WHERE monthly_allocation_id IS NOT NULL AND YEAR(created_at) = :year
+    WHERE monthly_allocation_id IS NOT NULL
+      AND YEAR(created_at) = :year
+      AND status = 'verified'
 ");
 $linkedExpenditures->execute(['year' => $fiscalYear]);
 $monthlyLinkedExpenditures = (float)$linkedExpenditures->fetchColumn();
@@ -108,7 +111,10 @@ $unallocatedReceiptBalance = (float)$unallocated->fetchColumn();
 
 $allocatedUnspent = $pdo->prepare("
     SELECT COALESCE(SUM(a.amount - COALESCE((
-        SELECT SUM(e.amount) FROM expenditures e WHERE e.monthly_allocation_id = a.id
+        SELECT SUM(e.amount)
+        FROM expenditures e
+        WHERE e.monthly_allocation_id = a.id
+          AND e.status = 'verified'
     ), 0)), 0)
     FROM monthly_subcategory_allocations a
     JOIN revenues r ON r.id = a.revenue_id

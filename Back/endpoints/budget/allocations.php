@@ -47,7 +47,9 @@ try {
             JOIN budget_subcategories s ON s.id = a.subcategory_id
             JOIN budget_categories c ON c.id = s.category_id
             LEFT JOIN users u ON u.id = a.created_by
-            LEFT JOIN expenditures e ON e.monthly_allocation_id = a.id
+            LEFT JOIN expenditures e
+                ON e.monthly_allocation_id = a.id
+                AND e.status = 'verified'
             {$where}
             GROUP BY a.id, a.revenue_id, a.subcategory_id, a.amount,
                      a.allocation_date, a.created_by, a.created_at,

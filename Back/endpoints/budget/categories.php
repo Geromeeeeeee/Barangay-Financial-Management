@@ -26,6 +26,7 @@ function category_payload(PDO $pdo, bool $refreshAllocations = true): array {
                    FROM expenditures e
                    INNER JOIN monthly_subcategory_allocations a ON a.id = e.monthly_allocation_id
                    WHERE a.subcategory_id = budget_subcategories.id
+                     AND e.status = 'verified'
                ), 0) AS monthly_spent_amount,
                COALESCE((
                    SELECT SUM(a.amount)
@@ -36,6 +37,7 @@ function category_payload(PDO $pdo, bool $refreshAllocations = true): array {
                    FROM expenditures e
                    INNER JOIN monthly_subcategory_allocations a ON a.id = e.monthly_allocation_id
                    WHERE a.subcategory_id = budget_subcategories.id
+                     AND e.status = 'verified'
                ), 0) AS monthly_remaining_amount
         FROM budget_subcategories ORDER BY category_id, name
     ")->fetchAll(PDO::FETCH_ASSOC);

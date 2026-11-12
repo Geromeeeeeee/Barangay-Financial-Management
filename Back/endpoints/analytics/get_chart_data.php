@@ -19,6 +19,7 @@ try {
         SELECT MONTH(created_at) as month, SUM(amount) as total 
         FROM expenditures 
         WHERE YEAR(created_at) = :year 
+          AND status = 'verified'
         GROUP BY MONTH(created_at)
     ");
     $stmtExp->execute(['year' => $year]);

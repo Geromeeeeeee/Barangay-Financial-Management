@@ -9,7 +9,7 @@ class Revenue {
         $this->database = $pdo;
     }
 
-    public function record_revenue($nta, $local_income, $source, $created_by = null, $request_key = null, $attachment_path = null, $attachment_name = null, $attachment_mime = null, $attachment_size = null, $amount = null, $particular = 'Others', $record_type = 'annual_budget', $receipt_date = null, $manageTransaction = true)
+    public function record_revenue($nta, $local_income, $source, $created_by = null, $request_key = null, $attachment_path = null, $attachment_name = null, $attachment_mime = null, $attachment_size = null, $amount = null, $particular = 'Others', $record_type = 'annual_budget', $receipt_date = null, $manageTransaction = true, $status = 'verified')
     {
         try {
             if ($manageTransaction) {
@@ -32,8 +32,8 @@ class Revenue {
             }
 
             $stmtInsertRevenue = $this->database->prepare('
-                INSERT INTO revenues (amount, nta, local_income, source, particular, created_by, request_key, attachment_path, attachment_name, attachment_mime, attachment_size, record_type, receipt_date)
-                VALUES (:amount, :nta, :local_income, :source, :particular, :created_by, :request_key, :attachment_path, :attachment_name, :attachment_mime, :attachment_size, :record_type, :receipt_date)
+                INSERT INTO revenues (amount, nta, local_income, source, particular, created_by, request_key, attachment_path, attachment_name, attachment_mime, attachment_size, record_type, receipt_date, status)
+                VALUES (:amount, :nta, :local_income, :source, :particular, :created_by, :request_key, :attachment_path, :attachment_name, :attachment_mime, :attachment_size, :record_type, :receipt_date, :status)
             ');
             $stmtInsertRevenue->execute([
                 'amount'          => $amount,
@@ -49,11 +49,12 @@ class Revenue {
                 'attachment_size' => $attachment_size,
                 'record_type'     => $record_type,
                 'receipt_date'    => $receipt_date,
+                'status'          => $status,
             ]);
 
             $newRevenueId = $this->database->lastInsertId();
 
-            if ($record_type === 'annual_budget') {
+            if ($record_type === 'annual_budget' && $status === 'verified') {
                 Budget::refreshAllocations($this->database);
             }
             if ($manageTransaction) {
