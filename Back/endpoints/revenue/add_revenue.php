@@ -123,6 +123,7 @@ try {
             SELECT nta, local_income
             FROM revenues
             WHERE record_type = 'annual_budget' AND status = 'verified'
+            AND YEAR(created_at) = YEAR(CURDATE())
             FOR UPDATE
         ")->fetchAll(PDO::FETCH_ASSOC);
         $annualBudget = 0.0;

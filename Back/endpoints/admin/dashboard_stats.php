@@ -4,7 +4,9 @@ session_start();
 require_once '../../header.php';
 require_once '../../classes/budget.php';
 
-Budget::refreshAllocations($pdo);
+$fiscalYear = (int)($_GET['year'] ?? date('Y'));
+
+Budget::refreshAllocations($pdo, $fiscalYear);
 
 // ============ TOTAL USERS ============
 $totalUsers = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
@@ -28,10 +30,14 @@ $recordsThisMonth = $pdo->query("
 ")->fetchColumn();
 
 // ============ TOTAL REVENUE (all time) ============
-$totalRevenue = $pdo->query("
+// ============ TOTAL REVENUE ============
+$stmt = $pdo->prepare("
     SELECT COALESCE(SUM(amount), 0) FROM revenues
     WHERE record_type = 'annual_budget' AND status = 'verified'
-")->fetchColumn();
+      AND YEAR(created_at) = :year
+");
+$stmt->execute(['year' => $fiscalYear]);
+$totalRevenue = $stmt->fetchColumn();
 
 // ============ CATEGORY BALANCES ============
 $categoryBalances = $pdo->query("
@@ -69,7 +75,6 @@ unset($category);
 $income = Budget::income($pdo);
 $totalAllocated = $pdo->query("SELECT COALESCE(SUM(allocated_amount), 0) FROM budget_categories")->fetchColumn();
 $totalExpenditures = $pdo->query("SELECT COALESCE(SUM(amount), 0) FROM expenditures WHERE status = 'verified'")->fetchColumn();
-$fiscalYear = (int)($_GET['year'] ?? date('Y'));
 $annualApprovedBudget = (float)$income['total_annual_income'];
 $monthlyReceipts = $pdo->prepare("
     SELECT COALESCE(SUM(amount), 0)

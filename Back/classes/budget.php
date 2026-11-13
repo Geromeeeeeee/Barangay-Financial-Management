@@ -1,14 +1,19 @@
 <?php
 class Budget
 {
-    public static function income(PDO $database): array
+    public static function income(PDO $database, $year = null): array
     {
-        $row = $database->query("
+        $year = $year ?? (int)date('Y'); 
+
+        $stmt = $database->prepare("
             SELECT COALESCE(SUM(nta), 0) AS nta,
-                   COALESCE(SUM(local_income), 0) AS local_income
+                COALESCE(SUM(local_income), 0) AS local_income
             FROM revenues
             WHERE record_type = 'annual_budget' AND status = 'verified'
-        ")->fetch(PDO::FETCH_ASSOC);
+            AND YEAR(created_at) = :year
+        ");
+        $stmt->execute(['year' => $year]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         $nta = round((float)$row['nta'], 2);
         $localIncome = round((float)$row['local_income'], 2);
@@ -37,9 +42,10 @@ class Budget
         return $allocations;
     }
 
-    public static function refreshAllocations(PDO $database): array
+    public static function refreshAllocations(PDO $database, $year = null): array
     {
-        $income = self::income($database);
+        $year = $year ?? (int)date('Y');
+        $income = self::income($database, $year);
         $allocations = self::predefinedAllocations($income);
         $mooeCategory = $database->prepare('
             SELECT id, name, allocated_amount

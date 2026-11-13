@@ -3,14 +3,18 @@ session_start();
 
 require_once '../../header.php';
 require_once '../../classes/budget.php';
+$fiscalYear = (int)($_GET['year'] ?? date('Y'));
 
-Budget::refreshAllocations($pdo);
+Budget::refreshAllocations($pdo, $fiscalYear);
 
 // ============ TOTAL REVENUE ============
-$totalRevenue = $pdo->query("
+$stmt = $pdo->prepare("
     SELECT COALESCE(SUM(amount), 0) FROM revenues
     WHERE record_type = 'annual_budget' AND status = 'verified'
-")->fetchColumn();
+      AND YEAR(created_at) = :year
+");
+$stmt->execute(['year' => $fiscalYear]);
+$totalRevenue = $stmt->fetchColumn();
 
 // ============ REVENUE THIS MONTH ============
 $revenueThisMonth = $pdo->query("
