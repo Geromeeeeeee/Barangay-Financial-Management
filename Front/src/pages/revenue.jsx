@@ -23,7 +23,7 @@ export default function Revenue () {
     const [currentPage, setCurrentPage] = useState(1)
     const {filters, months, years, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { revenues, unreleasedAnnualBudget, loading, error, refetch } = useRevenue(filterParams)
-    const { isTreasurer, isStaff, isSK, isAdmin } = useRole()
+    const { isTreasurer, isStaff, isSK, isAdmin, isSkChair } = useRole()
     const {peso, date} = useFormat()
     const { showToast } = useToast()
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
@@ -93,7 +93,7 @@ export default function Revenue () {
                                 <th>Supporting Document</th>
                                 <th className="right">Amount</th>
                                 {isAdmin && <th className="right">Status</th>}
-                                <th>Actions</th>
+                                {(isTreasurer||isSkChair) && <th className="right">Actions</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -143,13 +143,31 @@ export default function Revenue () {
                                             )}
                                         </td>
                                     )}
-                                    <td>
-                                        {isTreasurer && r.record_type === 'monthly_receipt' && (
+                                    {(isTreasurer||isSkChair) && (
+                                        <td className="right">
+                                        {r.status === 'pending' ? (
+                                            <span style={{
+                                                    color: r.status === 'pending' ? '#10b981' : '#dc2626',
+                                                    fontWeight: '500'
+                                                }}>
+                                                Pending
+                                            </span>
+                                        ) : r.status === 'rejected' ? (
+                                            <span style={{
+                                                    color: r.status === 'verified' ? '#10b981' : '#dc2626',
+                                                    fontWeight: '500'
+                                                }}>
+                                                Rejected
+                                            </span>
+                                        ) : (
+                                            (isTreasurer || isSkChair) && r.record_type === 'monthly_receipt' && (
                                             <button type="button" className="filter-clear" onClick={() => setAllocationReceipt(r)}>
                                                 Allocate Funds
                                             </button>
+                                            )
                                         )}
-                                    </td>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>

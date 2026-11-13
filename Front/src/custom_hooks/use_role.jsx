@@ -38,6 +38,7 @@ export function useRole() {
         isTreasurer: role === "treasurer",
         isStaff:     role === "staff",
         isSK:        role === "sk_chairman" || role === "sk_member",
+        isSkChair: role === "sk_chairman",
         isLoggedIn:  !!user,
     };
 }

@@ -66,8 +66,9 @@ try {
         exit();
     }
 
-    if (strtolower((string)($_SESSION['role'] ?? '')) !== 'treasurer') {
-        throw new InvalidArgumentException('Only treasurers can record monthly allocations.');
+    $allowed_roles = ['treasurer', 'sk_chairman'];
+    if (!in_array(strtolower((string)($_SESSION['role'] ?? '')), $allowed_roles, true)) {
+        throw new InvalidArgumentException('Only authorized personnel can record monthly allocations.');
     }
     $data = json_decode(file_get_contents('php://input'), true) ?: [];
     $revenueId = (int)($data['revenue_id'] ?? 0);
