@@ -11,7 +11,7 @@ import '../styles/layout.css'
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
 export default function DashboardLayout() {
-    const { isAdmin, isTreasurer, isSK } = useRole();
+    const { isAdmin, isTreasurer, isSK, isSkChair, isStaff } = useRole();
     const navigate = useNavigate();
 
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -58,7 +58,7 @@ export default function DashboardLayout() {
                         </>
                     )}
                     
-                    {isTreasurer && (
+                    {(isTreasurer || isSkChair || isStaff ) && (
                         <NavLink to="/Reports" className={linkClass}>
                             <div className="nav-icon"><BarChart size={22} /></div>
                             <span className="nav-text">Financial Reports</span>

@@ -36,7 +36,7 @@ function App() {
             </Route>
           </Route>
 
-          <Route element={<Protected_Route allowedRoles={['treasurer', 'admin']}/>}>
+          <Route element={<Protected_Route allowedRoles={['treasurer', 'sk_chairman', 'staff']}/>}>
             <Route element={<DashboardLayout />}>
               <Route path="/Reports" element={<Reports />} />
             </Route>

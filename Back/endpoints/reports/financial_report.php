@@ -9,7 +9,7 @@ if (!isset($_SESSION['uid'])) {
     exit();
 }
 
-$allowedRoles = ['staff', 'treasurer'];
+$allowedRoles = ['staff', 'treasurer', 'sk_chairman'];
 if (!in_array(strtolower((string)($_SESSION['role'] ?? '')), $allowedRoles, true)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'You are not authorized to view reports.']);

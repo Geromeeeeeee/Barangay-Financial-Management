@@ -4,6 +4,7 @@ import { jsPDF } from "jspdf";
 import BackButton from "../components/back_button";
 import sealLogo from "../assets/barangay-malagasang-logo.jpg";
 import "../styles/reports.css";
+import { useRole } from '../custom_hooks/use_role';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -20,6 +21,8 @@ export default function Reports() {
     const reportRef = useRef(null);
     const formatPeso = (value) => `₱${Number(value || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`;
     const years = Array.from({ length: 6 }, (_, index) => new Date().getFullYear() - index);
+    const { isSkChair, isSK } = useRole();
+    const isSkRole = isSkChair || isSK;
 
     const fetchReport = useCallback(async () => {
         setLoading(true);
@@ -29,14 +32,27 @@ export default function Reports() {
             if (!response.data.success) throw new Error(response.data.message || "Unable to load report.");
             setData(response.data);
             if (reportType === "category") {
-                setSelectedCategoryId(response.data.categoryReports[0]?.category_id ?? null);
+                const reports = response.data.categoryReports || [];
+                
+                let defaultId = null;
+                if (isSkRole) {
+                    const skCat = reports.find(c => {
+                        const name = (c.category_name || '').toUpperCase();
+                        return name.includes('SK') || name.includes('SANGGUNIANG KABATAAN');
+                    });
+                    defaultId = skCat?.category_id ?? null;
+                } else {
+                    defaultId = reports[0]?.category_id ?? null;
+                }
+                
+                setSelectedCategoryId(defaultId);
             }
         } catch (requestError) {
             setError(requestError.response?.data?.message || requestError.message || "Unable to load report.");
         } finally {
             setLoading(false);
         }
-    }, [month, year, reportType]);
+    }, [month, year, reportType, isSkRole]);
 
     useEffect(() => {
         const timer = setTimeout(fetchReport, 0);
@@ -67,6 +83,31 @@ export default function Reports() {
     const rows = (items, empty, render) => items.length ? items.map(render) : <tr><td colSpan="5" className="center empty-row">{empty}</td></tr>;
     const selectedCategory = data?.categoryReports?.find((category) => category.category_id === selectedCategoryId);
 
+    const allowedCategoryReports = data?.categoryReports?.filter(category => {
+        if (isSkRole) {
+            const catName = (category.category_name || '').toUpperCase();
+            return catName.includes('SK') || catName.includes('SANGGUNIANG KABATAAN');
+        }
+        return true;
+    }) || [];
+
+    const isSKItem = (str) => {
+        if (!str) return false;
+        const upper = str.toUpperCase();
+        return upper.includes('SK') || upper.includes('SANGGUNIANG KABATAAN');
+    };
+
+    const filteredAnnualRevenues = data?.annualRevenues?.filter(row => isSkRole ? isSKItem(row.source) : true) || [];
+    const filteredMonthlyReceipts = data?.monthlyReceipts?.filter(row => isSkRole ? isSKItem(row.source) : true) || [];
+    const filteredMonthlyAllocations = data?.monthlyAllocations?.filter(row => isSkRole ? isSKItem(row.category_name) : true) || [];
+    const filteredExpenditureBreakdown = data?.expenditureBreakdown?.filter(row => isSkRole ? isSKItem(row.category_name) : true) || [];
+    const filteredAllocationUtilization = data?.allocationUtilization?.filter(row => isSkRole ? isSKItem(row.category_name) : true) || [];
+
+    const calcTotalAnnual = filteredAnnualRevenues.reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
+    const calcTotalReceipts = filteredMonthlyReceipts.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    const calcTotalAllocated = filteredMonthlyAllocations.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+    const calcTotalExpenditure = filteredExpenditureBreakdown.reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
+
     return (
         <div className="reports-page">
             <BackButton />
@@ -83,12 +124,13 @@ export default function Reports() {
                     <button className="btn-download" onClick={downloadReport} disabled={!data || (reportType === "category" && !selectedCategory)}>Download Report</button>
                 </div>
             </header>
+            
             {loading && <p>Loading report...</p>}
             {error && <p className="report-error">{error}</p>}
             {downloadFeedback && <p className="report-feedback">{downloadFeedback}</p>}
             {!loading && data && reportType === "category" && <div className="category-report-selector">
                 <strong>Categories with expenditures:</strong>
-                {data.categoryReports.length ? data.categoryReports.map((category) => (
+                {allowedCategoryReports.length ? allowedCategoryReports.map((category) => (
                     <button
                         key={category.category_id}
                         className={category.category_id === selectedCategoryId ? "selected" : ""}
@@ -123,20 +165,20 @@ export default function Reports() {
 
                 <h4>PART I: ANNUAL BUDGET REFERENCE</h4>
                 <table className="report-table"><thead><tr><th>Source</th><th className="center">Records</th><th className="right">Amount</th></tr></thead><tbody>
-                    {rows(data.annualRevenues, "No annual budget records.", (row) => <tr key={row.source}><td>{row.source}</td><td className="center">{row.entry_count}</td><td className="right">{formatPeso(row.total_amount)}</td></tr>)}
-                    <tr className="total-row"><td colSpan="2">TOTAL ANNUAL APPROVED BUDGET</td><td className="right">{formatPeso(data.annualIncome.total_annual_income)}</td></tr>
+                    {rows(filteredAnnualRevenues, "No annual budget records.", (row) => <tr key={row.source}><td>{row.source}</td><td className="center">{row.entry_count}</td><td className="right">{formatPeso(row.total_amount)}</td></tr>)}
+                    <tr className="total-row"><td colSpan="2">TOTAL ANNUAL APPROVED BUDGET</td><td className="right">{formatPeso(isSkRole ? calcTotalAnnual : data.annualIncome.total_annual_income)}</td></tr>
                 </tbody></table>
 
                 <h4>PART II: MONTHLY BUDGET RELEASE</h4>
                 <table className="report-table"><thead><tr><th>Receipt Date</th><th>Source</th><th className="right">Amount</th></tr></thead><tbody>
-                    {rows(data.monthlyReceipts, "No monthly receipts recorded.", (row) => <tr key={row.id}><td>{row.receipt_date}</td><td>{row.source}</td><td className="right">{formatPeso(row.amount)}</td></tr>)}
-                    <tr className="total-row"><td colSpan="2">TOTAL RECEIPTS ({data.monthlyReceipts.length})</td><td className="right">{formatPeso(data.totalMonthlyReceipts)}</td></tr>
+                    {rows(filteredMonthlyReceipts, "No monthly receipts recorded.", (row) => <tr key={row.id}><td>{row.receipt_date}</td><td>{row.source}</td><td className="right">{formatPeso(row.amount)}</td></tr>)}
+                    <tr className="total-row"><td colSpan="2">TOTAL RECEIPTS ({filteredMonthlyReceipts.length})</td><td className="right">{formatPeso(isSkRole ? calcTotalReceipts : data.totalMonthlyReceipts)}</td></tr>
                 </tbody></table>
 
                 <h4>PART III: MONTHLY ALLOCATION ACTIVITY</h4>
                 <table className="report-table"><thead><tr><th>Receipt / Dates</th><th>Category / Budget Item</th><th className="right">Allocated</th></tr></thead><tbody>
-                    {rows(data.monthlyAllocations, "No allocations recorded.", (row) => <tr key={row.id}><td>{row.receipt_source} ({row.receipt_date})<br />Allocated: {row.allocation_date}</td><td>{row.category_name} / {row.subcategory_name}</td><td className="right">{formatPeso(row.amount)}</td></tr>)}
-                    <tr className="total-row"><td colSpan="2">TOTAL ALLOCATED THIS MONTH</td><td className="right">{formatPeso(data.totalMonthlyAllocated)}</td></tr>
+                    {rows(filteredMonthlyAllocations, "No allocations recorded.", (row) => <tr key={row.id}><td>{row.receipt_source} ({row.receipt_date})<br />Allocated: {row.allocation_date}</td><td>{row.category_name} / {row.subcategory_name}</td><td className="right">{formatPeso(row.amount)}</td></tr>)}
+                    <tr className="total-row"><td colSpan="2">TOTAL ALLOCATED THIS MONTH</td><td className="right">{formatPeso(isSkRole ? calcTotalAllocated : data.totalMonthlyAllocated)}</td></tr>
                 </tbody></table>
                 {/**
                 <div className="report-summary-box"><div className="summary-line"><span>UNALLOCATED RECEIPTS:</span><strong>{formatPeso(data.outstandingUnallocated)}</strong></div><div className="summary-line"><span>REMAINING ALLOCATIONS:</span><strong>{formatPeso(data.remainingAllocated)}</strong></div></div>
@@ -144,8 +186,8 @@ export default function Reports() {
 
                 <h4>PART IV: MONTHLY EXPENDITURES</h4>
                 <table className="report-table"><thead><tr><th>Category / Budget Item</th><th className="center">Entries</th><th className="right">Amount</th></tr></thead><tbody>
-                    {rows(data.expenditureBreakdown, "No expenditures recorded.", (row, index) => <tr key={`${row.category_name}-${row.subcategory_name}-${index}`}><td>{row.category_name} / {row.subcategory_name}</td><td className="center">{row.entry_count}</td><td className="right">{formatPeso(row.total_amount)}</td></tr>)}
-                    <tr className="total-row"><td colSpan="2">TOTAL EXPENDITURES</td><td className="right">{formatPeso(data.totalExpenditure)}</td></tr>
+                    {rows(filteredExpenditureBreakdown, "No expenditures recorded.", (row, index) => <tr key={`${row.category_name}-${row.subcategory_name}-${index}`}><td>{row.category_name} / {row.subcategory_name}</td><td className="center">{row.entry_count}</td><td className="right">{formatPeso(row.total_amount)}</td></tr>)}
+                    <tr className="total-row"><td colSpan="2">TOTAL EXPENDITURES</td><td className="right">{formatPeso(isSkRole ? calcTotalExpenditure : data.totalExpenditure)}</td></tr>
                 </tbody></table>
                 {/**
                 <p>Monthly-linked: {formatPeso(data.monthlyLinkedExpenditure)} · Legacy/non-monthly-linked: {formatPeso(data.legacyExpenditure)}</p>
@@ -153,7 +195,7 @@ export default function Reports() {
 
                 <h4>PART V: ALLOCATION UTILIZATION</h4>
                 <table className="report-table"><thead><tr><th>Receipt / Allocation Date</th><th>Category / Budget Item</th><th className="right">Allocated</th><th className="right">Spent</th><th className="right">Remaining</th></tr></thead><tbody>
-                    {rows(data.allocationUtilization, "No allocation history for this year.", (row) => <tr key={row.id}><td>{row.receipt_source} ({row.receipt_date})<br />{row.allocation_date}</td><td>{row.category_name} / {row.subcategory_name}</td><td className="right">{formatPeso(row.amount)}</td><td className="right">{formatPeso(row.expenditure_amount)}</td><td className="right">{formatPeso(row.remaining_amount)}</td></tr>)}
+                    {rows(filteredAllocationUtilization, "No allocation history for this year.", (row) => <tr key={row.id}><td>{row.receipt_source} ({row.receipt_date})<br />{row.allocation_date}</td><td>{row.category_name} / {row.subcategory_name}</td><td className="right">{formatPeso(row.amount)}</td><td className="right">{formatPeso(row.expenditure_amount)}</td><td className="right">{formatPeso(row.remaining_amount)}</td></tr>)}
                 </tbody></table>
 
                 {/**
