@@ -194,6 +194,7 @@ export default function Revenue () {
                     showToast={showToast}
                     onClose={() => setAllocationReceipt(null)}
                     onSaved={refetch}
+                    isSkChair={isSkChair}
                 />
             )}
             {reviewItem && (
@@ -207,7 +208,7 @@ export default function Revenue () {
     )
 }
 
-function ReceiptAllocationModal({ receipt, apiUrl, onClose, onSaved, showToast }) {
+function ReceiptAllocationModal({ receipt, apiUrl, onClose, onSaved, showToast, isSkChair }) {
     const [categories, setCategories] = useState([])
     const [history, setHistory] = useState([])
     const [itemType, setItemType] = useState('existing')
@@ -229,9 +230,21 @@ function ReceiptAllocationModal({ receipt, apiUrl, onClose, onSaved, showToast }
 
     useEffect(() => { load() }, [load])
 
+    const allowedCategories = categories.filter(category => {
+        const catName = (category.name || '').toUpperCase();
+        const isSKCategory = catName.includes('SK') || catName.includes('SANGGUNIANG KABATAAN');
+
+        if (isSkChair) {
+            return isSKCategory;
+        } 
+
+        return !isSKCategory;
+    });
+
     const allocated = history.reduce((total, allocation) => total + Number(allocation.amount || 0), 0)
     const remaining = Math.max(0, Number(receipt.amount) - allocated)
-    const items = categories.flatMap((category) => (category.subcategories || [])
+    
+    const items = allowedCategories.flatMap((category) => (category.subcategories || [])
         .filter((item) => item.is_active !== false)
         .map((item) => ({ ...item, category_name: category.name })))
 
@@ -282,7 +295,8 @@ function ReceiptAllocationModal({ receipt, apiUrl, onClose, onSaved, showToast }
                 <label><span>Budget item</span><select value={itemType} onChange={(event) => setItemType(event.target.value)}><option value="existing">Existing item</option><option value="new">Create new item</option></select></label>
                 {itemType === 'existing'
                     ? <label><span>Existing item</span><select value={subcategoryId} onChange={(event) => setSubcategoryId(event.target.value)} required><option value="">Select item</option>{items.map((item) => <option key={item.id} value={item.id}>{item.category_name} / {item.name}</option>)}</select></label>
-                    : <><label><span>Major category</span><select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} required><option value="">Select category</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label><label><span>New item name</span><input value={name} onChange={(event) => setName(event.target.value)} required /></label></>}
+                    
+                    : <><label><span>Major category</span><select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} required><option value="">Select category</option>{allowedCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label><label><span>New item name</span><input value={name} onChange={(event) => setName(event.target.value)} required /></label></>}
                 <label><span>Allocation date</span><input type="date" value={allocationDate} onChange={(event) => setAllocationDate(event.target.value)} required /></label>
                 <label><span>Amount</span><input type="number" min="0.01" max={remaining} step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} required /></label>
                 <div className="revenue-modal-actions">
