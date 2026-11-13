@@ -24,16 +24,15 @@ export default function TreasurerDashboard({ user }) {
     };
 
     const toggleAll = () => {
-        // Check if all categories are currently hidden
         const allHidden = stats.categoryBalances.length > 0 && 
                           stats.categoryBalances.every(c => hiddenCategories[c.id]);
 
         if (allHidden) {
-            setHiddenCategories({}); // Show all
+            setHiddenCategories({});
         } else {
             const allHiddenState = {};
             stats.categoryBalances.forEach(c => allHiddenState[c.id] = true);
-            setHiddenCategories(allHiddenState); // Hide all
+            setHiddenCategories(allHiddenState);
         }
     };
     
