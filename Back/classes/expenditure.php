@@ -26,7 +26,7 @@ class Expenditure {
                     throw new Exception('The selected monthly allocation is invalid.');
                 }
                 $monthlyAllocation = $this->database->prepare('
-                    SELECT a.id, a.amount AS allocation_amount,
+                    SELECT a.id, a.amount AS allocation_amount, a.allocation_date,
                            r.record_type,
                            s.id AS allocation_subcategory_id,
                            s.category_id AS allocation_category_id,
@@ -47,6 +47,7 @@ class Expenditure {
                     throw new Exception('The selected monthly allocation does not exist or is invalid.');
                 }
 
+                // 1. Calculate remaining balance of THIS specific monthly allocation
                 $allocationExpenditures = $this->database->prepare('
                     SELECT COALESCE(SUM(amount), 0)
                     FROM expenditures
@@ -56,8 +57,36 @@ class Expenditure {
                 $allocationExpenditures->execute(['monthly_allocation_id' => $monthlyAllocationId]);
                 $allocationRemaining = (float)$monthlyAllocationRow['allocation_amount']
                     - (float)$allocationExpenditures->fetchColumn();
-                if ((float)$amount > $allocationRemaining + 0.005) {
-                    throw new Exception('The selected monthly allocation has insufficient balance.');
+
+                $currentAllocationDate = $monthlyAllocationRow['allocation_date'];
+
+                // 2. Strict Global Unspent Reserve Pool from STRICTLY PREVIOUS MONTHS ONLY (Explicit Year/Month comparison)
+                $globalReserveStmt = $this->database->prepare('
+                    SELECT COALESCE(SUM(a.amount - COALESCE((
+                        SELECT SUM(e.amount)
+                        FROM expenditures e
+                        WHERE e.monthly_allocation_id = a.id
+                          AND e.status = \'verified\'
+                    ), 0)), 0)
+                    FROM monthly_subcategory_allocations a
+                    JOIN revenues r ON r.id = a.revenue_id
+                    WHERE r.record_type = \'monthly_receipt\' 
+                      AND r.status = \'verified\' 
+                      AND YEAR(a.allocation_date) = YEAR(:current_date)
+                      AND (
+                          YEAR(a.allocation_date) < YEAR(:current_date)
+                          OR (YEAR(a.allocation_date) = YEAR(:current_date) AND MONTH(a.allocation_date) < MONTH(:current_date))
+                      )
+                    FOR UPDATE
+                ');
+                $globalReserveStmt->execute(['current_date' => $currentAllocationDate]);
+                $globalUnspentPool = (float)$globalReserveStmt->fetchColumn();
+
+                // 3. Strict Combined Maximum Limit: Current Month Allocation Remaining + Past Months Unspent Pool
+                $maxAllowedExpenditure = max(0.0, $allocationRemaining) + max(0.0, $globalUnspentPool);
+
+                if ((float)$amount > $maxAllowedExpenditure + 0.005) {
+                    throw new Exception('The expenditure exceeds the current monthly allocation plus available unspent reserve funds from previous months.');
                 }
 
                 $category_id = (int)$monthlyAllocationRow['allocation_category_id'];
@@ -124,7 +153,6 @@ class Expenditure {
                 $updateCategory->execute(['amount' => $amount, 'id' => $category_id]);
             }
         }
-
 
             $stmtInsertExpenditure = $this->database->prepare('
                 INSERT INTO expenditures
@@ -238,4 +266,3 @@ class Expenditure {
         return $results;
     }
 }
-?>

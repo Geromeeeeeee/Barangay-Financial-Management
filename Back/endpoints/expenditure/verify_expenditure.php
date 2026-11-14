@@ -53,19 +53,30 @@ try {
     $categoryId = $exp['category_id'];
     $subcategoryId = $exp['subcategory_id'];
 
-    if ($actionStatus === 'verified' && $exp['monthly_allocation_id']) {
+    if ($actionStatus === 'verified') {
+        if (empty($exp['monthly_allocation_id'])) {
+            throw new Exception('This expenditure has no monthly allocation linked and cannot be verified against budget rules.');
+        }
+
+        $monthlyAllocationId = (int)$exp['monthly_allocation_id'];
+
         $allocation = $pdo->prepare('
-            SELECT amount
+            SELECT amount, allocation_date
             FROM monthly_subcategory_allocations
             WHERE id = :id
             FOR UPDATE
         ');
-        $allocation->execute(['id' => $exp['monthly_allocation_id']]);
-        $allocationAmount = $allocation->fetchColumn();
-        if ($allocationAmount === false) {
+        $allocation->execute(['id' => $monthlyAllocationId]);
+        $allocationRow = $allocation->fetch(PDO::FETCH_ASSOC);
+        if (!$allocationRow) {
             throw new Exception('The expenditure monthly allocation could not be found.');
         }
 
+        $allocationAmount = (float)$allocationRow['amount'];
+        // Fallback to current date if allocation_date is missing on older records
+        $allocationDate = !empty($allocationRow['allocation_date']) ? $allocationRow['allocation_date'] : date('Y-m-d');
+
+        // 1. Calculate remaining balance of THIS specific monthly allocation
         $verifiedExpenditures = $pdo->prepare('
             SELECT COALESCE(SUM(amount), 0)
             FROM expenditures
@@ -73,11 +84,42 @@ try {
               AND status = \'verified\'
         ');
         $verifiedExpenditures->execute([
-            'monthly_allocation_id' => $exp['monthly_allocation_id'],
+            'monthly_allocation_id' => $monthlyAllocationId,
         ]);
-        $verifiedAmount = (float)$verifiedExpenditures->fetchColumn();
-        if ($verifiedAmount + $amount > (float)$allocationAmount + 0.005) {
-            throw new Exception('The selected monthly allocation has insufficient balance.');
+        $allocationRemaining = $allocationAmount - (float)$verifiedExpenditures->fetchColumn();
+
+        // 2. Strict Global Unspent Reserve Pool from STRICTLY PREVIOUS MONTHS ONLY
+        $globalReserveStmt = $pdo->prepare('
+            SELECT COALESCE(SUM(a.amount - COALESCE((
+                SELECT SUM(e.amount)
+                FROM expenditures e
+                WHERE e.monthly_allocation_id = a.id
+                  AND e.status = \'verified\'
+            ), 0)), 0)
+            FROM monthly_subcategory_allocations a
+            JOIN revenues r ON r.id = a.revenue_id
+            WHERE r.record_type = \'monthly_receipt\' 
+              AND r.status = \'verified\' 
+              AND (
+                  YEAR(a.allocation_date) < YEAR(:current_date)
+                  OR (YEAR(a.allocation_date) = YEAR(:current_date) AND MONTH(a.allocation_date) < MONTH(:current_date))
+              )
+            FOR UPDATE
+        ');
+        $globalReserveStmt->execute(['current_date' => $allocationDate]);
+        $globalUnspentPool = (float)$globalReserveStmt->fetchColumn();
+
+        // 3. Strict Combined Maximum Limit: Current Month Allocation Remaining + Past Months Unspent Pool
+        $maxAllowedExpenditure = max(0.0, $allocationRemaining) + max(0.0, $globalUnspentPool);
+
+        if ($amount > $maxAllowedExpenditure + 0.005) {
+            throw new Exception(sprintf(
+                'The expenditure (₱%.2f) exceeds the available limit of ₱%.2f (Allocation Remaining: ₱%.2f + Previous Months Pool: ₱%.2f).',
+                $amount,
+                $maxAllowedExpenditure,
+                $allocationRemaining,
+                $globalUnspentPool
+            ));
         }
     }
 
