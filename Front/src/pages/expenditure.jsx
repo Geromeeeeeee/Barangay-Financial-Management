@@ -49,20 +49,38 @@ export default function Expenditure() {
 
     const {totalPages, displayedRecords} = usePagination({currentPage, filters, records: skFilteredExpenditures})
     
-    const allocationsBySubcategory = monthlyAllocations.reduce((groups, allocation) => {
+    // Filter monthly allocations to match the active filter month and year
+    const activeMonth = filters?.month ? Number(filters.month) : new Date().getMonth() + 1;
+    const activeYear = filters?.year ? Number(filters.year) : new Date().getFullYear();
+
+    const filteredMonthlyAllocations = monthlyAllocations.filter((allocation) => {
+        if (!allocation.allocation_date) return false;
+        const allocDate = new Date(allocation.allocation_date);
+        return allocDate.getMonth() + 1 === activeMonth && allocDate.getFullYear() === activeYear;
+    });
+
+    const allocationsBySubcategory = filteredMonthlyAllocations.reduce((groups, allocation) => {
         const key = String(allocation.subcategory_id);
         if (!groups[key]) groups[key] = [];
         groups[key].push(allocation);
         return groups;
     }, {});
 
+    // Show only categories with active subcategories that have allocations for this month
     const categoriesWithMonthlyAllocations = displayedCategories
-    .map((category) => ({
-        ...category,
-        subcategories: category.subcategories
-            .map((subcategory) => ({ ...subcategory, category_name: category.name }))
-    }))
-    .filter((category) => category.subcategories.length > 0 || isSK);
+        .map((category) => ({
+            ...category,
+            subcategories: (category.subcategories || [])
+                .filter((subcategory) => {
+                    const isActive = subcategory.is_active;
+                    const hasAllocationThisMonth = filteredMonthlyAllocations.some(
+                        (alloc) => String(alloc.subcategory_id) === String(subcategory.id)
+                    );
+                    return isActive && hasAllocationThisMonth;
+                })
+                .map((subcategory) => ({ ...subcategory, category_name: category.name }))
+        }))
+        .filter((category) => category.subcategories.length > 0 || (isSK && category.name.toUpperCase() === "SK"));
 
     const loadMonthlyAllocations = () => axios.get(`${API_URL}budget/allocations.php`, {
         withCredentials: true
@@ -150,45 +168,45 @@ export default function Expenditure() {
                             </div>
                             <div className="subcategory-list">
                                 {category.subcategories.map((subcategory) => {
-                                        const allocations = allocationsBySubcategory[String(subcategory.id)] || [];
-                                        const hasAvailableAllocation = allocations.some((allocation) => Number(allocation.remaining_amount) > 0);
-                                        return (
-                                            <div className="subcategory-row" key={subcategory.id}>
-                                                <div className="subcategory-details">
-                                                    <div className="subcategory-title">
-                                                        <span>{subcategory.name} {!subcategory.is_active && <em>(Archived)</em>}</span>
-                                                        {canModify && subcategory.is_active && (
-                                                            <button type="button" onClick={() => openExpenditureModal(subcategory, allocations)} disabled={!hasAvailableAllocation}>
-                                                                Record Expenditure
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    <details className="allocation-history">
-                                                        <summary>View individual monthly allocations ({allocations.length})</summary>
-                                                        <div className="allocation-history-list">
-                                                            {allocations.map((allocation) => (
-                                                                <div className="allocation-history-row" key={allocation.id}>
-                                                                    <span>
-                                                                        {allocation.receipt_source || "Monthly receipt"} ({allocation.receipt_date || "Date unavailable"})
-                                                                        <small>Allocated {allocation.allocation_date}</small>
-                                                                    </span>
-                                                                    <span>{peso(allocation.amount)} allocated</span>
-                                                                    <span>{peso(allocation.expenditure_amount)} spent</span>
-                                                                    <span>{peso(allocation.remaining_amount)} remaining</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </details>
+                                    const allocations = allocationsBySubcategory[String(subcategory.id)] || [];
+                                    const hasAvailableAllocation = allocations.some((allocation) => Number(allocation.remaining_amount) > 0);
+                                    return (
+                                        <div className="subcategory-row" key={subcategory.id}>
+                                            <div className="subcategory-details">
+                                                <div className="subcategory-title">
+                                                    <span>{subcategory.name} {!subcategory.is_active && <em>(Archived)</em>}</span>
+                                                    {canModify && subcategory.is_active && (
+                                                        <button type="button" onClick={() => openExpenditureModal(subcategory, allocations)} disabled={!hasAvailableAllocation}>
+                                                            Record Expenditure
+                                                        </button>
+                                                    )}
                                                 </div>
-                                                {canModify && subcategory.is_active && (
-                                                    <div className="subcategory-actions">
-                                                        <button type="button" onClick={() => setSubcategoryForm(subcategory)}>Edit</button>
-                                                        <button type="button" onClick={() => handleArchive(subcategory.id)}>Archive</button>
+                                                <details className="allocation-history">
+                                                    <summary>View individual monthly allocations ({allocations.length})</summary>
+                                                    <div className="allocation-history-list">
+                                                        {allocations.map((allocation) => (
+                                                            <div className="allocation-history-row" key={allocation.id}>
+                                                                <span>
+                                                                    {allocation.receipt_source || "Monthly receipt"} ({allocation.receipt_date || "Date unavailable"})
+                                                                    <small>Allocated {allocation.allocation_date}</small>
+                                                                </span>
+                                                                <span>{peso(allocation.amount)} allocated</span>
+                                                                <span>{peso(allocation.expenditure_amount)} spent</span>
+                                                                <span>{peso(allocation.remaining_amount)} remaining</span>
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                )}
+                                                </details>
                                             </div>
-                                        );
-                                    })}
+                                            {canModify && subcategory.is_active && (
+                                                <div className="subcategory-actions">
+                                                    <button type="button" onClick={() => setSubcategoryForm(subcategory)}>Edit</button>
+                                                    <button type="button" onClick={() => handleArchive(subcategory.id)}>Archive</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                             {canModify && category.name.toUpperCase() === "MOOE" && (
                                 <button type="button" onClick={() => setSubcategoryForm({ category_id: category.id, category_name: category.name, name: "", allocated_amount: "" })}>+ Add MOOE item</button>
