@@ -11,6 +11,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/
 export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget = null }) {
     const [loading, setLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
+    const today = new Date().toISOString().slice(0, 10);
     
     // Receipt File & Supporting Files
     const [receiptFile, setReceiptFile] = useState(null)
@@ -191,7 +192,13 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
                     {recordType === 'monthly_receipt' && (
                         <label>
                             <span>Actual receipt date</span>
-                            <input name="receipt_date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required />
+                            <input 
+                            name="receipt_date" 
+                            type="date" 
+                            defaultValue={today} 
+                            max={today} 
+                            required 
+                        />
                         </label>
                     )}
 
