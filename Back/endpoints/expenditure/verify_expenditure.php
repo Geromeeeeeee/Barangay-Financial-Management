@@ -73,10 +73,9 @@ try {
         }
 
         $allocationAmount = (float)$allocationRow['amount'];
-        // Fallback to current date if allocation_date is missing on older records
         $allocationDate = !empty($allocationRow['allocation_date']) ? $allocationRow['allocation_date'] : date('Y-m-d');
 
-        // 1. Calculate remaining balance of THIS specific monthly allocation
+        // 1. Calculate remaining balance of THIS specific monthly allocation (floored at 0)
         $verifiedExpenditures = $pdo->prepare('
             SELECT COALESCE(SUM(amount), 0)
             FROM expenditures
@@ -86,7 +85,7 @@ try {
         $verifiedExpenditures->execute([
             'monthly_allocation_id' => $monthlyAllocationId,
         ]);
-        $allocationRemaining = $allocationAmount - (float)$verifiedExpenditures->fetchColumn();
+        $allocationRemaining = max(0.0, $allocationAmount - (float)$verifiedExpenditures->fetchColumn());
 
         // 2. Strict Global Unspent Reserve Pool from STRICTLY PREVIOUS MONTHS ONLY
         $globalReserveStmt = $pdo->prepare('
@@ -100,6 +99,7 @@ try {
             JOIN revenues r ON r.id = a.revenue_id
             WHERE r.record_type = \'monthly_receipt\' 
               AND r.status = \'verified\' 
+              AND YEAR(a.allocation_date) = YEAR(:current_date)
               AND (
                   YEAR(a.allocation_date) < YEAR(:current_date)
                   OR (YEAR(a.allocation_date) = YEAR(:current_date) AND MONTH(a.allocation_date) < MONTH(:current_date))
@@ -110,7 +110,7 @@ try {
         $globalUnspentPool = (float)$globalReserveStmt->fetchColumn();
 
         // 3. Strict Combined Maximum Limit: Current Month Allocation Remaining + Past Months Unspent Pool
-        $maxAllowedExpenditure = max(0.0, $allocationRemaining) + max(0.0, $globalUnspentPool);
+        $maxAllowedExpenditure = $allocationRemaining + max(0.0, $globalUnspentPool);
 
         if ($amount > $maxAllowedExpenditure + 0.005) {
             throw new Exception(sprintf(

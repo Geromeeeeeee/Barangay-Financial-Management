@@ -14,7 +14,7 @@ try {
         $receipts = $pdo->query("
             SELECT r.id, r.receipt_date, r.amount, r.source,
                    COALESCE(SUM(a.amount), 0) AS allocated_amount,
-                   r.amount - COALESCE(SUM(a.amount), 0) AS remaining_amount
+                   GREATEST(0.00, r.amount - COALESCE(SUM(a.amount), 0)) AS remaining_amount
             FROM revenues r
             LEFT JOIN monthly_subcategory_allocations a ON a.revenue_id = r.id
             WHERE r.record_type = 'monthly_receipt' AND r.status = 'verified'
@@ -33,6 +33,7 @@ try {
             $parameters['subcategory_id'] = (int)$_GET['subcategory_id'];
         }
         $where = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
+        
         $history = $pdo->prepare("
             SELECT a.id, a.revenue_id, a.subcategory_id, a.amount,
                    a.allocation_date, a.created_by, a.created_at,
@@ -41,7 +42,7 @@ try {
                    c.name AS category_name,
                    u.username AS created_by_username,
                    COALESCE(SUM(e.amount), 0) AS expenditure_amount,
-                   a.amount - COALESCE(SUM(e.amount), 0) AS remaining_amount
+                   GREATEST(0.00, a.amount - COALESCE(SUM(e.amount), 0)) AS remaining_amount
             FROM monthly_subcategory_allocations a
             JOIN revenues r ON r.id = a.revenue_id AND r.status = 'verified'
             JOIN budget_subcategories s ON s.id = a.subcategory_id
@@ -120,15 +121,22 @@ try {
             WHERE category_id = :category_id AND LOWER(name) = LOWER(:name)
         ');
         $duplicate->execute(['category_id' => $categoryId, 'name' => $itemName]);
-        if ($duplicate->fetchColumn()) {
-            throw new InvalidArgumentException('A budget item with that name already exists in the selected category.');
+        $subcategoryId = (int)$duplicate->fetchColumn();
+        if ($subcategoryId) {
+            $checkActive = $pdo->prepare('SELECT is_active FROM budget_subcategories WHERE id = :id');
+            $checkActive->execute(['id' => $subcategoryId]);
+            if ((int)$checkActive->fetchColumn() === 0) {
+                $reactivate = $pdo->prepare('UPDATE budget_subcategories SET is_active = 1 WHERE id = :id');
+                $reactivate->execute(['id' => $subcategoryId]);
+            }
+        } else {
+            $createItem = $pdo->prepare('
+                INSERT INTO budget_subcategories (category_id, name, allocated_amount, spent_amount, is_active)
+                VALUES (:category_id, :name, 0, 0, 1)
+            ');
+            $createItem->execute(['category_id' => $categoryId, 'name' => $itemName]);
+            $subcategoryId = (int)$pdo->lastInsertId();
         }
-        $createItem = $pdo->prepare('
-            INSERT INTO budget_subcategories (category_id, name, allocated_amount, spent_amount, is_active)
-            VALUES (:category_id, :name, 0, 0, 1)
-        ');
-        $createItem->execute(['category_id' => $categoryId, 'name' => $itemName]);
-        $subcategoryId = (int)$pdo->lastInsertId();
     }
 
     $allocated = $pdo->prepare("
@@ -143,18 +151,45 @@ try {
     }
 
     $insert = $pdo->prepare("
-        INSERT INTO monthly_subcategory_allocations
-            (revenue_id, subcategory_id, amount, allocation_date, created_by)
-        VALUES (:revenue_id, :subcategory_id, :amount, :allocation_date, :created_by)
+        SELECT id, amount FROM monthly_subcategory_allocations
+        WHERE revenue_id = :revenue_id AND subcategory_id = :subcategory_id
     ");
-    $insert->execute([
-        'revenue_id' => $revenueId,
-        'subcategory_id' => $subcategoryId,
-        'amount' => $amount,
-        'allocation_date' => $allocationDate,
-        'created_by' => $_SESSION['uid'],
-    ]);
-    $allocationId = (int)$pdo->lastInsertId();
+    $insert->execute(['revenue_id' => $revenueId, 'subcategory_id' => $subcategoryId]);
+    $existingAlloc = $insert->fetch(PDO::FETCH_ASSOC);
+
+    if ($existingAlloc) {
+        $updateAlloc = $pdo->prepare("
+            UPDATE monthly_subcategory_allocations
+            SET amount = amount + :amount, allocation_date = :allocation_date
+            WHERE id = :id
+        ");
+        $updateAlloc->execute([
+            'amount' => $amount,
+            'allocation_date' => $allocationDate,
+            'id' => $existingAlloc['id']
+        ]);
+        $allocationId = (int)$existingAlloc['id'];
+    } else {
+        $insertAlloc = $pdo->prepare("
+            INSERT INTO monthly_allocation_details
+                (revenue_id, subcategory_id, amount, allocation_date, created_by)
+            VALUES (:revenue_id, :subcategory_id, :amount, :allocation_date, :created_by)
+        ");
+        // Fallback safety for insert statement structure if table name is standard
+        $insert = $pdo->prepare("
+            INSERT INTO monthly_subcategory_allocations
+                (revenue_id, subcategory_id, amount, allocation_date, created_by)
+            VALUES (:revenue_id, :subcategory_id, :amount, :allocation_date, :created_by)
+        ");
+        $insert->execute([
+            'revenue_id' => $revenueId,
+            'subcategory_id' => $subcategoryId,
+            'amount' => $amount,
+            'allocation_date' => $allocationDate,
+            'created_by' => $_SESSION['uid'],
+        ]);
+        $allocationId = (int)$pdo->lastInsertId();
+    }
 
     $audit = new Audit($pdo);
     $audit->log(
