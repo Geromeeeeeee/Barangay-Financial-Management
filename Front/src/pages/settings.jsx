@@ -5,8 +5,8 @@ import { useToast } from "../context/toast_context";
 import BackButton from "../components/back_button";
 import "../styles/dashboard.css";
 
-const API_URL = "http://localhost/Capstone/Back/endpoints/";
-const BASE_URL = "http://localhost/Capstone/Back/";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
+const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost/Capstone/Back/";
 
 const IconUser = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>

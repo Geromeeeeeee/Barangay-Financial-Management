@@ -1,7 +1,7 @@
 import { useRole } from "../custom_hooks/use_role";
 import { useNavigate } from "react-router-dom";
 
-const BASE_URL = "http://localhost/Capstone/Back/";
+const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost/Capstone/Back/";
 
 export default function UserMenu() {
     const { user } = useRole();

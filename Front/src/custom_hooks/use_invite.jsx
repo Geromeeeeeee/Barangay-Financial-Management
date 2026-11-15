@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const API = "http://localhost/Capstone/Back/endpoints";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
 export function useInvite() {
     const [codes, setCodes] = useState([]);
@@ -11,7 +11,7 @@ export function useInvite() {
     const fetchCodes = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API}/admin/invite_codes.php?action=list`, {
+            const res = await fetch(`${API_URL}/admin/invite_codes.php?action=list`, {
                 credentials: "include",
             });
             const data = await res.json();
@@ -27,7 +27,7 @@ export function useInvite() {
     const generateCode = async (role, email, expiresInHours = 24) => {
         setError(""); setSuccess("");
         try {
-            const res = await fetch(`${API}/admin/invite_codes.php`, {
+            const res = await fetch(`${API_URL}/admin/invite_codes.php`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -52,7 +52,7 @@ export function useInvite() {
     const revokeCode = async (id) => {
         setError(""); setSuccess("");
         try {
-            await fetch(`${API}/admin/invite_codes.php`, {
+            await fetch(`${API_URL}/admin/invite_codes.php`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -72,7 +72,7 @@ export function useInvite() {
 
 export async function validateInviteCode(code) {
     try {
-        const res = await fetch(`${API}/auth.php`, {
+        const res = await fetch(`${API_URL}/auth.php`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
