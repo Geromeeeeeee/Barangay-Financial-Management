@@ -155,11 +155,10 @@ try {
     $expenditureDetails = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $stmt = $pdo->prepare("
-        SELECT a.id, a.amount, a.allocation_date,
+        SELECT a.id, a.amount, a.allocation_date, a.subcategory_id,
                r.receipt_date, r.source AS receipt_source,
                c.name AS category_name, s.name AS subcategory_name,
-               COALESCE(SUM(e.amount), 0) AS expenditure_amount,
-               a.amount - COALESCE(SUM(e.amount), 0) AS remaining_amount
+               COALESCE(SUM(e.amount), 0) AS expenditure_amount
         FROM monthly_subcategory_allocations a
         JOIN revenues r ON r.id = a.revenue_id
         JOIN budget_subcategories s ON s.id = a.subcategory_id
@@ -168,12 +167,59 @@ try {
             ON e.monthly_allocation_id = a.id
             AND e.status = 'verified'
         WHERE r.record_type = 'monthly_receipt' AND r.status = 'verified' AND YEAR(a.allocation_date) = :year
-        GROUP BY a.id, a.amount, a.allocation_date, r.receipt_date,
+        GROUP BY a.id, a.amount, a.allocation_date, a.subcategory_id, r.receipt_date,
                  r.source, c.name, s.name
         ORDER BY a.allocation_date, a.id
     ");
     $stmt->execute(['year' => $year]);
-    $allocationUtilization = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $rawUtilization = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $allocationUtilization = [];
+    foreach ($rawUtilization as $row) {
+        $allocated = (float)$row['amount'];
+        $spent = (float)$row['expenditure_amount'];
+        
+        $excessStmt = $pdo->prepare("
+            SELECT COALESCE(SUM(a2.amount), 0) - COALESCE((
+                SELECT SUM(e2.amount) 
+                FROM expenditures e2 
+                JOIN monthly_subcategory_allocations a3 ON e2.monthly_allocation_id = a3.id
+                WHERE a3.allocation_date < :current_date AND e2.status = 'verified'
+            ), 0)
+            FROM monthly_subcategory_allocations a2
+            WHERE a2.allocation_date < :current_date
+        ");
+        $excessStmt->execute([
+            'current_date' => $row['allocation_date']
+        ]);
+        $previousExcess = (float)$excessStmt->fetchColumn();
+        if ($previousExcess < 0) $previousExcess = 0;
+
+        $totalAvailable = $allocated + $previousExcess;
+        $remaining = $totalAvailable - $spent;
+        
+        $usedExcess = false;
+        $isDeficit = false;
+        $coveredByExcess = 0;
+
+        if ($remaining < 0) {
+            $isDeficit = true;
+            $displayRemaining = $remaining;
+        } elseif ($spent > $allocated) {
+            $usedExcess = true;
+            $coveredByExcess = $spent - $allocated;
+            $displayRemaining = 0.00;
+        } else {
+            $displayRemaining = $allocated - $spent;
+        }
+
+        $row['remaining_amount'] = $displayRemaining;
+        $row['used_excess'] = $usedExcess;
+        $row['is_deficit'] = $isDeficit;
+        $row['excess_available'] = $previousExcess;
+        $row['covered_by_excess'] = $coveredByExcess;
+        $allocationUtilization[] = $row;
+    }
 
     $totalMonthlyReceipts = array_sum(array_map(static fn($row) => (float)$row['amount'], $monthlyReceipts));
     $totalMonthlyAllocated = array_sum(array_map(static fn($row) => (float)$row['amount'], $monthlyAllocations));

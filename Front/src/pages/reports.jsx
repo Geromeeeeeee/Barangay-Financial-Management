@@ -18,8 +18,17 @@ export default function Reports() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [downloadFeedback, setDownloadFeedback] = useState("");
+    const [isDownloading, setIsDownloading] = useState(false);
     const reportRef = useRef(null);
-    const formatPeso = (value) => `₱${Number(value || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 })}`;
+
+    const formatPeso = (value) => {
+        const formatted = Number(value || 0).toLocaleString("en-PH", { minimumFractionDigits: 2 });
+        if (isDownloading) {
+            return <span style={{ whiteSpace: 'nowrap' }}>PHP {formatted}</span>;
+        }
+        return <span style={{ whiteSpace: 'nowrap' }}>&#8369;{formatted}</span>;
+    };
+
     const years = Array.from({ length: 6 }, (_, index) => new Date().getFullYear() - index);
     const { isSkChair, isSK } = useRole();
     const isSkRole = isSkChair || isSK;
@@ -61,26 +70,43 @@ export default function Reports() {
 
     const downloadReport = async () => {
         setDownloadFeedback("");
+        setIsDownloading(true);
+        
         try {
+            await new Promise(resolve => setTimeout(resolve, 50)); 
+            
             if (!reportRef.current) throw new Error("Report is not available for download.");
+            await document.fonts.ready;
+            
             const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
             const margin = 36;
             const width = pdf.internal.pageSize.getWidth() - margin * 2;
+            
             await pdf.html(reportRef.current, {
                 margin: [margin, margin, margin, margin],
                 autoPaging: "text",
                 width,
                 windowWidth: 800,
-                html2canvas: { scale: width / 800, useCORS: true, letterRendering: true, scrollY: 0, scrollX: 0 }
+                html2canvas: { 
+                    scale: width / 800, 
+                    useCORS: true, 
+                    letterRendering: true, 
+                    scrollY: 0, 
+                    scrollX: 0,
+                    backgroundColor: "#ffffff"
+                }
             });
+            
             pdf.save(`financial-report-${months[month - 1].toLowerCase()}-${year}.pdf`);
             setDownloadFeedback("Report downloaded.");
         } catch {
             setDownloadFeedback("Unable to download report. Please try again.");
+        } finally {
+            setIsDownloading(false);
         }
     };
 
-    const rows = (items, empty, render) => items.length ? items.map(render) : <tr><td colSpan="5" className="center empty-row">{empty}</td></tr>;
+    const rows = (items, empty, render, colSpan = 5) => items.length ? items.map(render) : <tr><td colSpan={colSpan} className="center empty-row">{empty}</td></tr>;
     const selectedCategory = data?.categoryReports?.find((category) => category.category_id === selectedCategoryId);
 
     const allowedCategoryReports = data?.categoryReports?.filter(category => {
@@ -112,7 +138,10 @@ export default function Reports() {
         <div className="reports-page">
             <BackButton />
             <header className="reports-header">
-                <div><h1>Financial Reports</h1><p>Monthly cash activity and annual budget reference</p></div>
+                <div>
+                    <h1>Financial Reports</h1>
+                    <p>Monthly cash activity and annual budget reference</p>
+                </div>
                 <div className="report-actions">
                     <select value={reportType} onChange={(event) => { setReportType(event.target.value); setData(null); }}>
                         <option value="financial">Monthly Financial Report</option>
@@ -120,90 +149,123 @@ export default function Reports() {
                     </select>
                     <select value={month} onChange={(event) => setMonth(Number(event.target.value))}>{months.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select>
                     <select value={year} onChange={(event) => setYear(Number(event.target.value))}>{years.map((value) => <option key={value} value={value}>{value}</option>)}</select>
-                    <button className="btn-print" onClick={() => window.print()}>Print Report</button>
-                    <button className="btn-download" onClick={downloadReport} disabled={!data || (reportType === "category" && !selectedCategory)}>Download Report</button>
+                    <button className="btn-print" type="button" onClick={() => window.print()}>Print Report</button>
+                    <button className="btn-download" type="button" onClick={downloadReport} disabled={!data || (reportType === "category" && !selectedCategory) || isDownloading}>
+                        {isDownloading ? "Downloading..." : "Download Report"}
+                    </button>
                 </div>
             </header>
             
             {loading && <p>Loading report...</p>}
             {error && <p className="report-error">{error}</p>}
             {downloadFeedback && <p className="report-feedback">{downloadFeedback}</p>}
-            {!loading && data && reportType === "category" && <div className="category-report-selector">
-                <strong>Categories with expenditures:</strong>
-                {allowedCategoryReports.length ? allowedCategoryReports.map((category) => (
-                    <button
-                        key={category.category_id}
-                        className={category.category_id === selectedCategoryId ? "selected" : ""}
-                        onClick={() => setSelectedCategoryId(category.category_id)}
-                    >
-                        {category.category_name}
-                    </button>
-                )) : <span>No expenditures recorded for this period.</span>}
-            </div>}
-            {!loading && data && reportType === "category" && selectedCategory && <div className="report-document" ref={reportRef}>
-                <div className="print-header">
-                    <div className="print-header-left"><p>Republic of the Philippines</p><p>Province of Cavite</p><p>City of Imus</p><h2>BARANGAY MALAGASANG II-A</h2><p>Office of the Barangay Treasurer</p></div>
-                    <img src={sealLogo} alt="Barangay Seal" className="print-logo" />
-                    <div className="print-header-right"><p>Category-wise Expenditure Report</p><p>For {months[month - 1]} {year}</p></div>
+            
+            {!loading && data && reportType === "category" && (
+                <div className="category-report-selector">
+                    <strong>Categories with expenditures:</strong>
+                    {allowedCategoryReports.length ? allowedCategoryReports.map((category) => (
+                        <button
+                            key={category.category_id}
+                            type="button"
+                            className={category.category_id === selectedCategoryId ? "selected" : ""}
+                            onClick={() => setSelectedCategoryId(category.category_id)}
+                        >
+                            {category.category_name}
+                        </button>
+                    )) : <span>No expenditures recorded for this period.</span>}
                 </div>
-                <div className="print-divider" />
-                <h4>{selectedCategory.category_name}</h4>
-                <table className="report-table"><thead><tr><th>Expenditure Date</th><th>Budget Item / Subcategory</th><th>Description / Particulars</th><th className="right">Amount</th></tr></thead><tbody>
-                    {selectedCategory.expenditures.map((row) => <tr key={row.id}><td>{row.expenditure_date}</td><td>{row.subcategory_name}</td><td>{row.description}</td><td className="right">{formatPeso(row.amount)}</td></tr>)}
-                    <tr className="total-row"><td colSpan="3">TOTAL EXPENDITURES</td><td className="right">{formatPeso(selectedCategory.total_expenditure)}</td></tr>
-                </tbody></table>
-                <div className="print-footer"><div className="signature-block"><p>Prepared by:</p><div className="signature-line" /><p className="signature-name">Barangay Treasurer</p></div><div className="signature-block"><p>Approved by:</p><div className="signature-line" /><p className="signature-name">Barangay Captain</p></div></div>
-                <div className="print-timestamp">Generated on: {new Date().toLocaleString()}</div>
-            </div>}
-            {!loading && data && reportType === "financial" && <div className="report-document" ref={reportRef}>
-                <div className="print-header">
-                    <div className="print-header-left"><p>Republic of the Philippines</p><p>Province of Cavite</p><p>City of Imus</p><h2>BARANGAY MALAGASANG II-A</h2><p>Office of the Barangay Treasurer</p></div>
-                    <img src={sealLogo} alt="Barangay Seal" className="print-logo" />
-                    <div className="print-header-right"><p>Monthly Financial Report</p><p>For {months[month - 1]} {year}</p></div>
+            )}
+
+            {!loading && data && reportType === "category" && selectedCategory && (
+                <div className="report-document" ref={reportRef}>
+                    <div className="print-header">
+                        <div className="print-header-left"><p>Republic of the Philippines</p><p>Province of Cavite</p><p>City of Imus</p><h2>BARANGAY MALAGASANG II-A</h2><p>Office of the Barangay Treasurer</p></div>
+                        <img src={sealLogo} alt="Barangay Seal" className="print-logo" />
+                        <div className="print-header-right"><p>Category-wise Expenditure Report</p><p>For {months[month - 1]} {year}</p></div>
+                    </div>
+                    <div className="print-divider" />
+                    <h4>{selectedCategory.category_name}</h4>
+                    <table className="report-table"><thead><tr><th>Expenditure Date</th><th>Budget Item / Subcategory</th><th>Description / Particulars</th><th className="right">Amount</th></tr></thead><tbody>
+                        {selectedCategory.expenditures.map((row) => <tr key={row.id}><td>{row.expenditure_date}</td><td>{row.subcategory_name}</td><td>{row.description}</td><td className="right">{formatPeso(row.amount)}</td></tr>)}
+                        <tr className="total-row"><td colSpan="3">TOTAL EXPENDITURES</td><td className="right">{formatPeso(selectedCategory.total_expenditure)}</td></tr>
+                    </tbody></table>
+                    <div className="print-footer"><div className="signature-block"><p>Prepared by:</p><div className="signature-line" /><p className="signature-name">Barangay Treasurer</p></div><div className="signature-block"><p>Approved by:</p><div className="signature-line" /><p className="signature-name">Barangay Captain</p></div></div>
                 </div>
-                <div className="print-divider" />
+            )}
+            
+            {!loading && data && reportType === "financial" && (
+                <div className="report-document" ref={reportRef}>
+                    <div className="print-header">
+                        <div className="print-header-left"><p>Republic of the Philippines</p><p>Province of Cavite</p><p>City of Imus</p><h2>BARANGAY MALAGASANG II-A</h2><p>Office of the Barangay Treasurer</p></div>
+                        <img src={sealLogo} alt="Barangay Seal" className="print-logo" />
+                        <div className="print-header-right"><p>Monthly Financial Report</p><p>For {months[month - 1]} {year}</p></div>
+                    </div>
+                    <div className="print-divider" />
 
-                <h4>PART I: ANNUAL BUDGET REFERENCE</h4>
-                <table className="report-table"><thead><tr><th>Source</th><th className="center">Records</th><th className="right">Amount</th></tr></thead><tbody>
-                    {rows(filteredAnnualRevenues, "No annual budget records.", (row) => <tr key={row.source}><td>{row.source}</td><td className="center">{row.entry_count}</td><td className="right">{formatPeso(row.total_amount)}</td></tr>)}
-                    <tr className="total-row"><td colSpan="2">TOTAL ANNUAL APPROVED BUDGET</td><td className="right">{formatPeso(isSkRole ? calcTotalAnnual : data.annualIncome.total_annual_income)}</td></tr>
-                </tbody></table>
+                    <h4>PART I: ANNUAL BUDGET REFERENCE</h4>
+                    <table className="report-table"><thead><tr><th>Source</th><th className="center">Records</th><th className="right">Amount</th></tr></thead><tbody>
+                        {rows(filteredAnnualRevenues, "No annual budget records.", (row) => <tr key={row.source}><td>{row.source}</td><td className="center">{row.entry_count}</td><td className="right">{formatPeso(row.total_amount)}</td></tr>, 3)}
+                        <tr className="total-row"><td colSpan="2">TOTAL ANNUAL APPROVED BUDGET</td><td className="right">{formatPeso(isSkRole ? calcTotalAnnual : data.annualIncome.total_annual_income)}</td></tr>
+                    </tbody></table>
 
-                <h4>PART II: MONTHLY BUDGET RELEASE</h4>
-                <table className="report-table"><thead><tr><th>Receipt Date</th><th>Source</th><th className="right">Amount</th></tr></thead><tbody>
-                    {rows(filteredMonthlyReceipts, "No monthly receipts recorded.", (row) => <tr key={row.id}><td>{row.receipt_date}</td><td>{row.source}</td><td className="right">{formatPeso(row.amount)}</td></tr>)}
-                    <tr className="total-row"><td colSpan="2">TOTAL RECEIPTS ({filteredMonthlyReceipts.length})</td><td className="right">{formatPeso(isSkRole ? calcTotalReceipts : data.totalMonthlyReceipts)}</td></tr>
-                </tbody></table>
+                    <h4>PART II: MONTHLY BUDGET RELEASE</h4>
+                    <table className="report-table"><thead><tr><th>Receipt Date</th><th>Source</th><th className="right">Amount</th></tr></thead><tbody>
+                        {rows(filteredMonthlyReceipts, "No monthly receipts recorded.", (row) => <tr key={row.id}><td>{row.receipt_date}</td><td>{row.source}</td><td className="right">{formatPeso(row.amount)}</td></tr>, 3)}
+                        <tr className="total-row"><td colSpan="2">TOTAL RECEIPTS ({filteredMonthlyReceipts.length})</td><td className="right">{formatPeso(isSkRole ? calcTotalReceipts : data.totalMonthlyReceipts)}</td></tr>
+                    </tbody></table>
 
-                <h4>PART III: MONTHLY ALLOCATION ACTIVITY</h4>
-                <table className="report-table"><thead><tr><th>Receipt / Dates</th><th>Category / Budget Item</th><th className="right">Allocated</th></tr></thead><tbody>
-                    {rows(filteredMonthlyAllocations, "No allocations recorded.", (row) => <tr key={row.id}><td>{row.receipt_source} ({row.receipt_date})<br />Allocated: {row.allocation_date}</td><td>{row.category_name} / {row.subcategory_name}</td><td className="right">{formatPeso(row.amount)}</td></tr>)}
-                    <tr className="total-row"><td colSpan="2">TOTAL ALLOCATED THIS MONTH</td><td className="right">{formatPeso(isSkRole ? calcTotalAllocated : data.totalMonthlyAllocated)}</td></tr>
-                </tbody></table>
-                {/**
-                <div className="report-summary-box"><div className="summary-line"><span>UNALLOCATED RECEIPTS:</span><strong>{formatPeso(data.outstandingUnallocated)}</strong></div><div className="summary-line"><span>REMAINING ALLOCATIONS:</span><strong>{formatPeso(data.remainingAllocated)}</strong></div></div>
-                */}
+                    <h4>PART III: MONTHLY ALLOCATION ACTIVITY</h4>
+                    <table className="report-table"><thead><tr><th>Receipt / Dates</th><th>Category / Budget Item</th><th className="right">Allocated</th></tr></thead><tbody>
+                        {rows(filteredMonthlyAllocations, "No allocations recorded.", (row) => <tr key={row.id}><td>{row.receipt_source} ({row.receipt_date})<br />Allocated: {row.allocation_date}</td><td>{row.category_name} / {row.subcategory_name}</td><td className="right">{formatPeso(row.amount)}</td></tr>, 3)}
+                        <tr className="total-row"><td colSpan="2">TOTAL ALLOCATED THIS MONTH</td><td className="right">{formatPeso(isSkRole ? calcTotalAllocated : data.totalMonthlyAllocated)}</td></tr>
+                    </tbody></table>
 
-                <h4>PART IV: MONTHLY EXPENDITURES</h4>
-                <table className="report-table"><thead><tr><th>Category / Budget Item</th><th className="center">Entries</th><th className="right">Amount</th></tr></thead><tbody>
-                    {rows(filteredExpenditureBreakdown, "No expenditures recorded.", (row, index) => <tr key={`${row.category_name}-${row.subcategory_name}-${index}`}><td>{row.category_name} / {row.subcategory_name}</td><td className="center">{row.entry_count}</td><td className="right">{formatPeso(row.total_amount)}</td></tr>)}
-                    <tr className="total-row"><td colSpan="2">TOTAL EXPENDITURES</td><td className="right">{formatPeso(isSkRole ? calcTotalExpenditure : data.totalExpenditure)}</td></tr>
-                </tbody></table>
-                {/**
-                <p>Monthly-linked: {formatPeso(data.monthlyLinkedExpenditure)} · Legacy/non-monthly-linked: {formatPeso(data.legacyExpenditure)}</p>
-                */}
+                    <h4>PART IV: MONTHLY EXPENDITURES</h4>
+                    <table className="report-table"><thead><tr><th>Category / Budget Item</th><th className="center">Entries</th><th className="right">Amount</th></tr></thead><tbody>
+                        {rows(filteredExpenditureBreakdown, "No expenditures recorded.", (row, index) => <tr key={`${row.category_name}-${row.subcategory_name}-${index}`}><td>{row.category_name} / {row.subcategory_name}</td><td className="center">{row.entry_count}</td><td className="right">{formatPeso(row.total_amount)}</td></tr>, 3)}
+                        <tr className="total-row"><td colSpan="2">TOTAL EXPENDITURES</td><td className="right">{formatPeso(isSkRole ? calcTotalExpenditure : data.totalExpenditure)}</td></tr>
+                    </tbody></table>
 
-                <h4>PART V: ALLOCATION UTILIZATION</h4>
-                <table className="report-table"><thead><tr><th>Receipt / Allocation Date</th><th>Category / Budget Item</th><th className="right">Allocated</th><th className="right">Spent</th><th className="right">Remaining</th></tr></thead><tbody>
-                    {rows(filteredAllocationUtilization, "No allocation history for this year.", (row) => <tr key={row.id}><td>{row.receipt_source} ({row.receipt_date})<br />{row.allocation_date}</td><td>{row.category_name} / {row.subcategory_name}</td><td className="right">{formatPeso(row.amount)}</td><td className="right">{formatPeso(row.expenditure_amount)}</td><td className="right">{formatPeso(row.remaining_amount)}</td></tr>)}
-                </tbody></table>
+                    <h4>PART V: ALLOCATION UTILIZATION</h4>
+                    <table className="report-table">
+                        <thead>
+                            <tr>
+                                <th style={{ width: '15%' }}>Receipt / Allocation Date</th>
+                                <th style={{ width: '18%' }}>Category / Budget Item</th>
+                                <th className="right" style={{ width: '13%' }}>Allocated</th>
+                                <th className="right" style={{ width: '13%' }}>Excess Avail.</th>
+                                <th className="right" style={{ width: '12%' }}>Spent</th>
+                                <th className="right" style={{ width: '15%' }}>Covered by Excess</th>
+                                <th className="right" style={{ width: '14%' }}>Remaining</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows(filteredAllocationUtilization, "No allocation history for this year.", (row) => (
+                                <tr key={row.id}>
+                                    <td>{row.receipt_source} ({row.receipt_date})<br />{row.allocation_date}</td>
+                                    <td>{row.category_name} / {row.subcategory_name}</td>
+                                    <td className="right">{formatPeso(row.amount)}</td>
+                                    <td className="right">{formatPeso(row.excess_available)}</td>
+                                    <td className="right">{formatPeso(row.expenditure_amount)}</td>
+                                    <td className="right">
+                                        {row.covered_by_excess > 0 ? formatPeso(row.covered_by_excess) : formatPeso(0)}
+                                    </td>
+                                    <td className="right">
+                                        {formatPeso(row.remaining_amount)}
+                                        {row.is_deficit && (
+                                            <span style={{ display: 'block', fontSize: '0.7rem', color: '#dc2626', marginTop: '4px' }}>
+                                                (True Deficit)
+                                            </span>
+                                        )}
+                                    </td>
+                                </tr>
+                            ), 7)}
+                        </tbody>
+                    </table>
 
-                {/**
-                <div className="report-summary-box"><div className="summary-line"><span>RECEIPTS LESS EXPENDITURES:</span><strong>{formatPeso(data.netIncome)}</strong></div></div>
-                */}
-                <div className="print-footer"><div className="signature-block"><p>Prepared by:</p><div className="signature-line" /><p className="signature-name">Barangay Treasurer</p></div><div className="signature-block"><p>Approved by:</p><div className="signature-line" /><p className="signature-name">Barangay Captain</p></div></div>
-                <div className="print-timestamp">Generated on: {new Date().toLocaleString()}</div>
-            </div>}
+                    <div className="print-footer"><div className="signature-block"><p>Prepared by:</p><div className="signature-line" /><p className="signature-name">Barangay Treasurer</p></div><div className="signature-block"><p>Approved by:</p><div className="signature-line" /><p className="signature-name">Barangay Captain</p></div></div>
+                </div>
+            )}
         </div>
     );
 }
