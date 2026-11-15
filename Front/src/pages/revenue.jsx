@@ -23,12 +23,12 @@ export default function Revenue () {
     const [currentPage, setCurrentPage] = useState(1)
     const {filters, months, years, updateFilter, clearFilters, filterParams} = useFilter({setCurrentPage})
     const { revenues, unreleasedAnnualBudget, loading, error, refetch } = useRevenue(filterParams)
-    const { isTreasurer, isStaff, isSK, isAdmin, isSkChair } = useRole()
+    const { isTreasurer,  isSK, isAdmin, isSkChair } = useRole()
     const {peso, date} = useFormat()
     const { showToast } = useToast()
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
 
-    const canRecord = isTreasurer || isStaff || isSK
+    const canRecord = isTreasurer || isSkChair
 
     const skFilteredRevenues = isSK
         ? revenues.filter(r => 

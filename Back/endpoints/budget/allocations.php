@@ -150,6 +150,38 @@ try {
         throw new InvalidArgumentException('The allocation exceeds the remaining receipt balance.');
     }
 
+    if ($itemType === 'existing') {
+        $subQuery = $pdo->prepare('SELECT category_id FROM budget_subcategories WHERE id = :id');
+        $subQuery->execute(['id' => $subcategoryId]);
+        $categoryId = (int)$subQuery->fetchColumn();
+    }
+
+    $catLimitCheck = $pdo->prepare("
+        SELECT c.allocated_amount, 
+               COALESCE(SUM(msa.amount), 0) AS total_category_allocated
+        FROM budget_categories c
+        LEFT JOIN budget_subcategories bs ON bs.category_id = c.id
+        LEFT JOIN monthly_subcategory_allocations msa ON msa.subcategory_id = bs.id
+        WHERE c.id = :category_id
+        GROUP BY c.id, c.allocated_amount
+        FOR UPDATE
+    ");
+    $catLimitCheck->execute(['category_id' => $categoryId]);
+    $catLimitRow = $catLimitCheck->fetch(PDO::FETCH_ASSOC);
+
+    if ($catLimitRow) {
+        $annualCategoryBudget = (float)$catLimitRow['allocated_amount'];
+        $alreadyAllocated = (float)$catLimitRow['total_category_allocated'];
+
+        if ($alreadyAllocated + $amount > $annualCategoryBudget + 0.005) {
+            throw new InvalidArgumentException(sprintf(
+                'The allocation exceeds the parent category\'s annual budget limit',
+                $annualCategoryBudget,
+                $alreadyAllocated
+            ));
+        }
+    }
+
     $insert = $pdo->prepare("
         SELECT id, amount FROM monthly_subcategory_allocations
         WHERE revenue_id = :revenue_id AND subcategory_id = :subcategory_id
@@ -175,7 +207,6 @@ try {
                 (revenue_id, subcategory_id, amount, allocation_date, created_by)
             VALUES (:revenue_id, :subcategory_id, :amount, :allocation_date, :created_by)
         ");
-        // Fallback safety for insert statement structure if table name is standard
         $insert = $pdo->prepare("
             INSERT INTO monthly_subcategory_allocations
                 (revenue_id, subcategory_id, amount, allocation_date, created_by)
