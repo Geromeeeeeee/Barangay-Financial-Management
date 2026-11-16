@@ -30,7 +30,7 @@ export default function Reports() {
     };
 
     const years = Array.from({ length: 6 }, (_, index) => new Date().getFullYear() - index);
-    const { isSkChair, isSK } = useRole();
+    const { isSkChair, isSK, isTreasurer } = useRole();
     const isSkRole = isSkChair || isSK;
 
     const fetchReport = useCallback(async () => {
@@ -144,8 +144,12 @@ export default function Reports() {
                 </div>
                 <div className="report-actions">
                     <select value={reportType} onChange={(event) => { setReportType(event.target.value); setData(null); }}>
-                        <option value="financial">Monthly Financial Report</option>
-                        <option value="category">Category-wise Expenditure Report</option>
+                        {isTreasurer && (
+                            <option value="financial">Monthly Financial Report</option>
+                        )}
+                        <option value="category">
+                            {isSK ? "SK Monthly Report" : "Categorical Expenditure Report"}
+                        </option>
                     </select>
                     <select value={month} onChange={(event) => setMonth(Number(event.target.value))}>{months.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}</select>
                     <select value={year} onChange={(event) => setYear(Number(event.target.value))}>{years.map((value) => <option key={value} value={value}>{value}</option>)}</select>

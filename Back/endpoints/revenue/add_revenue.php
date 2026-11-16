@@ -11,23 +11,26 @@ if (!isset($_SESSION['uid'])) {
     exit();
 }
 
+$isTreasurer = strtolower((string)($_SESSION['role'] ?? '')) === 'treasurer';
+$isSK = strtolower((string)($_SESSION['role'] ?? '')) === 'sk_chairman';
+
 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 $data = stripos($contentType, 'multipart/form-data') !== false
     ? $_POST
     : (json_decode(file_get_contents("php://input"), true) ?: []);
 
-$amount          = $data['amount']          ?? null;
-$particular      = $data['particular']      ?? null;
-$nta             = array_key_exists('nta', $data) ? $data['nta'] : null;
-$localIncome     = $data['local_income']    ?? null;
-$source          = $data['source']         ?? null;
-$created_by      = $_SESSION['uid'];
-$request_key     = $data['request_key']     ?? null;
-$record_type     = $data['record_type']     ?? 'annual_budget';
-$receipt_date    = $data['receipt_date']    ?? null;
-$allocationsJson = $data['allocations']    ?? '[]';
-$ocrOverridden   = isset($data['ocr_overridden']) && (string)$data['ocr_overridden'] === '1';
-$status          = $ocrOverridden ? 'pending' : 'verified';
+$amount         = $data['amount']         ?? null;
+$particular     = $data['particular']     ?? null;
+$nta            = array_key_exists('nta', $data) ? $data['nta'] : null;
+$localIncome    = $data['local_income']    ?? null;
+$source         = $data['source']         ?? null;
+$created_by     = $_SESSION['uid'];
+$request_key    = $data['request_key']    ?? null;
+$record_type    = $data['record_type']    ?? 'annual_budget';
+$receipt_date   = $data['receipt_date']   ?? null;
+$allocationsJson = $data['allocations']   ?? '[]';
+$ocrOverridden  = isset($data['ocr_overridden']) && (string)$data['ocr_overridden'] === '1';
+$status         = $ocrOverridden ? 'pending' : 'verified';
 
 $revenue = new Revenue($pdo);
 $audit = new Audit($pdo);
@@ -119,26 +122,54 @@ try {
         }
 
         $pdo->beginTransaction();
-        $annualBudgetRows = $pdo->query("
-            SELECT nta, local_income
-            FROM revenues
-            WHERE record_type = 'annual_budget' AND status = 'verified'
-            AND YEAR(created_at) = YEAR(CURDATE())
-            FOR UPDATE
-        ")->fetchAll(PDO::FETCH_ASSOC);
-        $annualBudget = 0.0;
-        foreach ($annualBudgetRows as $annualBudgetRow) {
-            $annualBudget += (float)$annualBudgetRow['nta'] + (float)$annualBudgetRow['local_income'];
-        }
-        $verifiedMonthlyReceipts = (float)$pdo->query("
-            SELECT COALESCE(SUM(amount), 0)
-            FROM revenues
-            WHERE record_type = 'monthly_receipt'
-              AND status = 'verified'
-              AND YEAR(receipt_date) = YEAR(CURDATE())
-        ")->fetchColumn();
-        if ($verifiedMonthlyReceipts + $amount > $annualBudget + 0.005) {
-            throw new InvalidArgumentException('The monthly receipt exceeds the unreleased annual budget.');
+
+        if ($isSK) {
+            // SK-specific ceiling check against the SK annual budget category (10% share)
+            $skCategoryStmt = $pdo->prepare("
+                SELECT allocated_amount 
+                FROM budget_categories 
+                WHERE name = 'SK' 
+                FOR UPDATE
+            ");
+            $skCategoryStmt->execute();
+            $skAnnualBudget = (float)$skCategoryStmt->fetchColumn();
+
+            $verifiedSKReceipts = (float)$pdo->query("
+                SELECT COALESCE(SUM(r.amount), 0)
+                FROM revenues r
+                JOIN users u ON r.created_by = u.id
+                WHERE r.record_type = 'monthly_receipt'
+                  AND r.status = 'verified'
+                  AND YEAR(r.receipt_date) = YEAR(CURDATE())
+                  AND LOWER(u.role) = 'sk_chairman'
+            ")->fetchColumn();
+
+            if ($verifiedSKReceipts + $amount > $skAnnualBudget + 0.005) {
+                throw new InvalidArgumentException('The SK monthly receipt exceeds the SK annual budget limit.');
+            }
+        } else {
+            // Barangay-level annual budget check for Treasurer / Admin
+            $annualBudgetRows = $pdo->query("
+                SELECT nta, local_income
+                FROM revenues
+                WHERE record_type = 'annual_budget' AND status = 'verified'
+                AND YEAR(created_at) = YEAR(CURDATE())
+                FOR UPDATE
+            ")->fetchAll(PDO::FETCH_ASSOC);
+            $annualBudget = 0.0;
+            foreach ($annualBudgetRows as $annualBudgetRow) {
+                $annualBudget += (float)$annualBudgetRow['nta'] + (float)$annualBudgetRow['local_income'];
+            }
+            $verifiedMonthlyReceipts = (float)$pdo->query("
+                SELECT COALESCE(SUM(amount), 0)
+                FROM revenues
+                WHERE record_type = 'monthly_receipt'
+                  AND status = 'verified'
+                  AND YEAR(receipt_date) = YEAR(CURDATE())
+            ")->fetchColumn();
+            if ($verifiedMonthlyReceipts + $amount > $annualBudget + 0.005) {
+                throw new InvalidArgumentException('The monthly receipt exceeds the unreleased annual budget.');
+            }
         }
 
     } elseif ($particular !== null) {
@@ -177,12 +208,9 @@ try {
         }
     }
     
-    $isTreasurer = strtolower((string)($_SESSION['role'] ?? '')) === 'treasurer';
-    $isSK = strtolower((string)($_SESSION['role'] ?? '')) === 'sk_chairman';
-    
     $files = $_FILES['attachments'] ?? null;
-    if (($isTreasurer || $record_type === 'monthly_receipt') && (!$files || $files['error'][0] === UPLOAD_ERR_NO_FILE)) {
-        throw new InvalidArgumentException('Treasurers must upload at least one supporting document.');
+    if (($isTreasurer || $isSK || $record_type === 'monthly_receipt') && (!$files || $files['error'][0] === UPLOAD_ERR_NO_FILE)) {
+        throw new InvalidArgumentException('Supporting documents are required.');
     }
 
     $uploadedFilesData = [];
@@ -190,7 +218,7 @@ try {
 
     if ($files && $files['error'][0] !== UPLOAD_ERR_NO_FILE) {
         if (!($isTreasurer || $isSK)) {
-            throw new InvalidArgumentException('Only treasurers can upload supporting documents.');
+            throw new InvalidArgumentException('Only authorized officers can upload supporting documents.');
         }
 
         $allowedMimeTypes = ['application/pdf' => 'pdf', 'image/jpeg' => 'jpg', 'image/png' => 'png'];

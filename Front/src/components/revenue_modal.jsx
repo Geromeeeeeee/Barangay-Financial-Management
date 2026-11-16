@@ -36,7 +36,7 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
     const [isDraggingDocs, setIsDraggingDocs] = useState(false)
 
     const { showToast } = useToast()
-    const { isSK } = useRole()
+    const { isSK, isTreasurer } = useRole()
     const monthlyReceiptExceedsBudget = recordType === 'monthly_receipt'
         && unreleasedAnnualBudget !== null
         && Number(amount) > Number(unreleasedAnnualBudget) + 0.005
@@ -185,7 +185,9 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
                         <span>Record type</span>
                         <select value={recordType} onChange={handleRecordTypeChange}>
                             <option value="monthly_receipt">Monthly fund receipt</option>
-                            <option value="annual_budget">Annual approved budget</option>
+                            {isTreasurer && (
+                                <option value="annual_budget">Annual approved budget</option>
+                            )}
                         </select>
                     </label>
 
@@ -201,8 +203,8 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
                         />
                         </label>
                     )}
-
-                    {recordType === 'annual_budget' && (
+                    {isTreasurer && (
+                        recordType === 'annual_budget' && (
                         <label>
                             <span>Particular/Source</span>
                             <select
@@ -215,6 +217,7 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
                                 <option value="Others">Others</option>
                             </select>
                         </label>
+                    )
                     )}
 
                     {recordType === 'monthly_receipt' ? (
