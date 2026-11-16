@@ -38,12 +38,13 @@ $recordsThisMonth = $pdo->query("
 
 $categoryBalances = $pdo->query("
     SELECT id, name, allocated_amount, spent_amount,
-           allocated_amount - spent_amount AS balance, percentage, is_custom
+           GREATEST(0, allocated_amount - spent_amount) AS balance, percentage, is_custom
     FROM budget_categories ORDER BY id
 ")->fetchAll(PDO::FETCH_ASSOC);
+
 $subcategories = $pdo->query("
     SELECT id, category_id, name, allocated_amount, spent_amount,
-           allocated_amount - spent_amount AS balance
+           GREATEST(0, allocated_amount - spent_amount) AS balance
     FROM budget_subcategories ORDER BY category_id, name
 ")->fetchAll(PDO::FETCH_ASSOC);
 foreach ($categoryBalances as &$category) {

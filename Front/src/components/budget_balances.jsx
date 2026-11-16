@@ -10,7 +10,7 @@ export default function BudgetBalances({
     toggleAll,
     formatPeso
 }) {
-    // Check if all categories are hidden to determine master icon
+
     const allHidden = stats.categoryBalances.length > 0 && 
                       stats.categoryBalances.every(c => hiddenCategories[c.id]);
 

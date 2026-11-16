@@ -14,7 +14,6 @@ export default function Dashboard() {
     if (isTreasurer) return <TreasurerDashboard user={user} />;
     if (isSK)        return <SKDashboard user={user} />;
     if (isStaff)     return <StaffDashboard user={user} />;
-
-    // Moved inline styles to a class name
+    
     return <div className="unknown-role-msg">Unknown role</div>;
 }

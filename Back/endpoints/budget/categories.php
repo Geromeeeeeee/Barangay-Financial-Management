@@ -7,7 +7,7 @@ function category_payload(PDO $pdo, bool $refreshAllocations = true): array {
     $income = $refreshAllocations ? Budget::refreshAllocations($pdo) : Budget::income($pdo);
     $categories = $pdo->query("
         SELECT c.id, c.name, c.percentage, c.is_custom, c.allocated_amount, c.spent_amount,
-               c.allocated_amount - c.spent_amount AS balance
+               GREATEST(0, c.allocated_amount - c.spent_amount) AS balance
         FROM budget_categories c
         LEFT JOIN budget_subcategories s ON s.category_id = c.id
         GROUP BY c.id, c.name, c.percentage, c.is_custom, c.allocated_amount, c.spent_amount
@@ -15,7 +15,7 @@ function category_payload(PDO $pdo, bool $refreshAllocations = true): array {
     ")->fetchAll(PDO::FETCH_ASSOC);
     $subcategories = $pdo->query("
         SELECT id, category_id, name, allocated_amount, spent_amount, is_active,
-               allocated_amount - spent_amount AS balance,
+               GREATEST(0, allocated_amount - spent_amount) AS balance,
                COALESCE((
                    SELECT SUM(a.amount)
                    FROM monthly_subcategory_allocations a
@@ -28,7 +28,7 @@ function category_payload(PDO $pdo, bool $refreshAllocations = true): array {
                    WHERE a.subcategory_id = budget_subcategories.id
                      AND e.status = 'verified'
                ), 0) AS monthly_spent_amount,
-               COALESCE((
+               GREATEST(0, COALESCE((
                    SELECT SUM(a.amount)
                    FROM monthly_subcategory_allocations a
                    WHERE a.subcategory_id = budget_subcategories.id
@@ -38,7 +38,7 @@ function category_payload(PDO $pdo, bool $refreshAllocations = true): array {
                    INNER JOIN monthly_subcategory_allocations a ON a.id = e.monthly_allocation_id
                    WHERE a.subcategory_id = budget_subcategories.id
                      AND e.status = 'verified'
-               ), 0) AS monthly_remaining_amount
+               ), 0)) AS monthly_remaining_amount
         FROM budget_subcategories ORDER BY category_id, name
     ")->fetchAll(PDO::FETCH_ASSOC);
     foreach ($categories as &$category) {
