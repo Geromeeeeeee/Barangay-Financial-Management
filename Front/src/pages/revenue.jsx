@@ -161,7 +161,7 @@ export default function Revenue () {
                                             </span>
                                         ) : (
                                             (isTreasurer || isSkChair) && r.record_type === 'monthly_receipt' && (
-                                            <button type="button" className="filter-clear" onClick={() => setAllocationReceipt(r)}>
+                                            <button type="button" className="filter-clear" onClick={() => setAllocationReceipt(r)} disabled={r.remaining_amount <=0}>
                                                 Allocate Funds
                                             </button>
                                             )

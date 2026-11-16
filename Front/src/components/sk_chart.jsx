@@ -59,7 +59,7 @@ export default function SKChart() {
                             />
                             <Legend wrapperStyle={{ paddingTop: '10px' }} />
                             <Bar dataKey="spent" name="Spent" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={25} />
-                            <Line type="monotone" dataKey="allocated" name="Monthly Allocation" stroke="#2563eb" strokeWidth={3} dot={false} />
+                            <Line type="monotone" dataKey="allocated" name="Monthly Funding" stroke="#2563eb" strokeWidth={3} dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 )}

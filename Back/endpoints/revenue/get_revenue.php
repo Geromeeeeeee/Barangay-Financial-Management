@@ -20,6 +20,7 @@ try {
     $revenue = new Revenue($pdo);
     $revenues = $revenue->get_revenue($filters);
     $income = Budget::income($pdo);
+    
     $monthlyReceipts = $pdo->query("
         SELECT COALESCE(SUM(amount), 0)
         FROM revenues
@@ -27,10 +28,20 @@ try {
           AND status = 'verified'
           AND YEAR(receipt_date) = YEAR(CURDATE())
     ")->fetchColumn();
+    
     $unreleasedAnnualBudget = max(0, round(
         (float)$income['total_annual_income'] - (float)$monthlyReceipts,
         2
     ));
+
+    // Fetch total allocated amounts grouped by revenue_id to attach to each record
+    $allocStmt = $pdo->query("
+        SELECT revenue_id, COALESCE(SUM(amount), 0) as total_allocated
+        FROM monthly_subcategory_allocations
+        GROUP BY revenue_id
+    ");
+    $allocationsMap = $allocStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
     foreach ($revenues as &$record) {
         $record['nta'] = (float)$record['nta'];
         $record['local_income'] = (float)$record['local_income'];
@@ -38,6 +49,10 @@ try {
         $record['total_annual_income'] = $record['record_type'] === 'annual_budget'
             ? round((float)$record['amount'], 2)
             : 0.0;
+
+        $totalAllocated = (float)($allocationsMap[$record['id']] ?? 0);
+        $record['total_allocated'] = $totalAllocated;
+        $record['remaining_amount'] = round((float)$record['amount'] - $totalAllocated, 2);
     }
     unset($record);
 

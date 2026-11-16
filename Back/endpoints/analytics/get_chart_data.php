@@ -6,12 +6,12 @@ $year = (int)($_GET['year'] ?? date('Y'));
 
 try {
     $stmtRev = $pdo->prepare("
-        SELECT MONTH(created_at) as month, SUM(amount) as total 
+        SELECT MONTH(COALESCE(receipt_date, created_at)) as month, SUM(amount) as total 
         FROM revenues 
-        WHERE record_type = 'annual_budget'
+        WHERE record_type = 'monthly_receipt'
           AND status = 'verified'
-          AND YEAR(created_at) = :year
-        GROUP BY MONTH(created_at)
+          AND YEAR(COALESCE(receipt_date, created_at)) = :year
+        GROUP BY MONTH(COALESCE(receipt_date, created_at))
     ");
     $stmtRev->execute(['year' => $year]);
     $revenues = $stmtRev->fetchAll(PDO::FETCH_KEY_PAIR);
@@ -32,7 +32,7 @@ try {
     for ($i = 1; $i <= 12; $i++) {
         $chartData[] = [
             'name' => $months[$i - 1],
-            'revenue' => (float)($revenues[$i] ?? 0),
+            'revenue' => (float)($revenues[$i] ?? 0),      
             'expenditure' => (float)($expenditures[$i] ?? 0),
         ];
     }
