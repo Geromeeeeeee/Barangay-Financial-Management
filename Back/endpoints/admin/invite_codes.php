@@ -9,12 +9,12 @@ $action = $data['action'] ?? $_GET['action'] ?? '';
 
 $invite = new Invite($pdo);
 
-// ===== LIST ALL =====
+
 if($action === 'list'){
     echo json_encode($invite->list_all());
     exit();
 }
-// ===== CREATE =====
+
 if($action === 'create'){
     $role  = $data['role'] ?? 'staff';
     $email = trim($data['email'] ?? '');
@@ -26,9 +26,19 @@ if($action === 'create'){
         exit();
     }
 
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid email address format. Please enter a valid email.']);
+        exit();
+    }
+
+    $domain = substr(strrchr($email, "@"), 1);
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || (!checkdnsrr($domain, "MX") && !checkdnsrr($domain, "A"))) {
+        echo json_encode(['success' => false, 'message' => 'Email domain does not exist or cannot accept mail.']);
+        exit();
+    }
+
     $result = $invite->generate_code($role, $email, $hours, $created_by); 
     
-    // 👇 Explicit success response
     echo json_encode([
         'success' => true,
         'id'      => $result['id'],
@@ -39,7 +49,7 @@ if($action === 'create'){
     ]);
     exit();
 }
-// ===== REVOKE =====
+
 if($action === 'revoke'){
     $id = (int)($data['id'] ?? 0);
     $invite->revoke($id);

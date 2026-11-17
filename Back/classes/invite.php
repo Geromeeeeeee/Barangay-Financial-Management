@@ -56,18 +56,29 @@ class Invite {
             'created_by' => $created_by,
         ]);
 
+        $newId = $this->database->lastInsertId();
+
         // 🔴 TRIGGER THE EMAIL HERE
         require_once __DIR__ . '/mailer.php';
         $mailer = new Mailer();
         $mailer->sendInvite($email, $role, $code);
 
+        $stmtFetch = $this->database->prepare('
+            SELECT id, code, role, email, expires_at AS expiresAt, used_by AS usedBy, used_at AS usedAt, created_at AS createdAt
+            FROM invite_codes
+            WHERE id = :id
+            LIMIT 1
+        ');
+        $stmtFetch->execute(['id' => $newId]);
+        $row = $stmtFetch->fetch(PDO::FETCH_ASSOC);
+
         return [
-            'id'        => $this->database->lastInsertId(),
-            'code'      => $code,
-            'role'      => $role,
-            'email'     => $email,
-            'expiresAt' => date('Y-m-d H:i:s', strtotime("+$hours hours")),
-            'usedBy'    => null,
+            'id'        => $row['id'],
+            'code'      => $row['code'],
+            'role'      => $row['role'],
+            'email'     => $row['email'],
+            'expiresAt' => $row['expiresAt'],
+            'usedBy'    => $row['usedBy'],
         ];
     }
 
