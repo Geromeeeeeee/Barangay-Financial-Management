@@ -3,6 +3,7 @@ import axios from "axios";
 import "../styles/revenue.css"; 
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
+const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost/Capstone/Back/";
 
 export default function FileListModal({ revenueId, expenditure, onClose }) {
     const [files, setFiles] = useState([]);
@@ -17,11 +18,11 @@ export default function FileListModal({ revenueId, expenditure, onClose }) {
                         setFiles(res.data.data.map((file) => ({
                             ...file,
                             view_url: file.legacy
-                                ? `${API_URL}expenditure/view_attachment.php?id=${expenditure.id}`
-                                : `${API_URL}expenditure/view_attachment.php?attachment_id=${file.id}`,
+                                ? `${BASE_URL}uploads/expenditures/view_attachment.php?id=${expenditure.id}`
+                                : `${BASE_URL}uploads/expenditures/view_attachment.php?attachment_id=${file.id}`,
                             download_url: file.legacy
-                                ? `${API_URL}expenditure/download_attachment.php?id=${expenditure.id}`
-                                : `${API_URL}expenditure/download_attachment.php?attachment_id=${file.id}`,
+                                ? `${BASE_URL}uploads/expenditures/download_attachment.php?id=${expenditure.id}`
+                                : `${BASE_URL}uploads/expenditures/download_attachment.php?attachment_id=${file.id}`,
                         })));
                     }
                 })
