@@ -100,20 +100,18 @@ export default function Revenue () {
                             {displayedRecords.map((r) => (
                                 <tr key={r.id}>
                                     <td className="muted">{date(r.receipt_date || r.created_at)}</td>
-                                    <td>{r.record_type === 'monthly_receipt' ? `${r.source} (Monthly receipt)` : r.source}</td>
+                                    <td style={{ fontWeight: '500', color: '#1e293b' }}>
+                                        {r.record_type === 'monthly_receipt' ? (
+                                            <>
+                                                {r.source} <span style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: '400' }}>(Monthly receipt)</span>
+                                            </>
+                                        ) : r.source}
+                                    </td>
                                     <td>
                                         {r.attachment_count > 0 ? (
                                             <button
                                                 type="button"
-                                                className="fund-pill"
-                                                style={{
-                                                    background: '#e0f2fe', 
-                                                    color: '#0369a1', 
-                                                    fontWeight: 'bold',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    padding: '4px 10px'
-                                                }}
+                                                className="audit-file-link"
                                                 onClick={() => setViewFilesId(r.id)}
                                             >
                                                 📎 View document{Number(r.attachment_count) > 1 ? `s (${r.attachment_count})` : ''}
@@ -122,22 +120,20 @@ export default function Revenue () {
                                             <span className="muted">—</span>
                                         )}
                                     </td>
-                                    <td className="right amount">{peso(r.amount)}</td>
+                                    <td className="right amount" style={{ color: '#0f172a', fontWeight: '600' }}>{peso(r.amount)}</td>
                                     {isAdmin && (
                                         <td className="right">
                                             {r.status === 'pending' ? (
                                                 <button
                                                     type="button"
                                                     onClick={() => setReviewItem(r)}
-                                                    style={{ background: '#f59e0b', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}
+                                                    className="btn-primary"
+                                                    style={{ padding: '6px 12px', fontSize: '0.75rem', background: '#f59e0b' }}
                                                 >
                                                     Review
                                                 </button>
                                             ) : (
-                                                <span style={{
-                                                    color: r.status === 'verified' ? '#10b981' : '#dc2626',
-                                                    fontWeight: '500'
-                                                }}>
+                                                <span className={`audit-pill ${r.status === 'verified' ? 'pill-green' : 'pill-red'}`}>
                                                     {(r.status || 'unknown').charAt(0).toUpperCase() + (r.status || 'unknown').slice(1)}
                                                 </span>
                                             )}
@@ -145,27 +141,27 @@ export default function Revenue () {
                                     )}
                                     {(isTreasurer||isSkChair) && (
                                         <td className="right">
-                                        {r.status === 'pending' ? (
-                                            <span style={{
-                                                    color: r.status === 'pending' ? '#10b981' : '#dc2626',
-                                                    fontWeight: '500'
-                                                }}>
-                                                Pending
-                                            </span>
-                                        ) : r.status === 'rejected' ? (
-                                            <span style={{
-                                                    color: r.status === 'verified' ? '#10b981' : '#dc2626',
-                                                    fontWeight: '500'
-                                                }}>
-                                                Rejected
-                                            </span>
-                                        ) : (
-                                            (isTreasurer || isSkChair) && r.record_type === 'monthly_receipt' && (
-                                            <button type="button" className="filter-clear" onClick={() => setAllocationReceipt(r)} disabled={r.remaining_amount <=0}>
-                                                Allocate Funds
-                                            </button>
-                                            )
-                                        )}
+                                            {r.status === 'pending' ? (
+                                                <span className="audit-pill" style={{ background: '#fef3c7', color: '#b45309' }}>
+                                                    Pending
+                                                </span>
+                                            ) : r.status === 'rejected' ? (
+                                                <span className="audit-pill pill-red">
+                                                    Rejected
+                                                </span>
+                                            ) : (
+                                                (isTreasurer || isSkChair) && r.record_type === 'monthly_receipt' && (
+                                                    <button 
+                                                        type="button" 
+                                                        className="btn-primary" 
+                                                        style={{ padding: '6px 12px', fontSize: '0.75rem', background: '#eff6ff', color: '#1e40af', border: '1px solid #bfdbfe' }} 
+                                                        onClick={() => setAllocationReceipt(r)} 
+                                                        disabled={r.remaining_amount <= 0}
+                                                    >
+                                                        Allocate Funds
+                                                    </button>
+                                                )
+                                            )}
                                         </td>
                                     )}
                                 </tr>

@@ -124,7 +124,6 @@ try {
         $pdo->beginTransaction();
 
         if ($isSK) {
-            // SK-specific ceiling check against the SK annual budget category (10% share)
             $skCategoryStmt = $pdo->prepare("
                 SELECT allocated_amount 
                 FROM budget_categories 
@@ -148,7 +147,6 @@ try {
                 throw new InvalidArgumentException('The SK monthly receipt exceeds the SK annual budget limit.');
             }
         } else {
-            // Barangay-level annual budget check for Treasurer / Admin
             $annualBudgetRows = $pdo->query("
                 SELECT nta, local_income
                 FROM revenues
@@ -209,14 +207,29 @@ try {
     }
     
     $files = $_FILES['attachments'] ?? null;
-    if (($isTreasurer || $isSK || $record_type === 'monthly_receipt') && (!$files || $files['error'][0] === UPLOAD_ERR_NO_FILE)) {
+    $hasFiles = false;
+    
+    if ($files && isset($files['error'])) {
+        if (is_array($files['error'])) {
+            foreach ($files['error'] as $errorCode) {
+                if ($errorCode !== UPLOAD_ERR_NO_FILE) {
+                    $hasFiles = true;
+                    break;
+                }
+            }
+        } elseif ($files['error'] !== UPLOAD_ERR_NO_FILE) {
+            $hasFiles = true;
+        }
+    }
+
+    if (($isTreasurer || $isSK || $record_type === 'monthly_receipt') && !$hasFiles) {
         throw new InvalidArgumentException('Supporting documents are required.');
     }
 
     $uploadedFilesData = [];
     $uploadedPaths = [];
 
-    if ($files && $files['error'][0] !== UPLOAD_ERR_NO_FILE) {
+    if ($hasFiles) {
         if (!($isTreasurer || $isSK)) {
             throw new InvalidArgumentException('Only authorized officers can upload supporting documents.');
         }
@@ -228,16 +241,21 @@ try {
             throw new RuntimeException('The supporting document could not be stored.');
         }
 
-        $file_count = count($files['name']);
+        $fileCount = is_array($files['name']) ? count($files['name']) : 1;
 
-        for ($i = 0; $i < $file_count; $i++) {
-            if ($files['error'][$i] === UPLOAD_ERR_NO_FILE) continue;
+        for ($i = 0; $i < $fileCount; $i++) {
+            $currentError = is_array($files['error']) ? $files['error'][$i] : $files['error'];
+            if ($currentError === UPLOAD_ERR_NO_FILE) continue;
 
-            if ($files['error'][$i] !== UPLOAD_ERR_OK || $files['size'][$i] > 5 * 1024 * 1024) {
+            $currentSize = is_array($files['size']) ? $files['size'][$i] : $files['size'];
+            if ($currentError !== UPLOAD_ERR_OK || $currentSize > 5 * 1024 * 1024) {
                 throw new InvalidArgumentException('One or more files could not be uploaded or exceed 5 MB.');
             }
 
-            $mimeType = (new finfo(FILEINFO_MIME_TYPE))->file($files['tmp_name'][$i]);
+            $tmpName = is_array($files['tmp_name']) ? $files['tmp_name'][$i] : $files['tmp_name'];
+            $originalName = is_array($files['name']) ? $files['name'][$i] : $files['name'];
+
+            $mimeType = (new finfo(FILEINFO_MIME_TYPE))->file($tmpName);
             if (!isset($allowedMimeTypes[$mimeType])) {
                 throw new InvalidArgumentException('Only PDF, JPG, and PNG documents are allowed.');
             }
@@ -245,7 +263,7 @@ try {
             $safeFilename = bin2hex(random_bytes(16)) . '.' . $allowedMimeTypes[$mimeType];
             $uploadedPath = $uploadDirectory . DIRECTORY_SEPARATOR . $safeFilename;
 
-            if (!move_uploaded_file($files['tmp_name'][$i], $uploadedPath)) {
+            if (!move_uploaded_file($tmpName, $uploadedPath)) {
                 throw new RuntimeException('A supporting document could not be stored.');
             }
 
@@ -253,9 +271,9 @@ try {
             
             $uploadedFilesData[] = [
                 'path' => 'uploads/revenues/' . $safeFilename,
-                'name' => basename((string)$files['name'][$i]),
+                'name' => basename((string)$originalName),
                 'mime' => $mimeType,
-                'size' => (int)$files['size'][$i]
+                'size' => (int)$currentSize
             ];
         }
     }

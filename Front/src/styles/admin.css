@@ -57,6 +57,11 @@
     cursor: pointer;
 }
 
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .btn-danger {
     padding: 8px 14px;
     background: #fef2f2;
@@ -364,4 +369,104 @@
     height: 65vh;
     border: none;
     border-radius: 4px;
+}
+
+.custom-dropdown-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-dropdown-trigger {
+    padding: 9px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    background: #f8fafc;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-width: 160px;
+    color: #0f172a;
+}
+
+.custom-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px -6px rgba(15, 23, 42, 0.15);
+    z-index: 50;
+    margin-top: 4px;
+    overflow: hidden;
+    min-width: 220px;
+}
+
+.custom-dropdown-item {
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #0f172a;
+    white-space: nowrap;
+}
+
+.custom-dropdown-item:hover:not(.disabled) {
+    background-color: #f1f5f9;
+}
+
+.custom-dropdown-item.active {
+    background-color: #2563eb;
+    color: #ffffff;
+}
+
+.custom-dropdown-item.disabled {
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.dropdown-warning-text {
+    font-size: 0.75rem;
+    color: #ef4444;
+    font-weight: 700;
+    margin-left: 16px;
+}
+
+.custom-dropdown-item.active .dropdown-warning-text {
+    color: #fecaca;
+}
+
+.security-alert {
+    background-color: #FFF5F5;
+    border: 1px solid #FEB2B2;
+    border-left: 4px solid #E53E3E;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.security-alert-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.security-alert-content strong {
+    color: #C53030;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.security-alert-content span {
+    color: #742A2A;
+    font-size: 14px;
 }

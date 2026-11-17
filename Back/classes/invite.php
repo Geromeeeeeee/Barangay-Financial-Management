@@ -8,7 +8,6 @@ class Invite {
         $this->database = $pdo;
     }
 
-    // Check if a code is valid (not used, not expired)
     public function validate_code($code) {
         $stmt = $this->database->prepare('
             SELECT id, role, email, expires_at, used_by
@@ -33,11 +32,10 @@ class Invite {
             'valid' => true,
             'id'    => $row['id'],
             'role'  => $row['role'],
-            'email' => $row['email'], // Return the email
+            'email' => $row['email'],
         ];
     }
 
-    // Generate a new code
     public function generate_code($role, $email, $hours, $created_by = null) {
         $code = 'MAL2A-'
               . strtoupper(bin2hex(random_bytes(2)))
@@ -58,7 +56,6 @@ class Invite {
 
         $newId = $this->database->lastInsertId();
 
-        // 🔴 TRIGGER THE EMAIL HERE
         require_once __DIR__ . '/mailer.php';
         $mailer = new Mailer();
         $mailer->sendInvite($email, $role, $code);
@@ -82,7 +79,6 @@ class Invite {
         ];
     }
 
-    // List all codes
     public function list_all() {
         $stmt = $this->database->query('
             SELECT id, code, role, email,
@@ -96,14 +92,12 @@ class Invite {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Revoke a code
     public function revoke($id) {
         $stmt = $this->database->prepare('DELETE FROM invite_codes WHERE id = :id');
         $stmt->execute(['id' => $id]);
         return true;
     }
 
-    // Mark a code as used by a specific user
     public function mark_used($code_id, $user_id) {
         $stmt = $this->database->prepare('
             UPDATE invite_codes
@@ -111,6 +105,41 @@ class Invite {
             WHERE id = :id
         ');
         $stmt->execute(['user_id' => $user_id, 'id' => $code_id]);
+    }
+
+    public function is_role_filled($role) {
+        $normalizedRole = strtolower(str_replace([' ', '_'], '', trim($role)));
+
+        $stmt = $this->database->prepare("
+            SELECT COUNT(*) FROM users 
+            WHERE LOWER(REPLACE(role, '_', '')) = :role
+        ");
+        $stmt->execute(['role' => $normalizedRole]);
+        if ($stmt->fetchColumn() > 0) {
+            return true;
+        }
+
+        $stmt = $this->database->prepare("
+            SELECT COUNT(*) FROM invite_codes 
+            WHERE LOWER(REPLACE(role, '_', '')) = :role 
+              AND used_by IS NULL 
+              AND expires_at > NOW()
+        ");
+        $stmt->execute(['role' => $normalizedRole]);
+        if ($stmt->fetchColumn() > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function is_email_registered($email) {
+        $stmt = $this->database->prepare("
+            SELECT COUNT(*) FROM users 
+            WHERE LOWER(email) = :email
+        ");
+        $stmt->execute(['email' => strtolower(trim($email))]);
+        return $stmt->fetchColumn() > 0;
     }
 }
 ?>

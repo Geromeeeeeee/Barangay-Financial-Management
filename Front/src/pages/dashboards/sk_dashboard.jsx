@@ -84,16 +84,33 @@ export default function SKDashboard({ user }) {
                 <div className="dash-card">
                     <div className="dash-card-head">
                         <h2>SK Budget Items</h2>
-                        <Link to="/Expenditure" className="dash-link" style={{ textDecoration: 'none' }}>
+                        <Link to="/Expenditure" className="dash-link" style={{ textDecoration: 'none', fontWeight: 600 }}>
                             + Record Expense
                         </Link>
                     </div>
-                    <div className="sk-scroll-area">
-                        <ul className="activity-list">
-                            {(stats.categoryBalances[0]?.subcategories || []).length === 0 ? (
-                                <li className="muted">No SK budget items created yet.</li>
-                            ) : (
-                                stats.categoryBalances[0].subcategories.map((subcategory) => (
+                    <div className="sk-scroll-area" style={{ flex: 1, marginTop: '10px', overflowY: 'auto' }}>
+                        {(stats.categoryBalances[0]?.subcategories || []).length === 0 ? (
+                            <div style={{ 
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+                                height: '100%', padding: '20px', textAlign: 'center'
+                            }}>
+                                <div style={{ 
+                                    backgroundColor: '#eff6ff', width: '64px', height: '64px', borderRadius: '50%', 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', marginBottom: '16px' 
+                                }}>
+                                    📁
+                                </div>
+                                <h4 style={{ margin: '0 0 8px 0', color: '#0f172a', fontSize: '1.05rem', fontWeight: '600' }}>No SK Budget Items Yet</h4>
+                                <p style={{ margin: '0 0 20px 0', color: '#64748b', fontSize: '0.85rem', maxWidth: '280px', lineHeight: '1.5' }}>
+                                    You haven't created any specific budget items for the SK yet. Create one to start tracking expenses.
+                                </p>
+                                <Link to="/Expenditure" className="btn-primary" style={{ padding: '10px 20px', fontSize: '0.85rem', textDecoration: 'none', color: '#fff', borderRadius: '8px', fontWeight: '600' }}>
+                                    + Create Budget Item
+                                </Link>
+                            </div>
+                        ) : (
+                            <ul className="activity-list">
+                                {stats.categoryBalances[0].subcategories.map((subcategory) => (
                                     <ActivityRow
                                         key={subcategory.id}
                                         dot="blue"
@@ -101,11 +118,12 @@ export default function SKDashboard({ user }) {
                                         meta={`${formatPeso(subcategory.spent_amount)} spent · ${formatPeso(subcategory.balance)} remaining`}
                                         time={`${formatPeso(subcategory.allocated_amount)} allocated`}
                                     />
-                                ))
-                            )}
-                        </ul>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 </div>
+
                 <SKChart />
             </section>
         </div>

@@ -9,7 +9,6 @@ $action = $data['action'] ?? $_GET['action'] ?? '';
 
 $invite = new Invite($pdo);
 
-
 if($action === 'list'){
     echo json_encode($invite->list_all());
     exit();
@@ -37,6 +36,28 @@ if($action === 'create'){
         exit();
     }
 
+    if ($invite->is_email_registered($email)) {
+        echo json_encode([
+            'success' => false, 
+            'message' => "Email Block: An account is already registered with this email address. Please use a different email or log in to the existing account."
+        ]);
+        exit();
+    }
+
+    $uniqueRoles = ['treasurer', 'sk_chairman', 'admin']; 
+    
+    $normalizedInputRole = strtolower(str_replace(' ', '_', trim($role)));
+
+    if (in_array($normalizedInputRole, $uniqueRoles)) {
+        if ($invite->is_role_filled($role)) {
+            echo json_encode([
+                'success' => false, 
+                'message' => "Security Block: An active account or pending invite for '$role' already exists. You cannot generate another code for this role."
+            ]);
+            exit();
+        }
+    }
+
     $result = $invite->generate_code($role, $email, $hours, $created_by); 
     
     echo json_encode([
@@ -58,3 +79,4 @@ if($action === 'revoke'){
 }
 
 echo json_encode(['status' => 'invalid_action']);
+?>

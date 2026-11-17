@@ -22,7 +22,7 @@ export default function SKChart() {
     }, [year]);
 
     return (
-        <div className="dash-card" style={{ height: '400px', display: 'flex', flexDirection: 'column' }}>
+        <div className="dash-card" style={{ height: '350px', display: 'flex', flexDirection: 'column' }}>
             <div className="dash-card-head">
                 <h2>SK Budget Utilization</h2>
                 <select 
@@ -36,11 +36,11 @@ export default function SKChart() {
                 </select>
             </div>
             
-            <div style={{ flex: 1, width: '100%', minHeight: 0 }}>
+            <div style={{ flex: 1, width: '100%', minHeight: 0, marginTop: '10px' }}>
                 {loading ? (
-                    <p className="muted" style={{ textAlign: 'center', paddingTop: '100px' }}>Loading chart...</p>
+                    <p className="muted" style={{ textAlign: 'center', paddingTop: '80px' }}>Loading chart...</p>
                 ) : error ? (
-                    <p className="muted" style={{ textAlign: 'center', paddingTop: '100px' }}>{error}</p>
+                    <p className="muted" style={{ textAlign: 'center', paddingTop: '80px' }}>{error}</p>
                 ) : (
                     <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
@@ -50,7 +50,7 @@ export default function SKChart() {
                                 axisLine={false} 
                                 tickLine={false} 
                                 tick={{ fill: '#64748b', fontSize: 12 }} 
-                                tickFormatter={(value) => `₱${value / 1000}k`} 
+                                tickFormatter={(value) => `₱${(value / 1000).toLocaleString()}k`} 
                             />
                             <Tooltip 
                                 cursor={{ fill: 'rgba(226, 232, 240, 0.4)' }}
@@ -59,7 +59,7 @@ export default function SKChart() {
                             />
                             <Legend wrapperStyle={{ paddingTop: '10px' }} />
                             <Bar dataKey="spent" name="Spent" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={25} />
-                            <Line type="monotone" dataKey="allocated" name="Monthly Funding" stroke="#2563eb" strokeWidth={3} dot={false} />
+                            <Line type="monotone" dataPointKey="allocated" name="Monthly Funding" stroke="#2563eb" strokeWidth={3} dot={false} />
                         </ComposedChart>
                     </ResponsiveContainer>
                 )}

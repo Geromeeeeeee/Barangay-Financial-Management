@@ -20,9 +20,8 @@ export default function FileListModal({ revenueId, expenditure, onClose }) {
                             view_url: file.legacy
                                 ? `${BASE_URL}uploads/expenditures/view_attachment.php?id=${expenditure.id}`
                                 : `${BASE_URL}uploads/expenditures/view_attachment.php?attachment_id=${file.id}`,
-                            download_url: file.legacy
-                                ? `${BASE_URL}uploads/expenditures/download_attachment.php?id=${expenditure.id}`
-                                : `${BASE_URL}uploads/expenditures/download_attachment.php?attachment_id=${file.id}`,
+                            // USE THE NEW UNIFIED DOWNLOAD SCRIPT HERE:
+                            download_url: `${API_URL}download_attachment.php?id=${file.id}&type=expenditure`,
                         })));
                     }
                 })
@@ -37,7 +36,8 @@ export default function FileListModal({ revenueId, expenditure, onClose }) {
                     setFiles(res.data.data.map((file) => ({
                         ...file,
                         view_url: `${API_URL}revenue/view_file.php?id=${file.id}`,
-                        download_url: `${API_URL}revenue/download_file.php?id=${file.id}`,
+                        // USE THE NEW UNIFIED DOWNLOAD SCRIPT HERE:
+                        download_url: `${API_URL}download_attachment.php?id=${file.id}&type=revenue`,
                     })));
                 }
             })

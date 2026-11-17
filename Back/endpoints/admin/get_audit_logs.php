@@ -16,33 +16,59 @@ try {
             al.action,
             al.details,
             al.created_at,
-            COUNT(ea.id) AS attachment_count,
-            GROUP_CONCAT(ea.file_path ORDER BY ea.id SEPARATOR '||') AS attachment_paths
+            (
+                SELECT COUNT(ea.id)
+                FROM expenditure_attachments ea
+                JOIN expenditures e ON ea.expenditure_id = e.id
+                WHERE al.details LIKE CONCAT('%', e.description, '%')
+                  AND e.created_at >= al.created_at - INTERVAL 10 SECOND
+                  AND e.created_at <= al.created_at + INTERVAL 10 SECOND
+            ) + (
+                SELECT COUNT(ra.id)
+                FROM revenue_attachments ra
+                JOIN revenues r ON ra.revenue_id = r.id
+                WHERE al.details LIKE CONCAT('%', r.source, '%')
+                  AND r.created_at >= al.created_at - INTERVAL 10 SECOND
+                  AND r.created_at <= al.created_at + INTERVAL 10 SECOND
+            ) AS attachment_count,
+            (
+                SELECT GROUP_CONCAT(ea.file_path ORDER BY ea.id SEPARATOR '||')
+                FROM expenditure_attachments ea
+                JOIN expenditures e ON ea.expenditure_id = e.id
+                WHERE al.details LIKE CONCAT('%', e.description, '%')
+                  AND e.created_at >= al.created_at - INTERVAL 10 SECOND
+                  AND e.created_at <= al.created_at + INTERVAL 10 SECOND
+            ) AS expenditure_paths,
+            (
+                SELECT GROUP_CONCAT(ra.file_path ORDER BY ra.id SEPARATOR '||')
+                FROM revenue_attachments ra
+                JOIN revenues r ON ra.revenue_id = r.id
+                WHERE al.details LIKE CONCAT('%', r.source, '%')
+                  AND r.created_at >= al.created_at - INTERVAL 10 SECOND
+                  AND r.created_at <= al.created_at + INTERVAL 10 SECOND
+            ) AS revenue_paths
         FROM audit_logs al
-        LEFT JOIN expenditures e
-            ON e.id = (
-                SELECT e2.id
-                FROM expenditures e2
-                WHERE al.details LIKE CONCAT('%', e2.description, '%')
-                  AND e2.created_at >= al.created_at - INTERVAL 10 SECOND
-                  AND e2.created_at <= al.created_at + INTERVAL 10 SECOND
-                ORDER BY ABS(TIMESTAMPDIFF(MICROSECOND, e2.created_at, al.created_at)), e2.id
-                LIMIT 1
-            )
-        LEFT JOIN expenditure_attachments ea
-            ON ea.expenditure_id = e.id
-        GROUP BY al.id, al.username, al.action, al.details, al.created_at
         ORDER BY al.created_at DESC
         LIMIT 100
     ");
     $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
     foreach ($logs as &$log) {
         $log['attachment_count'] = (int)$log['attachment_count'];
-        $log['attachment_paths'] = $log['attachment_paths'] === null
-            ? []
-            : explode('||', $log['attachment_paths']);
+        
+        $allPaths = [];
+        if (!empty($log['expenditure_paths'])) {
+            $allPaths = array_merge($allPaths, explode('||', $log['expenditure_paths']));
+        }
+        if (!empty($log['revenue_paths'])) {
+            $allPaths = array_merge($allPaths, explode('||', $log['revenue_paths']));
+        }
+        
+        $log['attachment_paths'] = $allPaths;
+        unset($log['expenditure_paths'], $log['revenue_paths']);
     }
     unset($log);
+    
     echo json_encode($logs);
 } catch (Exception $e) {
     http_response_code(500);

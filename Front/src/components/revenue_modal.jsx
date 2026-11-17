@@ -13,30 +13,25 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
     const [errorMessage, setErrorMessage] = useState('')
     const today = new Date().toISOString().slice(0, 10);
     
-    // Receipt File & Supporting Files
     const [receiptFile, setReceiptFile] = useState(null)
     const [supportingFiles, setSupportingFiles] = useState([])
     
-    // Form Inputs
     const [amount, setAmount] = useState('')
     const [particular, setParticular] = useState('NTA')
     const [customSource, setCustomSource] = useState('')
     const [recordType, setRecordType] = useState('annual_budget')
-    const [categories, setCategories] = useState([])
-    const [allocations, setAllocations] = useState([])
 
-    // OCR State
     const [isScanning, setIsScanning] = useState(false)
     const [ocrStatus, setOcrStatus] = useState('idle') 
     const [detectedAmount, setDetectedAmount] = useState(null)
     const [isOverridden, setIsOverridden] = useState(false)
 
-    // Drag-and-Drop States
     const [isDraggingReceipt, setIsDraggingReceipt] = useState(false)
     const [isDraggingDocs, setIsDraggingDocs] = useState(false)
 
     const { showToast } = useToast()
     const { isSK, isTreasurer } = useRole()
+    
     const monthlyReceiptExceedsBudget = recordType === 'monthly_receipt'
         && unreleasedAnnualBudget !== null
         && Number(amount) > Number(unreleasedAnnualBudget) + 0.005
@@ -83,40 +78,6 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
     const handleRecordTypeChange = (event) => {
         const nextRecordType = event.target.value
         setRecordType(nextRecordType)
-        if (nextRecordType !== 'monthly_receipt') setAllocations([])
-    }
-
-    useEffect(() => {
-        if (recordType !== 'monthly_receipt') {
-            return
-        }
-        const timer = window.setTimeout(() => {
-            axios.get(`${API_URL}budget/categories.php`, { withCredentials: true })
-                .then((response) => setCategories(response.data.data || []))
-                .catch(() => setErrorMessage('Unable to load budget items for this receipt.'))
-        }, 0)
-        return () => window.clearTimeout(timer)
-    }, [recordType])
-
-    const budgetItems = categories.filter((category) => category.subcategories?.some((subcategory) => subcategory.is_active !== false)).flatMap((category) => (
-        (category.subcategories || []).map((subcategory) => ({
-            ...subcategory,
-            category_name: category.name,
-        })).filter((subcategory) => subcategory.is_active !== false)
-    ))
-
-    const addAllocation = () => {
-        setAllocations([...allocations, { item_type: 'existing', subcategory_id: '', category_id: '', name: '', amount: '' }])
-    }
-
-    const updateAllocation = (index, field, value) => {
-        setAllocations(allocations.map((allocation, allocationIndex) => (
-            allocationIndex === index ? { ...allocation, [field]: value } : allocation
-        )))
-    }
-
-    const removeAllocation = (index) => {
-        setAllocations(allocations.filter((_, allocationIndex) => allocationIndex !== index))
     }
 
     const handleSubmit = async (event) => {
@@ -126,11 +87,7 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
 
         const formData = new FormData(event.target)
         formData.set('record_type', recordType)
-        if (recordType === 'monthly_receipt') {
-            formData.set('allocations', JSON.stringify(allocations))
-        }
 
-        // Clean out default attachments[] input and manually append files
         formData.delete('attachments[]')
         if (receiptFile) {
             formData.append('attachments[]', receiptFile)
@@ -263,7 +220,6 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
                         )}
                     </label>
 
-                    {/* Official Receipt Dropzone + OCR Scanning */}
                     <div className="form-group">
                         <span>{recordType === 'monthly_receipt' ? 'Receipt / Proof of Fund Release' : 'Primary Receipt / Voucher'} <small>(Required for OCR)</small></span>
                         <div 
@@ -339,7 +295,6 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
                         )}
                     </div>
 
-                    {/* Optional Supporting Documents Upload */}
                     <div className="form-group">
                         <span>Supporting Documents <small>(Optional)</small></span>
                         <div 
@@ -393,79 +348,6 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
                             )}
                         </div>
                     </div>
-
-                    {/* Budget Item Allocation Section for Monthly Receipts */}
-                    {recordType === 'monthly_receipt' && (
-                        <div className="revenue-allocation-section">
-                            <div className="revenue-allocation-header">
-                                <h4>Distribute received funds to budget items (optional)</h4>
-                                <button type="button" className="btn-add-allocation" onClick={addAllocation}>
-                                    + Add budget item
-                                </button>
-                            </div>
-                            
-                            {allocations.map((allocation, index) => (
-                                <div className="allocation-item" key={index}>
-                                    <label>
-                                        <span>Item type</span>
-                                        <select
-                                            value={allocation.item_type}
-                                            onChange={(event) => updateAllocation(index, 'item_type', event.target.value)}
-                                        >
-                                            <option value="existing">Existing budget item</option>
-                                            <option value="new">Create new budget item</option>
-                                        </select>
-                                    </label>
-                                    
-                                    {allocation.item_type === 'existing' ? (
-                                        <label>
-                                            <span>Select budget item</span>
-                                            <select value={allocation.subcategory_id} onChange={(event) => updateAllocation(index, 'subcategory_id', event.target.value)} required>
-                                                <option value="">Select budget item</option>
-                                                {budgetItems
-                                                    .filter(item => !isSK || item.category_name === "SK")
-                                                    .map((item) => (
-                                                    <option key={item.id} value={item.id}>{item.category_name} — {item.name}</option>
-                                                ))}
-                                            </select>
-                                        </label>
-                                    ) : (
-                                        <>
-                                            {!isSK && (
-                                                <label>
-                                                    <span>Parent category</span>
-                                                    <select value={allocation.category_id} onChange={(event) => updateAllocation(index, 'category_id', event.target.value)} required>
-                                                        <option value="">Select parent category</option>
-                                                        {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-                                                    </select>
-                                                </label>
-                                            )}
-                                            {isSK && (
-                                                <input 
-                                                    type="hidden" 
-                                                    value={categories.find(c => c.name === "SK")?.id || ""} 
-                                                    onChange={() => {}} 
-                                                />
-                                            )}
-                                            <label>
-                                                <span>New item name</span>
-                                                <input type="text" value={allocation.name} onChange={(event) => updateAllocation(index, 'name', event.target.value)} placeholder="New budget item name" required />
-                                            </label>
-                                        </>
-                                    )}
-                                    
-                                    <label>
-                                        <span>Amount</span>
-                                        <input type="number" min="0.01" step="0.01" value={allocation.amount} onChange={(event) => updateAllocation(index, 'amount', event.target.value)} placeholder="Amount" required />
-                                    </label>
-                                    
-                                    <button type="button" className="btn-remove-allocation" onClick={() => removeAllocation(index)}>
-                                        Remove
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
 
                     <div className="revenue-modal-actions">
                         <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>

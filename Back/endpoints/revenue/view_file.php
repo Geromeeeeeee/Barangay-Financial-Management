@@ -18,22 +18,20 @@ if (!$file) {
     die("File not found in database.");
 }
 
-$file_path = __DIR__ . '/../../' . $file['file_path'];
+$file_path = realpath(__DIR__ . '/../../' . $file['file_path']);
 
-if (!file_exists($file_path)) {
+if (!$file_path || !file_exists($file_path)) {
     http_response_code(404);
     die("File does not exist on the server.");
 }
 
-header_remove('Content-Type'); 
-header_remove('Access-Control-Allow-Origin');
-header_remove('Access-Control-Allow-Credentials');
+if (ob_get_level()) {
+    ob_end_clean();
+}
 
-// Set headers to DISPLAY the file inline
 header('Content-Type: ' . $file['file_type']);
 header('Content-Disposition: inline; filename="' . basename($file['file_name']) . '"');
 header('Content-Length: ' . filesize($file_path));
 
-// Output the file
 readfile($file_path);
 exit;

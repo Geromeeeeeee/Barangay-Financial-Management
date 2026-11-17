@@ -49,7 +49,6 @@ export default function Expenditure() {
 
     const {totalPages, displayedRecords} = usePagination({currentPage, filters, records: skFilteredExpenditures})
     
-    // Filter monthly allocations to match the active filter month and year
     const activeMonth = filters?.month ? Number(filters.month) : new Date().getMonth() + 1;
     const activeYear = filters?.year ? Number(filters.year) : new Date().getFullYear();
 
@@ -66,7 +65,6 @@ export default function Expenditure() {
         return groups;
     }, {});
 
-    // Show only categories with active subcategories that have allocations for this month
     const categoriesWithMonthlyAllocations = displayedCategories
         .map((category) => ({
             ...category,
@@ -246,45 +244,43 @@ export default function Expenditure() {
                             {displayedRecords.map((expenditure) => (
                                 <tr key={expenditure.id}>
                                     <td className="muted">{date(expenditure.created_at)}</td>
-                                    <td>{expenditure.description}</td>
-                                    <td>{expenditure.subcategory_name || expenditure.category_name || expenditure.fund_allocation
-                                        ? <span className="fund-pill">{expenditure.subcategory_name || expenditure.category_name || expenditure.fund_allocation}</span>
-                                        : <span className="muted">—</span>}</td>
+                                    <td style={{ fontWeight: '500', color: '#1e293b' }}>{expenditure.description}</td>
+                                    <td>
+                                        {expenditure.subcategory_name || expenditure.category_name || expenditure.fund_allocation ? (
+                                            <span className="role-badge role-staff">
+                                                {expenditure.subcategory_name || expenditure.category_name || expenditure.fund_allocation}
+                                            </span>
+                                        ) : (
+                                            <span className="muted">—</span>
+                                        )}
+                                    </td>
                                     <td>
                                         {Number(expenditure.attachment_count) > 0 ? (
                                             <button
                                                 type="button"
-                                                className="fund-pill"
-                                                style={{
-                                                    background: '#e0f2fe',
-                                                    color: '#0369a1',
-                                                    fontWeight: 'bold',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    padding: '4px 10px'
-                                                }}
+                                                className="audit-file-link"
                                                 onClick={() => setViewFile(expenditure)}
                                             >
                                                 📎 View document{Number(expenditure.attachment_count) > 1 ? `s (${expenditure.attachment_count})` : ''}
                                             </button>
-                                        ) : <span className="muted">—</span>}
+                                        ) : (
+                                            <span className="muted">—</span>
+                                        )}
                                     </td>
-                                    <td className="right amount">{peso(expenditure.amount)}</td>
+                                    <td className="right amount" style={{ color: '#dc2626', fontWeight: '600' }}>{peso(expenditure.amount)}</td>
                                     {isAdmin && (
                                         <td className="right">
                                             {expenditure.status === 'pending' ? (
                                                 <button 
                                                     type="button" 
                                                     onClick={() => setReviewItem(expenditure)}
-                                                    style={{ background: '#f59e0b', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}
+                                                    className="btn-primary"
+                                                    style={{ padding: '6px 12px', fontSize: '0.75rem', background: '#f59e0b' }}
                                                 >
                                                     Review
                                                 </button>
-                                            ):(
-                                                <span style={{ 
-                                                    color: expenditure.status === 'verified' ? '#10b981' : '#dc2626', 
-                                                    fontWeight: '500' 
-                                                }}>
+                                            ) : (
+                                                <span className={`audit-pill ${expenditure.status === 'verified' ? 'pill-green' : 'pill-red'}`}>
                                                     {expenditure.status.charAt(0).toUpperCase() + expenditure.status.slice(1)}
                                                 </span>
                                             )}

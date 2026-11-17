@@ -234,15 +234,11 @@ export default function Auth_Page() {
                             )}
 
                             {isLogin && (
-                                <div className="form-extras">
-                                    <label className="checkbox">
-                                        <input type="checkbox" />
-                                        <span>Remember me</span>
-                                    </label>
-                                    <button type="button" className="forgot" onClick={() => setShowForgot(true)}>
-                                        Forgot password?
-                                    </button>
-                                </div>
+                                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+                               <button type="button" className="forgot" onClick={() => setShowForgot(true)}>
+                                      Forgot password?
+                                         </button>
+                                 </div>
                             )}
 
                             <button className="submit-button" type="submit" disabled={!isLogin && codeStatus !== "valid"}>
