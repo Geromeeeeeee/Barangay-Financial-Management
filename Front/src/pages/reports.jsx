@@ -86,20 +86,22 @@ export default function Reports() {
                 margin: [margin, margin, margin, margin],
                 autoPaging: "text",
                 width,
-                windowWidth: 800,
+                windowWidth: 900,
                 html2canvas: { 
-                    scale: width / 800, 
+                    scale: width / 920, 
                     useCORS: true, 
                     letterRendering: true, 
                     scrollY: 0, 
                     scrollX: 0,
-                    backgroundColor: "#ffffff"
+                    backgroundColor: "#ffffff",
+                    windowWidth: 800
                 }
             });
             
             pdf.save(`financial-report-${months[month - 1].toLowerCase()}-${year}.pdf`);
             setDownloadFeedback("Report downloaded.");
-        } catch {
+        } catch (err) {
+            console.error("PDF generation error:", err);
             setDownloadFeedback("Unable to download report. Please try again.");
         } finally {
             setIsDownloading(false);
@@ -231,16 +233,16 @@ export default function Reports() {
                     </tbody></table>
 
                     <h4>PART V: ALLOCATION UTILIZATION</h4>
-                    <table className="report-table">
+                    <table className="report-table allocation-table">
                         <thead>
                             <tr>
-                                <th style={{ width: '15%' }}>Receipt / Allocation Date</th>
-                                <th style={{ width: '18%' }}>Category / Budget Item</th>
-                                <th className="right" style={{ width: '13%' }}>Allocated</th>
-                                <th className="right" style={{ width: '13%' }}>Excess Avail.</th>
-                                <th className="right" style={{ width: '12%' }}>Spent</th>
-                                <th className="right" style={{ width: '15%' }}>Covered by Excess</th>
-                                <th className="right" style={{ width: '14%' }}>Remaining</th>
+                                <th>Receipt / Allocation Date</th>
+                                <th>Category / Budget Item</th>
+                                <th className="right">Allocated</th>
+                                <th className="right">Excess Avail.</th>
+                                <th className="right">Spent</th>
+                                <th className="right">Covered by Excess</th>
+                                <th className="right">Remaining</th>
                             </tr>
                         </thead>
                         <tbody>

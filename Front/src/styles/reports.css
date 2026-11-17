@@ -309,6 +309,18 @@
     text-transform: uppercase;
 }
 
+.report-table.allocation-table {
+    font-size: 0.65rem !important;
+    table-layout: fixed !important;
+}
+
+.report-table.allocation-table th,
+.report-table.allocation-table td {
+    padding: 6px 3px !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
 @media print {
     @page {
         size: A4 portrait;
@@ -319,12 +331,12 @@
         background: white !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        visibility: hidden !important; /* Hides everything by default */
+        visibility: hidden !important;
     }
 
     .reports-page, 
     .report-document {
-        visibility: visible !important; /* Only shows the report container */
+        visibility: visible !important;
     }
 
     .report-document {
