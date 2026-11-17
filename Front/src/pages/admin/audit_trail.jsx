@@ -4,8 +4,7 @@ import BackButton from "../../components/back_button";
 import "../../styles/admin.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
-const BASE_URL = "http://localhost/Capstone/Back/";
-
+const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost/Capstone/Back/";
 export default function AuditTrail() {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
