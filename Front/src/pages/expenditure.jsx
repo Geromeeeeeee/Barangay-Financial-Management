@@ -206,12 +206,6 @@ export default function Expenditure() {
                                     );
                                 })}
                             </div>
-                            {canModify && category.name.toUpperCase() === "MOOE" && (
-                                <button type="button" onClick={() => setSubcategoryForm({ category_id: category.id, category_name: category.name, name: "", allocated_amount: "" })}>+ Add MOOE item</button>
-                            )}
-                            {canModify && category.name.toUpperCase() !== "MOOE" && (
-                                <button type="button" onClick={() => setSubcategoryForm({ category_id: category.id, category_name: category.name, name: "", allocated_amount: "" })}>+ Add subcategory</button>
-                            )}
                         </section>
                     ))}
                     </div>
