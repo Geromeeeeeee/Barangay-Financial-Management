@@ -32,6 +32,7 @@ export default function Revenue () {
 
     const skFilteredRevenues = isSK
         ? revenues.filter(r => 
+            (r.creator_role && r.creator_role.toLowerCase().includes('sk')) ||
             (r.source && r.source.toUpperCase().includes("SK")) || 
             (r.particular && r.particular.toUpperCase().includes("SK"))
           )

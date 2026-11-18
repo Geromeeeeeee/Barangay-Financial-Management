@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { UploadCloud, FileText, X, ScanLine } from "lucide-react";
 import "../styles/expenditure.css";
 import useSubmitExpenditure from "../custom_hooks/use_submitExpenditure";
-import { scanReceiptImage } from '../custom_hooks/use_Scanner';
 import { useToast } from "../context/toast_context";
+import useVerifyReceipt from "../custom_hooks/use_verify_receipt";
 
 export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = [] }) {
     const [loading, setLoading] = useState(false);
@@ -31,6 +31,7 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
         ocrStatus,
         isOverridden,
     });
+    const {handleReceiptChange} = useVerifyReceipt({setOcrStatus, setIsOverridden, setIsScanning, setDetectedAmount, setReceiptFile, amount, receiptFile})
 
     const availableAllocations = monthlyAllocations.filter((allocation) => (
         allocation.is_active !== false && Number(allocation.remaining_amount) > 0
@@ -42,48 +43,6 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
             setIsModalOpen(false);
         }
     }, [successMessage, setIsModalOpen, showToast]);
-
-    const handleReceiptChange = async (file) => {
-    setReceiptFile(file);
-    setOcrStatus('idle');
-    setIsOverridden(false);
-
-    if (!file) return;
-    const enteredAmount = parseFloat(amount);
-
-    if (enteredAmount && file.type.startsWith('image/')) {
-        try {
-            setIsScanning(true);
-            const { extractedNumbers, likelyTotal } = await scanReceiptImage(file);
-
-            if ((!extractedNumbers || extractedNumbers.length === 0) && likelyTotal === null) {
-                setOcrStatus('unreadable');
-                setDetectedAmount(null);
-            } else {
-                // Check if likely total matches or if the entered amount appears anywhere in the raw text numbers
-                const matchFound = (likelyTotal === enteredAmount) || extractedNumbers.includes(enteredAmount);
-
-                if (matchFound) {
-                    setOcrStatus('matched');
-                    setDetectedAmount(enteredAmount);
-                } else {
-                    setOcrStatus('mismatch');
-                    // Display the keyword total if detected, otherwise fall back to the highest realistic number scanned
-                    const fallbackAmount = likelyTotal !== null 
-                        ? likelyTotal 
-                        : (extractedNumbers.length > 0 ? Math.max(...extractedNumbers.filter(n => n < 1000000)) : null);
-                    
-                    setDetectedAmount(fallbackAmount);
-                }
-            }
-        } catch (error) {
-            console.error("OCR Error:", error);
-            setOcrStatus('unreadable');
-        } finally {
-            setIsScanning(false);
-        }
-    }
-};
 
     return (
         <div

@@ -34,7 +34,7 @@ export default function BudgetBalances({
                     {stats.categoryBalances.map((category) => {
                         const allocated = Number(category.allocated_amount || 0);
                         const spent = Number(category.spent_amount || 0);
-                        const balance = Number(category.balance || 0);
+                        const balance = Math.max(0, Number(category.balance || 0));
                         const percentage = allocated > 0 ? Math.min((spent / allocated) * 100, 100) : 0;
                         const status = getCategoryStatus(percentage);
                         const isCardHidden = hiddenCategories[category.id] === true;

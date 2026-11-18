@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import axios from 'axios'
 import { UploadCloud, FileText, X, ScanLine } from 'lucide-react'
 import { useToast } from '../context/toast_context'
 import { useRole } from '../custom_hooks/use_role'
-import { scanReceiptImage } from '../custom_hooks/use_Scanner'
+import useVerifyReceipt from '../custom_hooks/use_verify_receipt'
 import '../styles/revenue.css'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
@@ -19,7 +19,6 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
     const [amount, setAmount] = useState('')
     const [particular, setParticular] = useState('NTA')
     const [customSource, setCustomSource] = useState('')
-    const [recordType, setRecordType] = useState('annual_budget')
 
     const [isScanning, setIsScanning] = useState(false)
     const [ocrStatus, setOcrStatus] = useState('idle') 
@@ -30,50 +29,13 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
     const [isDraggingDocs, setIsDraggingDocs] = useState(false)
 
     const { showToast } = useToast()
-    const { isSK, isTreasurer } = useRole()
+    const { isTreasurer } = useRole()
+    const [recordType, setRecordType] = useState(isTreasurer ? 'annual_budget' : 'monthly_receipt')
+    const {handleReceiptChange} = useVerifyReceipt({setOcrStatus, setIsOverridden, setIsScanning, setDetectedAmount, setReceiptFile, amount, receiptFile}) 
     
     const monthlyReceiptExceedsBudget = recordType === 'monthly_receipt'
         && unreleasedAnnualBudget !== null
         && Number(amount) > Number(unreleasedAnnualBudget) + 0.005
-
-    const handleReceiptChange = async (file) => {
-        setReceiptFile(file)
-        setOcrStatus('idle')
-        setIsOverridden(false)
-
-        if (!file) return
-        const enteredAmount = parseFloat(amount)
-
-        if (enteredAmount && file.type.startsWith('image/')) {
-            try {
-                setIsScanning(true)
-                const { extractedNumbers, likelyTotal } = await scanReceiptImage(file)
-
-                if ((!extractedNumbers || extractedNumbers.length === 0) && likelyTotal === null) {
-                    setOcrStatus('unreadable')
-                    setDetectedAmount(null)
-                } else {
-                    const matchFound = (likelyTotal === enteredAmount) || extractedNumbers.includes(enteredAmount)
-
-                    if (matchFound) {
-                        setOcrStatus('matched')
-                        setDetectedAmount(enteredAmount)
-                    } else {
-                        setOcrStatus('mismatch')
-                        const fallbackAmount = likelyTotal !== null 
-                            ? likelyTotal 
-                            : (extractedNumbers.length > 0 ? Math.max(...extractedNumbers.filter(n => n < 1000000)) : null)
-                        setDetectedAmount(fallbackAmount)
-                    }
-                }
-            } catch (error) {
-                console.error("OCR Error:", error)
-                setOcrStatus('unreadable')
-            } finally {
-                setIsScanning(false)
-            }
-        }
-    }
 
     const handleRecordTypeChange = (event) => {
         const nextRecordType = event.target.value

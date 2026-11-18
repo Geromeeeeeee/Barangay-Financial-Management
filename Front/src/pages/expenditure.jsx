@@ -235,9 +235,7 @@ export default function Expenditure() {
                                 <th>Fund Allocation</th>
                                 <th>Supporting Document</th>
                                 <th className="right">Amount</th>
-                                {isAdmin && (
-                                    <th className="right">Status</th>
-                                )}
+                                <th className="right">Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -268,9 +266,8 @@ export default function Expenditure() {
                                         )}
                                     </td>
                                     <td className="right amount" style={{ color: '#dc2626', fontWeight: '600' }}>{peso(expenditure.amount)}</td>
-                                    {isAdmin && (
                                         <td className="right">
-                                            {expenditure.status === 'pending' ? (
+                                            {(expenditure.status === 'pending' && isAdmin) ? (
                                                 <button 
                                                     type="button" 
                                                     onClick={() => setReviewItem(expenditure)}
@@ -285,7 +282,6 @@ export default function Expenditure() {
                                                 </span>
                                             )}
                                         </td>
-                                    )}
                                 </tr>
                             ))}
                         </tbody>

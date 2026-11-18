@@ -86,11 +86,12 @@ class Revenue {
         
         $where = $conditions ? ' WHERE ' . implode(' AND ', $conditions) : '';
         
-        // 👇 THIS IS THE FIX: Joining the attachments table and counting the rows
         $stmt = $this->database->prepare("
             SELECT r.*, 
+                   u.role AS creator_role,
                    COUNT(ra.id) as attachment_count
             FROM revenues r
+            LEFT JOIN users u ON r.created_by = u.id
             LEFT JOIN revenue_attachments ra ON r.id = ra.revenue_id
             {$where}
             GROUP BY r.id

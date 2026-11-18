@@ -40,7 +40,9 @@ try {
         throw new InvalidArgumentException('Invalid revenue record type.');
     }
 
-    if ($record_type === 'monthly_receipt') {
+    if ($record_type === 'monthly_receipt' || $isSK) {
+        $record_type = 'monthly_receipt';
+        
         if (!is_numeric($amount) || (float)$amount <= 0) {
             throw new InvalidArgumentException('A positive receipt amount is required.');
         }
@@ -170,40 +172,44 @@ try {
             }
         }
 
-    } elseif ($particular !== null) {
-        if (!is_numeric($amount) || (float)$amount <= 0) {
-            throw new InvalidArgumentException('A positive amount is required.');
-        }
+    } elseif ($record_type === 'annual_budget') {
+        if ($particular !== null && $particular !== '') {
+            if (!is_numeric($amount) || (float)$amount <= 0) {
+                throw new InvalidArgumentException('A positive amount is required.');
+            }
 
-        $amount = round((float)$amount, 2);
-        if ($particular === 'NTA') {
-            $nta = $amount;
-            $localIncome = 0;
-            $source = 'NTA';
-        } elseif ($particular === 'Local Income') {
-            $nta = 0;
-            $localIncome = $amount;
-            $source = 'Local Income';
-        } elseif ($particular === 'Others') {
-            $nta = 0;
-            $localIncome = 0;
-            if ($source === null || trim((string)$source) === '') {
-                throw new InvalidArgumentException('A specific revenue particular/source is required.');
+            $amount = round((float)$amount, 2);
+            if ($particular === 'NTA') {
+                $nta = $amount;
+                $localIncome = 0;
+                $source = 'NTA';
+            } elseif ($particular === 'Local Income') {
+                $nta = 0;
+                $localIncome = $amount;
+                $source = 'Local Income';
+            } elseif ($particular === 'Others') {
+                $nta = 0;
+                $localIncome = 0;
+                if ($source === null || trim((string)$source) === '') {
+                    throw new InvalidArgumentException('A specific revenue particular/source is required.');
+                }
+            } else {
+                throw new InvalidArgumentException('Invalid revenue particular/source.');
             }
         } else {
-            throw new InvalidArgumentException('Invalid revenue particular/source.');
+            if ($nta === null || $localIncome === null || trim((string)$nta) === '' || trim((string)$localIncome) === ''
+                || !is_numeric($nta) || (float)$nta < 0
+                || !is_numeric($localIncome) || (float)$localIncome < 0) {
+                throw new InvalidArgumentException('NTA and Local Income are required valid non-negative amounts.');
+            }
+
+            $amount = round((float)$nta + (float)$localIncome, 2);
+            if ($amount <= 0 || $source === null || trim((string)$source) === '') {
+                throw new InvalidArgumentException('A positive total annual income and source are required.');
+            }
         }
     } else {
-        if ($nta === null || $localIncome === null || trim((string)$nta) === '' || trim((string)$localIncome) === ''
-            || !is_numeric($nta) || (float)$nta < 0
-            || !is_numeric($localIncome) || (float)$localIncome < 0) {
-            throw new InvalidArgumentException('NTA and Local Income are required valid non-negative amounts.');
-        }
-
-        $amount = round((float)$nta + (float)$localIncome, 2);
-        if ($amount <= 0 || $source === null || trim((string)$source) === '') {
-            throw new InvalidArgumentException('A positive total annual income and source are required.');
-        }
+        throw new InvalidArgumentException('Invalid record type configuration.');
     }
     
     $files = $_FILES['attachments'] ?? null;

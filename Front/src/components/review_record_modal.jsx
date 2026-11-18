@@ -4,7 +4,6 @@ import "../styles/expenditure.css";
 import useVerify from "../custom_hooks/use_verify";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost/Capstone/Back/endpoints/";
-const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost/Capstone/Back/";
 
 export default function ReviewRecord ({ expenditure, revenue, onClose, onRefresh }) {
     const record = revenue || expenditure;
@@ -38,8 +37,8 @@ export default function ReviewRecord ({ expenditure, revenue, onClose, onRefresh
                         setFiles(res.data.data.map(file => ({
                             ...file,
                             view_url: file.legacy
-                                ? `${BASE_URL}uploads/expenditures/view_attachment.php?id=${record.id}`
-                                : `${BASE_URL}uploads/expenditures/view_attachment.php?attachment_id=${file.id}`
+                                ? `${API_URL}expenditure/view_attachment.php?id=${record.id}`
+                                : `${API_URL}expenditure/view_attachment.php?attachment_id=${file.id}`
                         })));
                     }
                 }

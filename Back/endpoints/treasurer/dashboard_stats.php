@@ -51,17 +51,22 @@ foreach ($categoryBalances as &$category) {
     $category['id'] = (int)$category['id'];
     $category['allocated_amount'] = (float)$category['allocated_amount'];
     $category['spent_amount'] = (float)$category['spent_amount'];
-    $category['balance'] = (float)$category['balance'];
+    
+    $category['balance'] = max(0.0, (float)$category['allocated_amount'] - (float)$category['spent_amount']);
+    
     $category['percentage'] = (float)$category['percentage'];
     $category['is_custom'] = (bool)$category['is_custom'];
     $category['subcategories'] = [];
+    
     foreach ($subcategories as $subcategory) {
         if ((int)$subcategory['category_id'] === $category['id']) {
             $subcategory['id'] = (int)$subcategory['id'];
             $subcategory['category_id'] = (int)$subcategory['category_id'];
             $subcategory['allocated_amount'] = (float)$subcategory['allocated_amount'];
             $subcategory['spent_amount'] = (float)$subcategory['spent_amount'];
-            $subcategory['balance'] = (float)$subcategory['balance'];
+            
+            $subcategory['balance'] = max(0.0, (float)$subcategory['allocated_amount'] - (float)$subcategory['spent_amount']);
+            
             $category['subcategories'][] = $subcategory;
         }
     }
