@@ -19,7 +19,9 @@ export default function FileListModal({ revenueId, expenditure, onClose }) {
                             view_url: file.legacy
                                 ? `${API_URL}expenditure/view_attachment.php?id=${expenditure.id}`
                                 : `${API_URL}expenditure/view_attachment.php?attachment_id=${file.id}`,
-                            download_url: `${API_URL}expenditure/download_attachment.php?id=${file.id}`,
+                            download_url: file.legacy
+                                ? `${API_URL}expenditure/download_attachment.php?id=${expenditure.id}`
+                                : `${API_URL}expenditure/download_attachment.php?attachment_id=${file.id}`,
                         })));
                     }
                 })
@@ -34,7 +36,7 @@ export default function FileListModal({ revenueId, expenditure, onClose }) {
                     setFiles(res.data.data.map((file) => ({
                         ...file,
                         view_url: `${API_URL}revenue/view_file.php?id=${file.id}`,
-                        download_url: `${API_URL}download_attachment.php?id=${file.id}&type=revenue`,
+                        download_url: `${API_URL}revenue/download_file.php?id=${file.id}`,
                     })));
                 }
             })
