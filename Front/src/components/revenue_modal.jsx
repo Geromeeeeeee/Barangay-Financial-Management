@@ -22,8 +22,6 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
 
     const [isScanning, setIsScanning] = useState(false)
     const [ocrStatus, setOcrStatus] = useState('idle') 
-    const [detectedAmount, setDetectedAmount] = useState(null)
-    const [isOverridden, setIsOverridden] = useState(false)
 
     const [isDraggingReceipt, setIsDraggingReceipt] = useState(false)
     const [isDraggingDocs, setIsDraggingDocs] = useState(false)
@@ -31,7 +29,9 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
     const { showToast } = useToast()
     const { isTreasurer } = useRole()
     const [recordType, setRecordType] = useState(isTreasurer ? 'annual_budget' : 'monthly_receipt')
-    const {handleReceiptChange} = useVerifyReceipt({setOcrStatus, setIsOverridden, setIsScanning, setDetectedAmount, setReceiptFile, amount, receiptFile}) 
+    
+    // Updated hook call (removed setIsOverridden and setDetectedAmount)
+    const { handleReceiptChange } = useVerifyReceipt({ setOcrStatus, setIsScanning, setReceiptFile, amount, receiptFile }) 
     
     const monthlyReceiptExceedsBudget = recordType === 'monthly_receipt'
         && unreleasedAnnualBudget !== null
@@ -56,14 +56,13 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
         }
         supportingFiles.forEach((file) => formData.append('attachments[]', file))
 
-        formData.append('ocr_overridden', isOverridden ? 1 : 0)
+        // Automatically flag override if OCR status is mismatch or unreadable
+        const shouldOverride = ocrStatus === 'mismatch' || ocrStatus === 'unreadable'
+        formData.append('ocr_overridden', shouldOverride ? 1 : 0)
 
         try {
             if (monthlyReceiptExceedsBudget) {
                 throw new Error('The monthly receipt exceeds the unreleased annual budget.')
-            }
-            if ((ocrStatus === 'mismatch' || ocrStatus === 'unreadable') && !isOverridden) {
-                throw new Error("Please resolve the receipt OCR mismatch warning or check 'Override OCR' to submit.")
             }
 
             const response = await axios.post(`${API_URL}revenue/add_revenue.php`, formData, {
@@ -233,26 +232,17 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
                         )}
 
                         {!isScanning && ocrStatus === 'matched' && (
-                            <div className="ocr-warning-box matched">Amount Verified</div>
-                        )}
-
-                        {!isScanning && ocrStatus === 'mismatch' && (
-                            <div className="ocr-warning-box mismatch">
-                                <strong>Warning: Receipt shows ₱{detectedAmount?.toLocaleString()}, but input is ₱{Number(amount).toLocaleString()}.</strong>
-                                <label className="ocr-override-label">
-                                    <input type="checkbox" checked={isOverridden} onChange={(e) => setIsOverridden(e.target.checked)} />
-                                    Proceed with manual override
-                                </label>
+                            <div className="ocr-warning-box matched">
+                                <strong>Verified</strong>
                             </div>
                         )}
 
-                        {!isScanning && ocrStatus === 'unreadable' && (
-                            <div className="ocr-warning-box unreadable">
-                                <strong>Could not automatically read print on document.</strong>
-                                <label className="ocr-override-label">
-                                    <input type="checkbox" checked={isOverridden} onChange={(e) => setIsOverridden(e.target.checked)} />
-                                    Proceed with manual verification
-                                </label>
+                        {!isScanning && (ocrStatus === 'mismatch' || ocrStatus === 'unreadable') && (
+                            <div className="ocr-warning-box mismatch" style={{ background: '#fef2f2', border: '1px solid #fca5a5', padding: '10px', borderRadius: '6px', color: '#991b1b', fontSize: '0.85rem' }}>
+                                <strong>Status: Not Verified</strong>
+                                <p style={{ margin: '4px 0 0 0' }}>
+                                    Note: Automatic verification unsuccessful due to an amount discrepancy or image clarity. Upload another file or proceed with manual approval.
+                                </p>
                             </div>
                         )}
                     </div>
@@ -321,9 +311,7 @@ export default function Revenue_Modal({ setIsModalOpen, unreleasedAnnualBudget =
                             disabled={
                                 loading || 
                                 isScanning || 
-                                monthlyReceiptExceedsBudget ||
-                                (ocrStatus === 'mismatch' && !isOverridden) || 
-                                (ocrStatus === 'unreadable' && !isOverridden)
+                                monthlyReceiptExceedsBudget
                             }
                         >
                             {loading ? "Saving..." : "Save Revenue"}

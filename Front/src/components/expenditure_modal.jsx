@@ -14,8 +14,6 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
     const [amount, setAmount] = useState(""); 
     const [isScanning, setIsScanning] = useState(false);
     const [ocrStatus, setOcrStatus] = useState('idle'); 
-    const [detectedAmount, setDetectedAmount] = useState(null);
-    const [isOverridden, setIsOverridden] = useState(false);
 
     const [isDraggingReceipt, setIsDraggingReceipt] = useState(false);
     const [isDraggingDocs, setIsDraggingDocs] = useState(false);
@@ -29,9 +27,8 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
         supportingFiles,
         setSuccessMessage,
         ocrStatus,
-        isOverridden,
     });
-    const {handleReceiptChange} = useVerifyReceipt({setOcrStatus, setIsOverridden, setIsScanning, setDetectedAmount, setReceiptFile, amount, receiptFile})
+    const { handleReceiptChange } = useVerifyReceipt({ setOcrStatus, setIsScanning, setReceiptFile, amount, receiptFile })
 
     const availableAllocations = monthlyAllocations.filter((allocation) => (
         allocation.is_active !== false && Number(allocation.remaining_amount) > 0
@@ -142,26 +139,17 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
                         )}
 
                         {!isScanning && ocrStatus === 'matched' && (
-                            <div className="ocr-warning-box matched">Amount Verified</div>
-                        )}
-
-                        {!isScanning && ocrStatus === 'mismatch' && (
-                            <div className="ocr-warning-box mismatch">
-                                <strong>Warning: Receipt shows ₱{detectedAmount?.toLocaleString()}, but input is ₱{Number(amount).toLocaleString()}.</strong>
-                                <label className="ocr-override-label">
-                                    <input type="checkbox" checked={isOverridden} onChange={(e) => setIsOverridden(e.target.checked)} />
-                                    Proceed with manual override
-                                </label>
+                            <div className="ocr-warning-box matched">
+                                <strong>Verified</strong>
                             </div>
                         )}
 
-                        {!isScanning && ocrStatus === 'unreadable' && (
-                            <div className="ocr-warning-box unreadable">
-                                <strong>Could not automatically read print on document.</strong>
-                                <label className="ocr-override-label">
-                                    <input type="checkbox" checked={isOverridden} onChange={(e) => setIsOverridden(e.target.checked)} />
-                                    Proceed with manual verification
-                                </label>
+                        {!isScanning && (ocrStatus === 'mismatch' || ocrStatus === 'unreadable') && (
+                            <div className="ocr-warning-box mismatch" style={{ background: '#fef2f2', border: '1px solid #fca5a5', padding: '10px', borderRadius: '6px', color: '#991b1b', fontSize: '0.85rem' }}>
+                                <strong>Status: Not Verified</strong>
+                                <p style={{ margin: '4px 0 0 0' }}>
+                                    Note: Automatic verification unsuccessful due to an amount discrepancy or image clarity. Upload another file or proceed with manual approval.
+                                </p>
                             </div>
                         )}
                     </div>
@@ -229,9 +217,7 @@ export default function ExpenditureModal({ setIsModalOpen, monthlyAllocations = 
                                 loading || 
                                 availableAllocations.length === 0 || 
                                 isScanning || 
-                                !receiptFile ||
-                                (ocrStatus === 'mismatch' && !isOverridden) || 
-                                (ocrStatus === 'unreadable' && !isOverridden)
+                                !receiptFile
                             }
                         >
                             {loading ? "Saving..." : "Confirm"}

@@ -7,8 +7,7 @@ export default function useSubmitExpenditure({
     receiptFile = null,
     supportingFiles = [], 
     setSuccessMessage,
-    ocrStatus = 'idle',
-    isOverridden = false
+    ocrStatus = 'idle'
 }){
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -19,17 +18,13 @@ export default function useSubmitExpenditure({
         formData.delete("supporting_documents[]");
 
         try {
-            // 1. Verify receipt file presence
             if (!receiptFile) {
                 throw new Error("A receipt attachment is required to log an expenditure.");
             }
 
-            // 2. Check OCR override conditions
-            if ((ocrStatus === 'mismatch' || ocrStatus === 'unreadable') && !isOverridden) {
-                throw new Error("Please resolve the receipt OCR mismatch warning or check 'Override OCR' to submit.");
-            }
+            // Automatically override if OCR status is mismatch or unreadable
+            const shouldOverride = ocrStatus === 'mismatch' || ocrStatus === 'unreadable';
 
-            // 3. Append receipt and supporting documents under supporting_documents[]
             const allFiles = [receiptFile, ...supportingFiles];
             allFiles.forEach((file) => formData.append("supporting_documents[]", file));
             
@@ -37,7 +32,7 @@ export default function useSubmitExpenditure({
                 throw new Error("Select a monthly allocation before recording the expenditure.");
             }
 
-            formData.append("ocr_overridden", isOverridden ? 1 : 0);
+            formData.append("ocr_overridden", shouldOverride ? 1 : 0);
 
             const response = await axios.post(
                 `${API_URL}expenditure/add_expenditure.php`,
