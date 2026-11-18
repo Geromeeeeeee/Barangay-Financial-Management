@@ -25,7 +25,12 @@ try {
         exit('File not found.');
     }
 
-    $filePath = __DIR__ . '/../../' . $file['file_path'];
+    $relativePath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $file['file_path']);
+    $filePath = __DIR__ . '/../../' . $relativePath;
+
+    if (!file_exists($filePath)) {
+        $filePath = __DIR__ . '/../../uploads/expenditures/' . basename($file['file_path']);
+    }
 
     if (!file_exists($filePath)) {
         http_response_code(404);
