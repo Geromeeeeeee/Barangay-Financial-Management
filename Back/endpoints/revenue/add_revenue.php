@@ -370,7 +370,7 @@ try {
 
     $auditDescription = "Recorded revenue of ₱" . number_format($amount, 2) . " for {$source}";
     if ($ocrOverridden) {
-        $auditDescription .= " [WARNING: Receipt doesn't match the input number - Manually Overridden]";
+        $auditDescription .= " [WARNING: Receipt doesn't match the input number - Manually Approved]";
     }
 
     $audit->log('Record Revenue', $auditDescription);

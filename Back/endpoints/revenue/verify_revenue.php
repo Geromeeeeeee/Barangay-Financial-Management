@@ -80,9 +80,13 @@ try {
 
     $audit = new Audit($pdo);
     $actionName = $actionStatus === 'verified' ? 'Verify Revenue' : 'Reject Revenue';
+    
+    $revSource = $revenue['source'] ?? ('revenue #' . $revenueId);
+
     $auditDetails = $actionStatus === 'verified'
-        ? "Approved manual override for revenue #{$revenueId} amounting to ₱" . number_format((float)$revenue['amount'], 2)
-        : "Rejected manual override for revenue #{$revenueId} amounting to ₱" . number_format((float)$revenue['amount'], 2);
+        ? "Approved revenue of ₱" . number_format((float)$revenue['amount'], 2) . " for \"{$revSource}\""
+        : "Rejected revenue of ₱" . number_format((float)$revenue['amount'], 2) . " for \"{$revSource}\"";
+
     $audit->log($actionName, $auditDetails);
 
     $pdo->commit();

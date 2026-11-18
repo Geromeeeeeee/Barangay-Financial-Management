@@ -12,7 +12,7 @@ if (!isset($_SESSION['uid'])) {
 $role = strtolower((string)($_SESSION['role'] ?? ''));
 if ($role !== 'admin') {
     http_response_code(403);
-    echo json_encode(['status' => 'error', 'message' => 'Only administrators can update manual override statuses.']);
+    echo json_encode(['status' => 'error', 'message' => 'Only administrators can update verification statuses.']);
     exit();
 }
 
