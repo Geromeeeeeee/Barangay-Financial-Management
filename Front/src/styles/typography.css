@@ -1,0 +1,23 @@
+.page-header{
+
+}
+.container-header{
+
+}
+.semi-bold{
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #cbd5e1;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.normal{
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: #1e293ba3;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    letter-spacing: 0.5px;
+}

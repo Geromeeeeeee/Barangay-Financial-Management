@@ -38,13 +38,13 @@ $recordsThisMonth = $pdo->query("
 
 $categoryBalances = $pdo->query("
     SELECT id, name, allocated_amount, spent_amount,
-           GREATEST(0, allocated_amount - spent_amount) AS balance, percentage, is_custom
+           (allocated_amount - spent_amount) AS balance, percentage, is_custom
     FROM budget_categories ORDER BY id
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 $subcategories = $pdo->query("
     SELECT id, category_id, name, allocated_amount, spent_amount,
-           GREATEST(0, allocated_amount - spent_amount) AS balance
+           (allocated_amount - spent_amount) AS balance
     FROM budget_subcategories ORDER BY category_id, name
 ")->fetchAll(PDO::FETCH_ASSOC);
 foreach ($categoryBalances as &$category) {
@@ -52,7 +52,7 @@ foreach ($categoryBalances as &$category) {
     $category['allocated_amount'] = (float)$category['allocated_amount'];
     $category['spent_amount'] = (float)$category['spent_amount'];
     
-    $category['balance'] = max(0.0, (float)$category['allocated_amount'] - (float)$category['spent_amount']);
+    $category['balance'] = (float)$category['allocated_amount'] - (float)$category['spent_amount'];
     
     $category['percentage'] = (float)$category['percentage'];
     $category['is_custom'] = (bool)$category['is_custom'];
@@ -65,7 +65,7 @@ foreach ($categoryBalances as &$category) {
             $subcategory['allocated_amount'] = (float)$subcategory['allocated_amount'];
             $subcategory['spent_amount'] = (float)$subcategory['spent_amount'];
             
-            $subcategory['balance'] = max(0.0, (float)$subcategory['allocated_amount'] - (float)$subcategory['spent_amount']);
+            $subcategory['balance'] = (float)$subcategory['allocated_amount'] - (float)$subcategory['spent_amount'];
             
             $category['subcategories'][] = $subcategory;
         }

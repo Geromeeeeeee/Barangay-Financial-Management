@@ -1,0 +1,15 @@
+.success{
+    color: #16a34a; /*Same as Excellent status*/
+}
+.error{
+    color: #dc2626; /*Same as critical status*/
+}
+.pending{
+    color: #dced69;
+}
+.warning{
+    color: #d97706;
+}
+.good{
+    color: #2563eb;
+}

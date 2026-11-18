@@ -10,8 +10,11 @@ import { useTreasurerStats } from "../../custom_hooks/use_treasurer_stats";
 import RecentActivity from "../../components/recent_activity";
 import BudgetBalances from "../../components/budget_balances";
 import AnnualBudgetReleaseSection from "../../components/annual_budget_release_section";
+import BalanceModal from "../../components/balance_modal";
 
 export default function TreasurerDashboard({ user }) {
+    const [isModalOpen, setIsmodalOpen] = useState(false);
+    const [selectedDeficitCategory, setSelectedDeficitCategory] = useState(null);
     const { stats, loading, error, refresh } = useTreasurerStats();
     const [activityType, setActivityType] = useState("revenue");
     const [hiddenCategories, setHiddenCategories] = useState({});
@@ -53,6 +56,16 @@ export default function TreasurerDashboard({ user }) {
     return (
         <div className="dashboard-page treasurer-view">
             {error && <div className="alert alert-error">{error}</div>}
+            {isModalOpen && (
+                <BalanceModal 
+                    onClose={() => { 
+                        setIsmodalOpen(false); 
+                        setSelectedDeficitCategory(null); 
+                    }} 
+                    category={selectedDeficitCategory}
+                    formatPeso={formatPeso}
+                />
+            )}
 
             <div className="top-split-layout">
                 <div className="hero-wrapper">
@@ -94,14 +107,18 @@ export default function TreasurerDashboard({ user }) {
             </section>
 
             <BudgetBalances 
-                loading={loading} 
-                stats={stats} 
-                getCategoryStatus={getCategoryStatus} 
-                hiddenCategories={hiddenCategories} 
-                toggleCategory={toggleCategory} 
-                toggleAll={toggleAll}
-                formatPeso={formatPeso} 
-            />
+            loading={loading} 
+            stats={stats} 
+            getCategoryStatus={getCategoryStatus} 
+            hiddenCategories={hiddenCategories} 
+            toggleCategory={toggleCategory} 
+            toggleAll={toggleAll}
+            formatPeso={formatPeso}
+            onOpenDeficitModal={(category) => {
+                setSelectedDeficitCategory(category);
+                setIsmodalOpen(true);
+            }} 
+        />
 
             <AnnualBudgetReleaseSection stats={stats} loading={loading} formatPeso={formatPeso} isVisible={true} />
 

@@ -1,5 +1,6 @@
 import eyeCloseIcon from "../assets/eye_close.svg";
 import eyeOpenIcon from "../assets/eye_open.svg";
+import "../styles/status.css";
 
 export default function BudgetBalances({
     loading, 
@@ -8,7 +9,8 @@ export default function BudgetBalances({
     hiddenCategories, 
     toggleCategory, 
     toggleAll,
-    formatPeso
+    formatPeso,
+    onOpenDeficitModal
 }) {
 
     const allHidden = stats.categoryBalances.length > 0 && 
@@ -34,7 +36,7 @@ export default function BudgetBalances({
                     {stats.categoryBalances.map((category) => {
                         const allocated = Number(category.allocated_amount || 0);
                         const spent = Number(category.spent_amount || 0);
-                        const balance = Math.max(0, Number(category.balance || 0));
+                        const balance =(Number(category.balance || 0));
                         const percentage = allocated > 0 ? Math.min((spent / allocated) * 100, 100) : 0;
                         const status = getCategoryStatus(percentage);
                         const isCardHidden = hiddenCategories[category.id] === true;
@@ -56,7 +58,12 @@ export default function BudgetBalances({
                                 <div className="fund-card-numbers">
                                     <div className="fund-number-row">
                                         <span className="fund-label">Balance</span>
-                                        <span className="fund-value highlight">{isCardHidden ? "***" : formatPeso(balance)}</span>
+                                        <span 
+                                            className={balance < 0 ? 'error' : ''}
+                                            onClick={balance < 0 ? () => onOpenDeficitModal(category) : undefined}
+                                        >
+                                            {isCardHidden ? "***" : formatPeso(balance)}
+                                        </span>
                                     </div>
                                     <div className="fund-number-row">
                                         <span className="fund-label">Allocated</span>
@@ -73,7 +80,11 @@ export default function BudgetBalances({
                                     </div>
                                     <div className="fund-footer-text">
                                         <span>{percentage.toFixed(1)}% utilized</span>
-                                        <span className={`fund-status fund-status-${status.toLowerCase()}`}>{status}</span>
+                                        <span className={`fund-status ${
+                                        status === "Critical" ? "error" : 
+                                        status === "Excellent" ? "success" : 
+                                        `fund-status-${status.toLowerCase()}`
+                                    }`}>{status}</span>
                                     </div>
                                 </div>
                             </div>
