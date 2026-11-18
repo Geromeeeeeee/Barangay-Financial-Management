@@ -222,10 +222,18 @@ try {
         $allocationId = (int)$pdo->lastInsertId();
     }
 
+    $revSrcStmt = $pdo->prepare("SELECT source FROM revenues WHERE id = :id");
+    $revSrcStmt->execute(['id' => $revenueId]);
+    $receiptSource = $revSrcStmt->fetchColumn() ?: ('#' . $revenueId);
+
+    $subNameStmt = $pdo->prepare("SELECT name FROM budget_subcategories WHERE id = :id");
+    $subNameStmt->execute(['id' => $subcategoryId]);
+    $subName = $subNameStmt->fetchColumn() ?: ('#' . $subcategoryId);
+
     $audit = new Audit($pdo);
     $audit->log(
         'Record Monthly Allocation',
-        'Allocated ₱' . number_format($amount, 2) . ' from monthly receipt #' . $revenueId . ' to budget item #' . $subcategoryId
+        'Allocated ₱' . number_format($amount, 2) . ' from monthly receipt "' . $receiptSource . '" to budget item "' . $subName . '"'
     );
     $pdo->commit();
     echo json_encode(['status' => 'success', 'id' => $allocationId]);

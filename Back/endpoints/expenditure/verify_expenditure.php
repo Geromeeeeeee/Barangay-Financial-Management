@@ -164,9 +164,12 @@ try {
 
     $audit = new Audit($pdo);
     $actionName = $actionStatus === 'verified' ? 'Verify Expenditure' : 'Reject Expenditure';
+    
+    $expDescription = $exp['description'] ?? ('expenditure #' . $expenditureId);
+
     $auditDetails = $actionStatus === 'verified' 
-        ? "Approved manual override for expenditure #{$expenditureId} amounting to ₱" . number_format($amount, 2)
-        : "Rejected manual override for expenditure #{$expenditureId} amounting to ₱" . number_format($amount, 2);
+        ? "Approved expenditure of ₱" . number_format($amount, 2) . " for \"{$expDescription}\""
+        : "Rejected expenditure of ₱" . number_format($amount, 2) . " for \"{$expDescription}\"";
 
     $audit->log($actionName, $auditDetails);
 
