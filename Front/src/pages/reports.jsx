@@ -79,22 +79,24 @@ export default function Reports() {
             await document.fonts.ready;
             
             const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-            const margin = 36;
-            const width = pdf.internal.pageSize.getWidth() - margin * 2;
+            const margin = 24;
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const printableWidth = pageWidth - (margin * 2); 
+            const windowWidth = 800;
             
             await pdf.html(reportRef.current, {
                 margin: [margin, margin, margin, margin],
                 autoPaging: "text",
-                width,
-                windowWidth: 900,
+                width: printableWidth,
+                windowWidth: windowWidth,
                 html2canvas: { 
-                    scale: width / 920, 
+                    scale: printableWidth / windowWidth,
                     useCORS: true, 
                     letterRendering: true, 
                     scrollY: 0, 
                     scrollX: 0,
                     backgroundColor: "#ffffff",
-                    windowWidth: 800
+                    windowWidth: windowWidth
                 }
             });
             

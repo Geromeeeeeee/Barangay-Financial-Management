@@ -22,8 +22,8 @@ class Audit {
         }
 
         $stmt = $this->database->prepare("
-            INSERT INTO audit_logs (user_id, username, action, details) 
-            VALUES (:uid, :uname, :action, :details)
+            INSERT INTO audit_logs (user_id, username, action, details, created_at) 
+            VALUES (:uid, :uname, :action, :details, NOW())
         ");
         $stmt->execute([
             'uid' => $userId,
