@@ -36,14 +36,26 @@ export default function Expenditure() {
     const {isTreasurer, isSK, role, isAdmin} = useRole();
     const isSKChairman = role === 'sk_chairman';
     const canModify = isTreasurer || isSKChairman;
-    const displayedCategories = isSK ? categories.filter((category)=>category.name === "SK") : categories
+    const displayedCategories = isSK 
+    ? categories.filter((category) => category.name === "SK") 
+    : isTreasurer 
+        ? categories.filter((category) => category.name.toUpperCase() !== "SK") 
+        : categories;
     const [reviewItem, setReviewItem] = useState(null);
 
     const skFilteredExpenditures = isSK
+    ? expenditures.filter(e => 
+        (e.category_name && e.category_name.toUpperCase() === "SK") || 
+        (e.subcategory_name && e.subcategory_name.toUpperCase().includes("SK")) ||
+        (e.fund_allocation && e.fund_allocation.toUpperCase() === "SK")
+      )
+    : isTreasurer
         ? expenditures.filter(e => 
-            (e.category_name && e.category_name.toUpperCase() === "SK") || 
-            (e.subcategory_name && e.subcategory_name.toUpperCase().includes("SK")) ||
-            (e.fund_allocation && e.fund_allocation.toUpperCase() === "SK")
+            !(
+                (e.category_name && e.category_name.toUpperCase() === "SK") || 
+                (e.subcategory_name && e.subcategory_name.toUpperCase().includes("SK")) ||
+                (e.fund_allocation && e.fund_allocation.toUpperCase() === "SK")
+            )
           )
         : expenditures;
 
