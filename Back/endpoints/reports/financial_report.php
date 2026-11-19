@@ -33,7 +33,9 @@ try {
             JOIN budget_categories c ON c.id = e.category_id
             LEFT JOIN budget_subcategories s
                 ON s.id = e.subcategory_id AND s.category_id = c.id
-            WHERE MONTH(e.created_at) = :month AND YEAR(e.created_at) = :year
+            WHERE MONTH(e.created_at) = :month 
+              AND YEAR(e.created_at) = :year
+              AND e.status = 'verified'
             ORDER BY c.name, e.created_at, e.id
         ");
         $stmt->execute(['month' => $month, 'year' => $year]);

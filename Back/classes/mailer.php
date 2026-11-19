@@ -66,7 +66,7 @@ class Mailer {
             $mail->addAddress($toEmail);
 
             // Link goes to your React frontend
-            $resetLink = "http://localhost:5173/reset-password?token=" . $token;
+            $resetLink = "http://m2a-finance.online/reset-password?token=" . $token;
 
             // Content
             $mail->isHTML(true);

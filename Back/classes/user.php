@@ -79,7 +79,7 @@ class User {
             return [
                 'success' => false,
                 'status'  => 'email_mismatch',
-                'message' => "This invite code was sent to {$check['email']}. Please use that email."
+                'message' => "The email address provided does not match the recipient of this invite code."
             ];
         }
 

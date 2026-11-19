@@ -10,8 +10,8 @@ if (!isset($_SESSION['uid'])) {
 
 $file = $_GET['file'] ?? '';
 
-// Security check: prevent directory traversal attacks
-if (empty($file) || strpos($file, 'uploads/expenditures/') !== 0) {
+// Security check: allow both expenditures and revenues folders, prevent directory traversal
+if (empty($file) || (strpos($file, 'uploads/expenditures/') !== 0 && strpos($file, 'uploads/revenues/') !== 0)) {
     http_response_code(400);
     echo "Invalid file path";
     exit();
@@ -28,7 +28,12 @@ if (!file_exists($filePath)) {
 // Detect MIME type to render correctly
 $mime = mime_content_type($filePath);
 
+if (ob_get_level()) {
+    ob_end_clean();
+}
+
 header('Content-Type: ' . $mime);
 header('Content-Length: ' . filesize($filePath));
 readfile($filePath);
 exit();
+?>
